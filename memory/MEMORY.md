@@ -23,6 +23,7 @@ This project inherits all universal rules, user profile, hard rules, workflow pa
 ## Project
 
 - [Session v1 bootstrap — 2026-04-14](project/session_v1_bootstrap.md) — origin session context, decisions frozen, self-ratings, forward map
+- [Session v0.2.0 — 2026-04-15](project/session_v0_2_0_skill_phase_minus_one.md) — Phase -1 skill shipped end-to-end, v0.2.0 tagged at 7.6/10, gaps logged for v0.3.0
 - [Aurum frozen scope lock](project/aurum_frozen_scope_lock.md) — hard rule that aurum-ai repo stays at `0b1de3d` until Genesis v1 ships; no aurum-ai commits / PRs / edits allowed in any Genesis session
 
 ## Reference
