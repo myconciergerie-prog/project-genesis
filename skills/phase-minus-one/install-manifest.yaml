@@ -1,0 +1,260 @@
+# SPDX-License-Identifier: MIT
+#
+# Phase -1 target stack with per-OS install commands.
+# Consumed by skills/phase-minus-one/modes/*.md via the Phase -1.3 install pass.
+#
+# Item shape:
+#   key                    unique short name, matches a KEY from detect.sh
+#   layer                  2 | 3 | 4 | 5 | 7 per the dependency chain in the spec
+#   label                  human label shown in the gap report
+#   rationale              one-line reason — why this item is in Phase -1
+#   install_commands:      per-OS command; omit an OS to mark "fall back to paste-back"
+#     windows: ...
+#     macos:   ...
+#     linux:   ...  (sub-key per package manager if divergent)
+#   user_action_required:  none | admin_password | sign_in | extension_grant | restart | pairing
+#   probe_key:             the KEY from detect.sh that verifies presence
+#   plan_gate:             null | max | pro_or_higher — subscription-aware branching
+#   core:                  true | false — core items run by default, bonus items opt-in in Phase -1.7
+#
+# All commands are documented (with sources cited in the research cache) so that
+# a user in detailed mode can read them and understand what will happen before
+# approving.
+
+version: 1
+
+items:
+  # -------- Layer 2 pivot (Phase -2, not installed by Phase -1 itself) --------
+  - key: CLAUDE
+    layer: 2
+    label: Claude Code CLI
+    rationale: The pivot tool. Phase -2 prerequisite — user runs the one-liner before Genesis can exist.
+    probe_key: CLAUDE
+    install_commands:
+      windows: "irm https://claude.ai/install.ps1 | iex"
+      macos:   "curl -fsSL https://claude.ai/install.sh | bash"
+      linux:   "curl -fsSL https://claude.ai/install.sh | bash"
+    user_action_required: none
+    plan_gate: pro_or_higher
+    core: true
+    note: >
+      This item is listed for baseline check only — if CLAUDE is missing at the
+      time detect.sh runs, Phase -1 cannot proceed (Genesis itself requires
+      Claude Code). The skill reports a clear error and directs the user to
+      the one-liner above.
+
+  # -------- Layer 3 dev essentials --------
+  - key: NODE
+    layer: 3
+    label: Node.js LTS
+    rationale: Required by Playwright MCP and many other tool MCPs.
+    probe_key: NODE
+    install_commands:
+      windows: "winget install -e --id OpenJS.NodeJS.LTS"
+      macos:   "brew install node"
+      linux:
+        apt:    "sudo apt update && sudo apt install -y nodejs npm"
+        dnf:    "sudo dnf install -y nodejs npm"
+        pacman: "sudo pacman -S --noconfirm nodejs npm"
+    user_action_required: admin_password
+    core: true
+
+  - key: GIT
+    layer: 3
+    label: Git
+    rationale: Source control — Genesis uses `git init`, worktrees, push / pull, SSH.
+    probe_key: GIT
+    install_commands:
+      windows: "winget install -e --id Git.Git"
+      macos:   "brew install git"
+      linux:
+        apt:    "sudo apt install -y git"
+        dnf:    "sudo dnf install -y git"
+        pacman: "sudo pacman -S --noconfirm git"
+    user_action_required: admin_password
+    core: true
+
+  - key: CODE
+    layer: 3
+    label: VS Code
+    rationale: IDE used by the Claude Code VS Code extension — extension doubles as the `ide` MCP server.
+    probe_key: CODE
+    install_commands:
+      windows: "winget install -e --id Microsoft.VisualStudioCode"
+      macos:   "brew install --cask visual-studio-code"
+      linux:
+        apt:    "sudo apt install -y code"
+        dnf:    "sudo dnf install -y code"
+        pacman: "sudo pacman -S --noconfirm code"
+    user_action_required: admin_password
+    core: true
+
+  - key: CHROME
+    layer: 3
+    label: Google Chrome
+    rationale: Required for Claude in Chrome extension and for sign-in flows in Phase -1.4.
+    probe_key: CHROME
+    install_commands:
+      windows: "winget install -e --id Google.Chrome"
+      macos:   "brew install --cask google-chrome"
+      linux:
+        apt:    "sudo apt install -y google-chrome-stable"
+        dnf:    "sudo dnf install -y google-chrome-stable"
+        pacman: "sudo pacman -S --noconfirm google-chrome"
+    user_action_required: admin_password
+    core: true
+
+  - key: GH_CLI
+    layer: 3
+    label: GitHub CLI
+    rationale: Used by Genesis for repo creation API calls and PR / merge operations via GH_TOKEN env.
+    probe_key: GH_CLI
+    install_commands:
+      windows: "winget install -e --id GitHub.cli"
+      macos:   "brew install gh"
+      linux:
+        apt:    "sudo apt install -y gh"
+        dnf:    "sudo dnf install -y gh"
+        pacman: "sudo pacman -S --noconfirm github-cli"
+    user_action_required: admin_password
+    core: true
+
+  # -------- Layer 4 automation surface --------
+  - key: CLAUDE_CODE_VSCODE_EXTENSION
+    layer: 4
+    label: Claude Code VS Code extension
+    rationale: Doubles as the local `ide` MCP server — installing it expands the MCP surface for every Claude Code session on this machine.
+    probe_key: CLAUDE_CODE_VSCODE_EXTENSION
+    install_commands:
+      windows: "code --install-extension anthropic.claude-code"
+      macos:   "code --install-extension anthropic.claude-code"
+      linux:   "code --install-extension anthropic.claude-code"
+    user_action_required: restart
+    core: true
+    depends_on: [CODE]
+
+  - key: MCP_PLAYWRIGHT
+    layer: 4
+    label: Playwright MCP
+    rationale: Browser automation surface — required for future automated Phase 5.5 auth pre-flight.
+    probe_key: MCP_PLAYWRIGHT
+    install_commands:
+      windows: "claude mcp add --scope user playwright npx @playwright/mcp@latest"
+      macos:   "claude mcp add --scope user playwright npx @playwright/mcp@latest"
+      linux:   "claude mcp add --scope user playwright npx @playwright/mcp@latest"
+    user_action_required: restart
+    core: true
+    depends_on: [NODE, CLAUDE]
+
+  - key: CLAUDE_IN_CHROME
+    layer: 4
+    label: Claude in Chrome extension
+    rationale: Agentic browser action surface — cannot be auto-installed because Chrome enforces extension permission prompts.
+    probe_key: CLAUDE_IN_CHROME
+    install_commands:
+      windows: "PASTE_BACK_URL=https://chromewebstore.google.com/category/extensions"
+      macos:   "PASTE_BACK_URL=https://chromewebstore.google.com/category/extensions"
+      linux:   "PASTE_BACK_URL=https://chromewebstore.google.com/category/extensions"
+    user_action_required: extension_grant
+    core: true
+    depends_on: [CHROME]
+    note: >
+      Paste-back only. The skill renders a micro-card directing the user to the
+      Chrome Web Store listing for Claude in Chrome, the user accepts the
+      permission dialog, pins the extension, and confirms back in the chat.
+
+  # -------- Multi-device core --------
+  - key: CLAUDE_MOBILE_APP
+    layer: 4
+    label: Claude mobile app (iOS or Android)
+    rationale: Core multi-device companion surface per beta-tester framing in the spec refinement layer 2.
+    probe_key: null
+    install_commands:
+      windows: "PASTE_BACK_URL=https://claude.ai/download"
+      macos:   "PASTE_BACK_URL=https://claude.ai/download"
+      linux:   "PASTE_BACK_URL=https://claude.ai/download"
+    user_action_required: sign_in
+    core: true
+    note: >
+      User installs on their phone. Phase -1.4 sign-in round includes a
+      "sign in with the same Anthropic account" step.
+
+  - key: CLAUDE_CODE_REMOTE_CONTROL
+    layer: 4
+    label: Claude Code Remote Control
+    rationale: Drives the desktop session from the paired phone — native streaming, auto-reconnect. Gated to Max plan.
+    probe_key: null
+    install_commands:
+      windows: "CLAUDE_CMD=claude /remote-control pair"
+      macos:   "CLAUDE_CMD=claude /remote-control pair"
+      linux:   "CLAUDE_CMD=claude /remote-control pair"
+    user_action_required: pairing
+    plan_gate: max
+    core: true
+    depends_on: [CLAUDE_MOBILE_APP]
+    fallback_when_plan_not_met: CODESPACES_FALLBACK
+    note: >
+      If the user's plan is Pro or Team, swap to the Codespaces fallback
+      declared in optional-bonus.md. If Free, Phase -1 blocks with a clear
+      error — Claude Code requires a paid plan.
+
+  # -------- Layer 7 optional bonuses (Phase -1.7) --------
+  - key: ANTIGRAVITY
+    layer: 7
+    label: Google Antigravity
+    rationale: Multi-LLM agent IDE (Sonnet 4.6 + Opus 4.6 + Gemini 3.1 Pro + GPT-OSS). Free for individuals. Opt-in bonus.
+    probe_key: null
+    install_commands:
+      windows: "PASTE_BACK_URL=https://antigravity.google/download"
+      macos:   "PASTE_BACK_URL=https://antigravity.google/download"
+      linux:   "PASTE_BACK_URL=https://antigravity.google/download"
+    user_action_required: sign_in
+    core: false
+
+  - key: CODESPACES_FALLBACK
+    layer: 7
+    label: GitHub Codespaces setup
+    rationale: Any-device cloud fallback for Pro users who cannot use Remote Control.
+    probe_key: null
+    install_commands:
+      windows: "PASTE_BACK_URL=https://github.com/codespaces"
+      macos:   "PASTE_BACK_URL=https://github.com/codespaces"
+      linux:   "PASTE_BACK_URL=https://github.com/codespaces"
+    user_action_required: sign_in
+    core: false
+
+  - key: TERMUX
+    layer: 7
+    label: Android Termux local Claude Code
+    rationale: Power-user escape hatch — local Claude Code on Android. Android only.
+    probe_key: null
+    install_commands:
+      windows: "PASTE_BACK_URL=https://f-droid.org/packages/com.termux/"
+      macos:   "PASTE_BACK_URL=https://f-droid.org/packages/com.termux/"
+      linux:   "PASTE_BACK_URL=https://f-droid.org/packages/com.termux/"
+    user_action_required: sign_in
+    core: false
+
+  - key: VOICE_MODE
+    layer: 7
+    label: Claude Code voice mode (`/voice`)
+    rationale: Gated rollout Q1–Q2 2026. Opt-in toggle if available.
+    probe_key: null
+    install_commands:
+      windows: "CLAUDE_CMD=claude /voice"
+      macos:   "CLAUDE_CMD=claude /voice"
+      linux:   "CLAUDE_CMD=claude /voice"
+    user_action_required: none
+    core: false
+
+security_floor:
+  description: >
+    The five categories Phase -1 never automates. When an install step hits
+    one, the mode runner pauses, surfaces a paste-back micro-card, and waits
+    for the user to confirm before continuing.
+  categories:
+    - initial_sign_in
+    - admin_password
+    - extension_permission_grant
+    - two_factor_code
+    - device_authorization_flow
