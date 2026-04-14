@@ -1,0 +1,23 @@
+# SPDX-License-Identifier: MIT
+# direnv alternative to .env.local for project-scoped env vars
+# Install direnv: https://direnv.net/
+# Usage:
+#   1. Copy this file to .envrc in the project root
+#   2. Fill in your values
+#   3. Run `direnv allow` in this directory (one-time)
+# direnv auto-loads these vars when you cd into the project, unloads when you cd out
+# Safer scope than .env.local because vars are not ambient outside this directory
+
+export GH_TOKEN=github_pat_PASTE_YOUR_FINE_GRAINED_PAT_HERE
+
+# Add more project-scoped env vars below
+# export SUPABASE_PROJECT_REF=
+# export SUPABASE_SB_PUBLISHABLE=
+# export OPENAI_API_KEY=
+# export ANTHROPIC_API_KEY=
+# export GEMINI_API_KEY=
+
+# Best-practice 2026 note: direnv is recommended over plain .env.local for multi-project Windows/macOS/Linux
+# setups because its scope is the directory (not the shell), so leaking a secret into an unrelated terminal
+# session is prevented by design. See .claude/docs/superpowers/research/sota/ for the research behind this
+# recommendation (best-practice-at-date rule from Layer 0).

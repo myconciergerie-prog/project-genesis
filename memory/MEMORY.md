@@ -1,0 +1,51 @@
+<!-- SPDX-License-Identifier: MIT -->
+
+# MEMORY — Project Genesis
+
+Index of project-level memory for Project Genesis. **Always loaded at session open** per R1.1.
+
+## Layer 0 inheritance
+
+This project inherits all universal rules, user profile, hard rules, workflow patterns, and machine-specific reference from `~/.claude/CLAUDE.md` (Layer 0) **by reference**. See the project-level `CLAUDE.md` at the repo root for the pointer rules. This memory index does NOT duplicate Layer 0 content.
+
+## Master
+
+- [Master vision + stack + rules summary](master.md) — the stable project vision; read at every session open
+
+## User
+
+- [user/ README](user/README.md) — user profile is centralized in Layer 0; project-specific user notes would land here if they arise
+
+## Feedback
+
+- [feedback/ README](feedback/README.md) — universal feedback rules inherited from Layer 0; project-specific feedback would land here if it diverges
+
+## Project
+
+- [Session v1 bootstrap — 2026-04-14](project/session_v1_bootstrap.md) — origin session context, decisions frozen, self-ratings, forward map
+- [Aurum frozen scope lock](project/aurum_frozen_scope_lock.md) — hard rule that aurum-ai repo stays at `0b1de3d` until Genesis v1 ships; no aurum-ai commits / PRs / edits allowed in any Genesis session
+
+## Reference
+
+- [SSH identity — Project Genesis](reference/ssh_genesis_identity.md) — dedicated `~/.ssh/id_ed25519_genesis` + `github.com-genesis` alias in `~/.ssh/config`, fingerprint and git remote URL
+- [GitHub account target — Project Genesis](reference/github_genesis_account.md) — `myconciergerie-prog/project-genesis`, PAT env pattern, SSH URL binding, Chrome Profile 2 for web UI
+
+## Themes
+
+- [themes/ README](themes/README.md) — empty; themes populated as the project grows and multi-entry patterns emerge
+
+## Journal
+
+- [Journal INDEX](journal/INDEX.md) — stratified thought capture (6th memory type per Layer 0 journal system spec); no entries yet, created via trigger phrases like "ouvre une pensée sur X"
+
+## Pépites
+
+- [Pépites INDEX](pepites/INDEX.md) — gold nugget discoveries with cross-project routing metadata (7th memory type per `specs/v1_pepite_discovery_flagging.md`); no entries yet, flagged automatically during research when red-light criteria match
+
+## Pointers to dev-internal docs (not memory, but related)
+
+- `.claude/docs/superpowers/rules/v1_rules.md` — R1-R10 for this project (adapted from Aurum v1)
+- `.claude/docs/superpowers/research/INDEX.md` — R8 research cache with TTL, 7 active entries as of bootstrap
+- `.claude/docs/superpowers/specs/` — design specs (4 v1 specs + 1 v2 spec captured during bootstrap)
+- `.claude/docs/superpowers/plans/` — implementation plans
+- `.claude/docs/superpowers/resume/` — session handoff prompts

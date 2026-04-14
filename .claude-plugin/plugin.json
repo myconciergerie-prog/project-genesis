@@ -1,0 +1,29 @@
+{
+  "name": "project-genesis",
+  "version": "0.1.0",
+  "description": "Project Genesis — recursive project bootstrap template, shipped as a Claude Code plugin",
+  "author": {
+    "name": "myconciergerie-prog",
+    "email": "myconciergerie@gmail.com",
+    "url": "https://github.com/myconciergerie-prog"
+  },
+  "homepage": "https://github.com/myconciergerie-prog/project-genesis",
+  "repository": "git@github.com-genesis:myconciergerie-prog/project-genesis.git",
+  "license": "MIT",
+  "keywords": [
+    "bootstrap",
+    "template",
+    "workflow",
+    "project-init",
+    "scaffold",
+    "genesis",
+    "journal",
+    "pepite",
+    "meta-memory",
+    "cross-os",
+    "multidevice",
+    "phase-minus-one",
+    "auth-preflight",
+    "session-post-processor"
+  ]
+}
