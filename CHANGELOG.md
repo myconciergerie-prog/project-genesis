@@ -8,6 +8,58 @@ Every version bump includes a **5-axis self-rating block** per R10.3 discipline,
 
 ---
 
+## [0.5.0] — 2026-04-15 — "Session post-processor skill"
+
+### Added
+
+- `skills/session-post-processor/` — the fourth functional skill. Parses the current Claude Code session's JSONL transcript, redacts secrets (GitHub PATs, SSH private keys, Anthropic/OpenAI/Supabase/Stripe/AWS/Google API keys, JWTs, `.env.local` content paste-backs, generic long hex / base64), and emits a readable Markdown archive under `memory/project/sessions/YYYY-MM-DD_<slug>.md`. Includes a mandatory **halt-on-leak verification gate** that re-applies every pattern to the written file and deletes it if any pattern still matches. Manual-invoke only in v0.5.0 — `SessionEnd` hook wiring is a v0.6+ candidate after three successful dogfood runs.
+- `skills/session-post-processor/SKILL.md` — entry point, trigger phrases, seven-step flow (locate → parse → redact → emit → halt-on-leak → INDEX → health card), explicit manual-only discipline for v0.5.0 with a three-run dogfood requirement before any hook wiring, anti-Frankenstein scope locks.
+- `skills/session-post-processor/jsonl-parser.md` — record-by-record schema walkthrough based on the on-disk-verified 2026-04-15 research entry. Outer type / inner content-block type distinction, `parentUuid` threading with timestamp as primary ordering key, sidechain sub-agent grouping rule, five content-block extraction rules, resilient error handling (no exceptions halt the parse — only the secret-leak gate halts).
+- `skills/session-post-processor/redaction-patterns.md` — 14 patterns in specific-before-generic application order with name / regex / rationale / test vectors for each. Variable-name-preserving replacement for `env_local_paste`. Explicit non-goals for handwritten secrets, URL-embedded credentials, binary attachment contents.
+- `skills/session-post-processor/markdown-emitter.md` — output template with frontmatter schema, per-record-kind rendering rules, truncation rules, idempotency rule (re-run produces `-N` suffixed file, never silent overwrite).
+- `skills/session-post-processor/install-manifest.yaml` — Python 3.10+ runtime dependency (stdlib only), `memory/project/sessions/` + `INDEX.md` creation with `create_if_missing_only` guard, five verification checks. Explicitly does NOT register `SessionEnd` hooks, does NOT modify `settings.json`.
+- `skills/session-post-processor/verification.md` — two-mode health card with 12 checks including the critical halt-on-leak redaction gate that deletes the archive file on any pattern hit. File deletion is the single privileged operation in the whole skill.
+- `.claude/docs/superpowers/research/stack/claude-code-session-jsonl-format_2026-04-15.md` — refreshed research entry (confidence upgraded medium → high after on-disk verification against `a086701e.jsonl`, 174 records). Clarifies outer vs inner type taxonomy, documents verified flat layout, slug derivation rule, multi-slug-per-project situation (both `project-genesis` and `project-genesis-2026` slugs exist from prior rename), supersedes the 2026-04-14 entry which moves to `research/archive/`.
+- `.claude-plugin/plugin.json` version bumped to `0.5.0`.
+
+### Notes
+
+- Ships **one** skill only, per anti-Frankenstein discipline. Remaining stubs: `pepite-flagging/` + `genesis-protocol/` (orchestrator, still last).
+- **Granular commit discipline** applied for the first time on this skill, as reinforced by the v0.4.0 PowerShell-window incident. Eight commits in the feat branch (research-refresh → SKILL.md → jsonl-parser → redaction-patterns → markdown-emitter → install-manifest → verification → changelog-bump), squashed to one on merge. Protects against mid-session host loss.
+- **Research refresh as a prerequisite**. The existing `claude-code-session-jsonl-format_2026-04-14.md` entry expired today (2026-04-15), was confidence `medium`, and had explicit "verification needed" caveats. Before writing the skill, the session sampled a real JSONL on disk, verified the outer vs inner type taxonomy, and wrote the 2026-04-15 replacement with confidence `high`. First application of the R8 "refresh or extend" rule mid-session.
+- **Manual-only for v0.5.0** — no `SessionEnd` hook wiring. Three-run dogfood gate before automation: this session (run 1), a subsequent Genesis session (run 2), an Aurum session after the freeze lifts (run 3).
+- **Halt-on-leak gate is the security floor**. A redaction miss must never result in a silent archive file with the secret in it. File deletion is the single privileged operation in the skill.
+- **No vendored dependencies**. Prior art cited for schema reference only. Python stdlib is enough.
+- **`phase-minus-one`, `phase-5-5-auth-preflight`, and `journal-system` untouched**. All three stable at 7.6 / 8.2 / 8.8.
+- Every new file carries `SPDX-License-Identifier: MIT` short-form header per R10.
+
+### Self-rating — v0.5.0
+
+| Axis | Rating | Notes |
+|---|---|---|
+| Pain-driven coverage | 9/10 | Writing session memories by hand has been the manual step in every Genesis session so far (v0.1 → v0.4, five times). Halt-on-leak gate addresses the specific threat of silently committing a redaction miss. Research refresh closes the "confidence medium" caveat from the 2026-04-14 entry. Zero speculative features. |
+| Prose cleanliness | 7/10 | Larger skill (6 files vs 5 for journal-system) because redaction and verification both need their own files. Tables used for patterns, checks, rendering rules. Some intentional redundancy between `jsonl-parser.md` and the research entry so the skill stays legible when the research TTL expires. Denser than journal-system because the subject matter is denser. |
+| Best-at-date alignment | 9/10 | On-disk verification against a Claude Opus 4.6 session file from today. Redaction patterns include 2026-current token formats (fine-grained `github_pat_11`, Anthropic `sk-ant-`, Supabase `sb_secret_`, OpenAI `sk-proj-`, Stripe `sk_(test\|live)_`, full AWS prefix list, Google `AIza`). Python 3.10+ `match/case` is 2026-current idiomatic. |
+| Self-contained | 8/10 | Runs end-to-end within `skills/session-post-processor/` + `memory/project/sessions/`. Touches `~/.claude/projects/` read-only. Python 3.10+ is the only non-stdlib cross-skill coupling in the Genesis stack so far — previous skills are pure markdown / bash. Capped at 8 because the runtime dependency is a genuine self-containment cost. |
+| Anti-Frankenstein | 9/10 | Six files (minimum for this surface). Zero speculative features: no hook wiring in v0.5, no HTML emitter, no token-usage dashboard, no cross-session timeline, no semantic indexing, no interactive replay. Manual-only with three-run dogfood gate. Halt-on-leak gate is the only privileged operation. Skill deliberately does NOT cache parsed records — each run is fresh and auditable. |
+| **Average** | **8.4/10** | Clears the 8.0/10 floor by 0.4. Below v0.4.0 (8.8/10) intentionally — larger surface and a real runtime dependency. The journal-system climb was from a smaller surface, not a more rigorous rubric. v1 average target 8.5/10 still defensible. |
+
+### Known gaps for v0.6.0
+
+- **No executable Python module** — ships the pipeline spec, not a runnable `.py`. First dogfood run needs a small entry point written on the fly, eventually promoted to `skills/session-post-processor/run.py`. Deferred because the spec must be frozen before the implementation; v0.5 is the spec freeze.
+- **No test vector runner** — `redaction-patterns.md` lists vectors but no harness. Small `tests/redaction_vectors.py` is a v0.6 candidate.
+- **No SessionEnd hook wiring** — explicit v0.6+ candidate after three successful manual dogfood runs.
+- **No retroactive processing** — current session only. Archiving historical JSONLs (v0.1 → v0.4) deferred.
+- **No cross-session timeline** — separate `session-timeline` aggregator, v0.8+ candidate.
+- **No JWT decoding** — shape match only, payload decoding deferred.
+- **No slug-collision detection** — multiple Windows-path variants collapsing to the same slug would land JSONLs in the same directory. Most-recent-mtime pick is usually correct; YELLOW warning for multi-match is a v0.6+ safety net.
+
+### Next version target
+
+**v0.6.0** — either `pepite-flagging` (the remaining independent skill stub) or the first implementation pass of session-post-processor's executable Python module. Rubric says pick the more concrete pain point at the time. Target rating: **8.0/10 floor**.
+
+---
+
 ## [0.4.0] — 2026-04-15 — "Journal system skill"
 
 ### Added
