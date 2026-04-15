@@ -4,7 +4,7 @@
 
 Chronological index of journal entries (6th memory type per Layer 0 journal system spec). One-liner per entry, newest first.
 
-*(No entries yet — entries are created via user trigger phrases from Layer 0.)*
+First entry opened 2026-04-15 during the v0.6.0 session.
 
 ## How to create an entry
 
@@ -33,4 +33,4 @@ Entries use the stratified format where each session's contribution lands as a n
 
 ## Entries
 
-*(none yet)*
+- **2026-04-15** — [Slug rule live-dogfood correction](2026-04-15_slug-rule-live-dogfood-correction.md) — *seed* — first time an R8 research entry was corrected by running code rather than by fresh WebSearch. Opened during the v0.6.0 session, first run of `session-post-processor/run.py`.
