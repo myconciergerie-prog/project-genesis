@@ -1,6 +1,6 @@
 {
   "name": "project-genesis",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "Project Genesis — recursive project bootstrap template, shipped as a Claude Code plugin",
   "author": {
     "name": "myconciergerie-prog",
@@ -24,6 +24,7 @@
     "multidevice",
     "phase-minus-one",
     "auth-preflight",
-    "session-post-processor"
+    "session-post-processor",
+    "pepite-flagging"
   ]
 }
