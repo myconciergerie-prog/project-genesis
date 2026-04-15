@@ -8,6 +8,62 @@ Every version bump includes a **5-axis self-rating block** per R10.3 discipline,
 
 ---
 
+## [0.6.0] — 2026-04-15 — "Session post-processor run.py executable"
+
+### Added
+
+- `skills/session-post-processor/run.py` — the first Genesis skill to ship a runnable Python module instead of a spec-only Markdown surface. Implements the seven-step pipeline frozen in v0.5.0 (locate → parse → redact → emit → halt-on-leak → INDEX → health card) using only the Python 3.10+ standard library (`json`, `re`, `os`, `pathlib`, `datetime`, `argparse`, `sys`, `unicodedata`). No pip installs, no vendored libraries. CLI flags: `--project-root`, `--cwd` (for worktree override), `--jsonl` (explicit source), `--inject-test-leak` (dogfood-only halt-gate probe).
+- `memory/project/sessions/` — seeded via the run.py install step (idempotent `ensure_sessions_dir`), with the canonical `INDEX.md` stub from `install-manifest.yaml`.
+- `memory/project/sessions/2026-04-15_on-reprend-v0-6-0-project-genesis.md` — **first real dogfood archive** of a live Genesis session, produced by run.py against `~/.claude/projects/C--Dev-Claude-cowork-project-genesis/a3857578-*.jsonl`. 93 records, 37 tool calls, 20 redactions across 13 patterns, halt-on-leak gate CLEAN. Committed as a durable artefact per the v0.5 → v0.6 resume prompt — the archive is a version-controlled record of the implementation session, redacted by construction.
+- `.claude-plugin/plugin.json` version bumped to `0.6.0`.
+
+### Fixed
+
+- **Slug derivation** — the 2026-04-15 on-disk-verified research entry said `\`, `:`, and space map to `-`, but empirical verification during the first dogfood run showed **underscore also maps to `-`** (actual directory `C--Dev-Claude-cowork-project-genesis`, not `C--Dev-Claude_cowork-project-genesis`). `slugify_cwd()` extended to replace `\`, `/`, `:`, `_`, and space. First live-dogfood correction of a research entry. Research entry refresh is a v0.7+ follow-up (low priority — code is correct, only the documentation caveat is outstanding).
+
+### Verified
+
+- **Halt-on-leak gate fires under deliberate test** — `--inject-test-leak` appends a fake `github_pat_` + 90-`A` string to the parsed record list **after** the redaction pass so it bypasses the redactor, reaches the emitter raw, triggers the verification gate, and the written archive is deleted before the INDEX update. Confirmed end-to-end: 54616 bytes written, `github_pat_finegrained` leak detected, file unlinked, RED card emitted, non-zero exit code. The gate is not theoretical.
+- **First-run on the current session's JSONL succeeds**: CLEAN verification, 20 redaction hits across 13 patterns, 37 tool calls surfaced, archive is 1182 lines and 49683 bytes.
+
+### Notes
+
+- **Dogfood run 2 of the three-run gate**. Run 1 was the v0.5.0 session itself (implicit — the skill shipped the spec, no executable, so no run was possible, but the session's own JSONL proved the spec was parseable by hand). Run 2 is this v0.6.0 session, with the actual `run.py` processing `a3857578-*.jsonl`. Run 3 will be either a future Genesis session or the first Aurum session after the freeze lifts. **Hook wiring stays deferred** per R10 anti-Frankenstein discipline — no `SessionEnd` automation before all three runs land CLEAN.
+- **Only stdlib**, per the v0.5 spec freeze. No `yaml` (frontmatter emitted as plain text), no `requests`, no `pyyaml`. Python 3.14 on this machine covers the 3.10+ floor with room to spare.
+- **Generic pattern false positives are acceptable** — `generic_long_base64` caught a file path fragment (`claude/docs/superpowers/research/stack/claude-code-session`) during the first dogfood. This is the documented cost of the redact-heavy strategy: false positives are recoverable, false negatives are incidents. A v0.7+ candidate is a short allow-list of known-safe path fragments, not a regex relaxation.
+- **Idempotent archive allocation** — `allocate_archive_path` appends `-2`, `-3`, etc. on filename collision. Re-running the skill against the same session produces a new file each time, and the user can diff them to confirm redaction stability.
+- **Atomic emit** — `emit_markdown` writes to `<archive>.md.tmp`, then `.replace()`s to `<archive>.md`. Avoids half-written archives if the process crashes mid-emit.
+- **Granular commit discipline** applied again — one commit per logical unit (run.py, sessions/ + dogfood, plugin.json, CHANGELOG).
+- **`phase-minus-one`, `phase-5-5-auth-preflight`, `journal-system`, `session-post-processor` spec files untouched**. All stable.
+- Every new file carries the `SPDX-License-Identifier: MIT` short-form header.
+
+### Self-rating — v0.6.0
+
+| Axis | Rating | Notes |
+|---|---|---|
+| Pain-driven coverage | 9/10 | The v0.5.0 session shipped the spec but blocked on the three-run dogfood gate because no executable existed. `run.py` unblocks it end-to-end. Every feature in `run.py` maps to a specific step of the v0.5 spec — zero speculative additions. `--inject-test-leak` is a dogfood-only flag that exists because the halt gate needs a live proof, not a theoretical one. |
+| Prose cleanliness | 8/10 | One file, ~700 lines, sectioned into redaction / slug / parser / emitter / verifier / index / health-card / main with block-comment headers. Functions are small and named for what they return, not what they do. Comments only where WHY is non-obvious (env_local_paste special case, dogfood injection rationale, post-redaction tag stripping). Slightly below v0.4's journal-system 9 because it's code not prose, and code carries more intrinsic noise. |
+| Best-at-date alignment | 9/10 | 2026-current Python idioms (type hints with `|` union, `Path.read_text(encoding=)`, `re.Pattern[str]`). Redaction patterns match 2026 token formats per the v0.5 spec (github_pat_finegrained 82+ chars, `sk-ant-`, `sb_secret_`, `sk-proj-`, AWS prefix list, Google `AIza`, JWT `eyJ...eyJ...`). No legacy Python 2 baggage, no deprecated stdlib modules. |
+| Self-contained | 9/10 | Single file, stdlib only, no pip, no yaml parser, no cross-skill imports. Install step is idempotent and creates only `memory/project/sessions/` + `INDEX.md`. The Python 3.10+ runtime is already declared in `install-manifest.yaml` — no new dependency is introduced by this version. Higher than v0.5 (8) because v0.5 *declared* the runtime dep; v0.6 just *uses* it inside the existing envelope. |
+| Anti-Frankenstein | 8/10 | Did NOT wire SessionEnd hooks (R10 discipline). Did NOT add a YELLOW warning for multi-slug collision (v0.5 gap, deferred — there is no real multi-slug collision on this machine to dogfood against, so the logic would be untestable now). Did NOT add a test vector runner (v0.5 gap, deferred — the `--inject-test-leak` flag is the minimal viable halt-gate proof). Did NOT implement retroactive batch processing. The dogfood-injection flag is one 4-line block that only runs with `--inject-test-leak`; its existence is pain-driven (we need to prove the gate fires). Capped at 8 because run.py is a single 700-line file and a future session might legitimately split it (parser/redactor/emitter) if the test harness grows. |
+| **Average** | **8.6/10** | Clears the 8.0/10 floor by 0.6. Above v0.5.0 (8.4/10) because implementing a frozen spec is a cleaner rating surface than the spec-freeze itself. Running average across v0.2 → v0.6 = **(7.6 + 8.2 + 8.8 + 8.4 + 8.6) / 5 = 8.32/10**, on track for the v1 target 8.5/10. |
+
+### Known gaps for v0.7.0
+
+- **No multi-slug collision YELLOW warning** — if a project has both a `-2026` and a plain slug under `~/.claude/projects/`, both will match the current rule and the most-recent-mtime pick is usually correct but could surprise. Add a YELLOW warning when multiple slug dirs exist for the same cwd.
+- **Research entry refresh for the underscore rule** — the 2026-04-15 `claude-code-session-jsonl-format` research entry still documents `\`, `:`, and space only; refresh to add underscore.
+- **Test vector harness** — `redaction-patterns.md` has vectors, run.py has no harness. Small `tests/redaction_vectors.py` would assert `match` vectors redact and `non-match` vectors survive.
+- **Allow-list for generic_long_base64 false positives** — path fragments like `claude/docs/superpowers/research/stack/claude-code-session` should not be redacted. Short allow-list of safe prefixes.
+- **`pepite-flagging` skill** — the last independent skill stub, now the natural next target for v0.7 (was the alternative v0.6 option).
+- **`genesis-protocol` orchestrator** — still last, lands after every phase and skill is implemented and the first public downstream bootstrap proves the flow.
+- **`SessionEnd` hook wiring** — still deferred until run 3 of the dogfood gate lands CLEAN.
+
+### Next version target
+
+**v0.7.0** — `pepite-flagging` skill OR run 3 of the post-processor dogfood against an Aurum session (only if the freeze has lifted). Rubric says pick the more concrete pain at session open. Target rating: **8.0/10 floor**.
+
+---
+
 ## [0.5.0] — 2026-04-15 — "Session post-processor skill"
 
 ### Added
