@@ -8,6 +8,61 @@ Every version bump includes a **5-axis self-rating block** per R10.3 discipline,
 
 ---
 
+## [0.7.0] — 2026-04-15 — "Pépite flagging skill + R8 slug rule correction"
+
+### Added
+
+- `skills/pepite-flagging/` — the **last independent skill stub** shipped as a 1:1 mirror of the canonical spec `.claude/docs/superpowers/specs/v1_pepite_discovery_flagging.md`. Speech-native, consent-bounded, automatic detection during research operations (WebSearch, WebFetch, sub-agent exploration, R8 refreshes) with a "two or more of six" red-light criteria rule. Six files, ~936 lines total:
+  - `SKILL.md` — entry point, automatic + manual trigger phrases, five-step flow (detect → create → surface → act → INDEX), hard rules, anti-Frankenstein scope locks
+  - `trigger-criteria.md` — the six red-light criteria with rationale, calibration example, and anti-noise guard per criterion. Applied "two or more" scoring table with worked examples. Anti-over-flagging and anti-under-flagging discipline
+  - `pepite-format.md` — frontmatter schema (14 required fields), body section order, slug derivation, status transition table (seed → extracted → actioned → archived, with dismissed as terminal), idempotency rules, one fully-worked illustrative example marked as non-real
+  - `cross-project-routing.md` — pointer file template, per-target consent pattern (never batched silently), target project slug lookup with v1 hard-coded machine map, cold-read protocol for pointer consumers, v1/v2 scope lock
+  - `install-manifest.yaml` — idempotent directory + INDEX.md creation with `create_if_missing_only` guard, three verification checks, no runtime dependency declaration (pure Markdown + YAML skill)
+  - `verification.md` — two-mode health card (13 checks), halt-on-RED on missing required frontmatter, illegal status transition, or **cross-project pointer write without explicit per-target consent** (consent floor — the only privileged operation in this skill)
+- `.claude-plugin/plugin.json` version bumped to `0.7.0`, added `pepite-flagging` to the keywords list.
+
+### Fixed
+
+- **R8 research entry correction — live dogfood follow-up from v0.6.0**. The `claude-code-session-jsonl-format_2026-04-15.md` entry described the cwd-to-slug rule as replacing only `\`, `:`, and space with `-`. Empirical verification during the v0.6 first dogfood run proved underscore also maps to `-`; the code was fixed in `slugify_cwd()` but the research entry still carried the incomplete rule. Corrected in this release: the entry now lists `\`, `/`, `:`, `_`, and space as the full replacement set, with an explicit "Correction 2026-04-15 (live dogfood)" note pointing to `memory/journal/2026-04-15_slug-rule-live-dogfood-correction.md` for the epistemic context. Forward slash `/` added to cover git-bash-style cwd strings on Windows. First time an R8 entry has been amended in-place after a live-dogfood correction rather than via a supersede chain — justified because the correction is a bug fix, not new research.
+
+### Notes
+
+- **Four skills shipped** now: `phase-minus-one`, `phase-5-5-auth-preflight`, `journal-system`, `session-post-processor`, plus `session-post-processor/run.py` as a v0.6.0 add. **`pepite-flagging` is the fifth**. Only **one** stub remains: `genesis-protocol/` (the orchestrator, always last).
+- **1:1 spec mirror discipline** applied for the second time (first was `journal-system` in v0.4). Every file in `skills/pepite-flagging/` references the canonical spec and explicitly commits to tracking it — if the spec changes, the skill is updated to match, never the other way around.
+- **No runtime code** in this skill. Unlike `session-post-processor/run.py`, detection and flagging happen inside Claude's own research operations; file writes use the built-in Write tool. The skill is pure Markdown + YAML. This is deliberate — the detection logic is a judgement call, not a deterministic pipeline, and a Python implementation would either oversimplify (miss pépites the LLM would catch) or duplicate the LLM's job.
+- **Consent floor** — cross-project pointer writes are the only privileged operation. Per-target consent is mandatory; silence is always a skip, never an implicit yes; batched "propagate to all" requires explicit echo-back confirmation. `verification.md` Check 10 halts on any consent bypass, deletes the offending pointer, and refuses to auto-retry. Same discipline as `session-post-processor`'s halt-on-leak gate.
+- **v1 machine map is hard-coded** in `cross-project-routing.md` — the Genesis user runs ~20 projects, the mapping is small, and it changes slowly. Auto-discovery of sibling projects is a v2 candidate, deferred because a hard-coded map covers the current use case and automation without a felt pain is scope creep.
+- **First-half-of-session discipline** applied again: R8 refresh first (slug underscore correction), skill implementation second. Granular commits inside the feat branch: one per skill file + plugin.json bump + CHANGELOG, squashed at merge time.
+- **No example pépite pre-seeded**. The illustrative DuckDB+VSS example in `pepite-format.md` is explicitly marked as non-real. The first real pépite will be detected during normal research operations in v0.7.0+ sessions — live dogfood, not synthetic.
+- **Every new file carries the `SPDX-License-Identifier: MIT` header** per R10.
+- **`phase-minus-one`, `phase-5-5-auth-preflight`, `journal-system`, `session-post-processor`** all untouched. All stable.
+
+### Self-rating — v0.7.0
+
+| Axis | Rating | Notes |
+|---|---|---|
+| Pain-driven coverage | 9/10 | Every file maps to a spec section or a detection/consent concern. The cross-project consent floor directly addresses the "never auto-propagate" rule from Layer 0. The trigger criteria calibration reflects the anti-over-flagging and anti-under-flagging pains that only become concrete after the skill ships and gets used. The R8 slug rule fix closes the gap left at v0.6 shipping time. Zero speculative features. |
+| Prose cleanliness | 8/10 | Six files, ~936 lines. Each file has a clear job and minimal overlap. The spec mirror means some content is deliberately duplicated from `v1_pepite_discovery_flagging.md` — this is intentional because the skill must be legible without clicking through to the spec. Tables used throughout for criteria, transitions, verification checks. The hard-coded machine map in `cross-project-routing.md` is prose-ugly but v1-honest; a prettier auto-discovery surface is explicitly v2. |
+| Best-at-date alignment | 9/10 | Criteria 3 ("emerging tech") and Criteria 6 ("highest potential") directly operationalise the Layer 0 `best-practice-at-date default` rule. The cross-project routing is the first operational component of Meta-Memory Layer 3 — stepping stone to Path B per the Layer 0 Meta-Memory architecture. Pointer file format uses current `type: reference` convention consistent with the rest of the Genesis memory stack. |
+| Self-contained | 9/10 | Pure Markdown + YAML. Zero runtime dependencies. No Python, no pip, no external binaries. Install step touches only `memory/pepites/` inside the target project. Cross-project pointers are additive auto-memory writes that never touch another project's git state — the only cross-project effect is a file appearing in `~/.claude/projects/<target>/memory/`, which is per-machine state. |
+| Anti-Frankenstein | 9/10 | Deferred explicitly: slash commands (v2), auto-propagation without per-target consent (v2), TTL auto-archive (v2), cross-pépite synthesis (v2), pépite ranking (v2 if ever), multi-machine propagation (v2), Python runtime (not needed). The skill's surface is exactly six files mirroring a frozen spec, no more. Pre-seeded example marked as non-real to prevent false provenance. Manual force-flag path exists but the primary mode is auto-detection because that's where the pain is. |
+| **Average** | **8.8/10** | Clears the 8.0/10 floor by 0.8. Ties with v0.4.0 (journal-system, also 8.8/10) as the highest single-version rating in the project's history. Above v0.6.0 (8.6/10) because the 1:1 spec mirror discipline is a cleaner rating surface than first-runnable-code, and because the R8 slug rule correction is a side-fix that would normally be carried as debt — closing it in the same release removes a latent drag. Running average v0.2 → v0.7 = **(7.6 + 8.2 + 8.8 + 8.4 + 8.6 + 8.8) / 6 = 8.40/10**, still on track for v1 target 8.5/10. The last milestone (`genesis-protocol`) needs to land at ≥ 9.1 to reach the target — achievable but tight, the orchestrator's rating ceiling depends heavily on how cleanly it composes the five shipped skills. |
+
+### Known gaps for v0.8.0
+
+- **`genesis-protocol` orchestrator skill** — the last remaining stub. Composes all five shipped skills (`phase-minus-one`, `phase-5-5-auth-preflight`, `journal-system`, `session-post-processor`, `pepite-flagging`) into the 7-phase protocol from the master vision. This is the v1 ship target.
+- **Dogfood run 3 for `session-post-processor`** — still pending. Needs either a future Genesis session (post-v0.7 maintenance) or the first Aurum session after the freeze lifts. Hook wiring stays deferred until run 3 lands CLEAN.
+- **Multi-slug YELLOW warning in `run.py`** — v0.5 gap, still deferred. No multi-slug collision exists on this machine to test against.
+- **Test vector harness for redaction patterns** — v0.5 gap. Small `tests/redaction_vectors.py` is a v0.8+ candidate.
+- **Allow-list for `generic_long_base64` false positives** — v0.6 gap. Short list of safe path prefixes.
+- **First real pépite detection** — no pépites flagged in this session because the session is implementation work, not research. The first real flag happens in a v0.7+ research session.
+
+### Next version target
+
+**v0.8.0 — `genesis-protocol` orchestrator** (the last remaining stub, likely v1.0.0 if it lands high). Target rating: **8.5/10 floor** because the v1 ship is close and the orchestrator's rating sets the v1 average. An alternative is a small maintenance version (hook wiring for session-post-processor, test vector harness, allow-list) if the user wants to reduce technical debt before the ship, but the anti-Frankenstein discipline says ship first and polish after — the orchestrator is the critical path to v1.
+
+---
+
 ## [0.6.0] — 2026-04-15 — "Session post-processor run.py executable"
 
 ### Added
