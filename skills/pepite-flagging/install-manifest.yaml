@@ -1,0 +1,150 @@
+# SPDX-License-Identifier: MIT
+# pepite-flagging / install-manifest.yaml
+#
+# Creates memory/pepites/ and ensures INDEX.md exists in the target project.
+# The INDEX.md in Project Genesis is already seeded during the bootstrap (it
+# contains the red-light criteria, states, surfacing protocol, and cross-
+# project propagation summary). The install step is a no-op on Genesis itself,
+# but creates the directory and seeds the INDEX on downstream projects that
+# install this skill.
+#
+# Idempotent: running this step on a project that already has a pepites/
+# directory is a no-op except for updating the INDEX stub if sections are
+# missing. Never overwrites existing pépite entries.
+
+skill: pepite-flagging
+version: 0.7.0
+created_at: 2026-04-15
+
+dependencies:
+  runtime:
+    - name: none
+      rationale: |
+        Pure Markdown + YAML skill. No Python runtime required. Detection
+        and flagging happen inside Claude's own research operations; file
+        writes use the built-in Write tool. No pip installs, no shell
+        scripts, no external binaries.
+
+targets:
+  - path: memory/pepites/
+    kind: directory
+    idempotent: true
+    description: |
+      Root directory for pépite entries. Created if missing, left
+      untouched if it already exists. Never deletes or overwrites existing
+      pépite files.
+
+  - path: memory/pepites/INDEX.md
+    kind: file
+    idempotent: true
+    create_if_missing_only: true
+    description: |
+      Starter INDEX file with the red-light criteria, entry states, and
+      surfacing protocol baked in. If INDEX.md already exists (which it
+      does in Project Genesis itself, seeded during bootstrap), leave it
+      alone — do NOT rewrite or reformat user-authored index content.
+    template: |
+      <!-- SPDX-License-Identifier: MIT -->
+
+      # Pépites INDEX
+
+      Chronological index of pépite entries (7th memory type per
+      `.claude/docs/superpowers/specs/v1_pepite_discovery_flagging.md` if
+      this project was bootstrapped by Genesis; otherwise, per the
+      pépite-flagging skill's `SKILL.md`). One-liner per entry, newest
+      first. Each entry has routing metadata for cross-project propagation.
+
+      *(No entries yet — pépites are flagged automatically during research
+      when "two or more" red-light criteria are met, then surfaced to the
+      user at the next natural boundary for extraction / keep / propagate
+      / dismiss.)*
+
+      ## Red-light trigger criteria (short form)
+
+      A finding is flagged as a pépite when **at least two** of the
+      following are true:
+
+      1. Contradicts a previous assumption or past research cache entry
+      2. Has asymmetric leverage — one-time setup unlocks ongoing compound value
+      3. Emerging tech / early-adopter stage with strong cross-source signal
+      4. Cross-cuts projects — solves a known open question in a different project
+      5. Saves ≥ 5 minutes per recurring use case OR eliminates a recurring pain
+      6. "Most-potential" framing in best-practice-at-date analysis
+
+      If only one criterion is met, the finding goes into the normal R8
+      research cache — not flagged as a pépite.
+
+      ## Entry states
+
+      - `seed` — just flagged, not yet reviewed by user
+      - `extracted` — user said "extract" and content has been pulled into a spec or plan
+      - `actioned` — extraction has resulted in concrete work (PR, skill, commit)
+      - `archived` — kept for reference but no longer active
+      - `dismissed` — user said "dismiss" — not every detected pépite warrants work
+
+      ## Surfacing protocol
+
+      When a red light is raised during research, Claude:
+
+      1. Creates the entry silently with `status: seed`
+      2. At the next natural conversation boundary, surfaces a short 🔴 Pépite card
+      3. User responds with one of (a) extract (b) seed (c) propagate (d) dismiss
+      4. Claude updates the entry's status and takes the requested action
+
+      ## Cross-project propagation
+
+      Propagation to other projects requires **explicit user yes per
+      invocation, per target project**. When approved, Claude writes
+      pointer files into the target projects' auto-memory with a
+      canonical-location reference. Zero duplication.
+
+      See `skills/pepite-flagging/cross-project-routing.md` for the full
+      routing protocol.
+
+      ## Entries
+
+      *(none yet)*
+
+verification:
+  - check: directory_exists
+    path: memory/pepites/
+    on_fail: |
+      memory/pepites/ was not created. Check filesystem permissions and
+      re-run the install step. Without this directory the skill cannot
+      write pépite entries.
+
+  - check: file_exists
+    path: memory/pepites/INDEX.md
+    on_fail: |
+      memory/pepites/INDEX.md is missing. Re-run the install step or
+      create the INDEX from the template above. The skill will still
+      detect pépites but cannot maintain a browsable view.
+
+  - check: file_contains
+    path: memory/pepites/INDEX.md
+    pattern: "Red-light trigger criteria"
+    on_fail: |
+      memory/pepites/INDEX.md exists but does not look like a pépites
+      index — missing the trigger criteria section. Do NOT overwrite —
+      the user may have customised it. Ask the user whether to migrate
+      to the standard template or keep the custom layout.
+
+notes: |
+  This install step does NOT:
+    - Register any research-operation hook (detection happens inline in
+      Claude's turn, not via external hooks)
+    - Modify settings.json
+    - Touch memory/MEMORY.md (that is maintained by the bootstrap, not the skill)
+    - Install Python packages or any external binaries
+    - Pre-seed example pépites
+
+  The install step is safe to re-run. All idempotency checks use
+  create_if_missing_only or existence probes that short-circuit on
+  already-present state.
+
+  In Project Genesis itself, the INDEX.md is already seeded during the v1
+  bootstrap with content that matches the template above (plus possibly
+  small edits made during later sessions). The install check "file_contains"
+  looks for the "Red-light trigger criteria" section header rather than an
+  exact match, so hand-edited INDEX files pass as long as that section
+  exists.
