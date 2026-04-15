@@ -1,0 +1,117 @@
+# SPDX-License-Identifier: MIT
+# session-post-processor / install-manifest.yaml
+#
+# Creates memory/project/sessions/ and seeds INDEX.md in the target project.
+# Declares the Python 3.10+ runtime requirement and checks for availability.
+#
+# Idempotent: running this step on a project that already has a sessions/
+# directory is a no-op except for updating the INDEX stub if sections are
+# missing. Never overwrites existing archive files.
+
+skill: session-post-processor
+version: 0.5.0
+created_at: 2026-04-15
+
+dependencies:
+  runtime:
+    - name: python
+      minimum_version: 3.10
+      rationale: |
+        The parser / redactor / emitter pipeline uses only the Python
+        standard library (json, re, os, pathlib, datetime). 3.10+ is
+        required for `match/case` statement support in the record-type
+        classifier and for improved error messages. No pip install needed.
+      probe: |
+        python --version 2>&1 | grep -E 'Python 3\.(1[0-9]|[2-9][0-9])'
+      on_fail: |
+        Python 3.10+ not found. Install via the Phase -1 skill or the OS
+        package manager. The session-post-processor cannot operate without
+        a Python runtime.
+
+targets:
+  - path: memory/project/sessions/
+    kind: directory
+    idempotent: true
+    description: |
+      Root directory for session archive files. Created if missing, left
+      untouched if it already exists. Never deletes or overwrites existing
+      archives.
+
+  - path: memory/project/sessions/INDEX.md
+    kind: file
+    idempotent: true
+    create_if_missing_only: true
+    description: |
+      Starter INDEX file with a single "Archives" section. If INDEX.md
+      already exists, leave it alone — do NOT rewrite or reformat
+      user-authored index content.
+    template: |
+      <!-- SPDX-License-Identifier: MIT -->
+
+      # Session Archives INDEX
+
+      Machine-readable session archives produced by the
+      `session-post-processor` skill. Each archive is a Markdown summary of
+      a Claude Code session with secrets redacted and a halt-on-leak
+      verification gate.
+
+      See `skills/session-post-processor/SKILL.md` for the trigger phrases
+      and flow.
+
+      ## Archives
+      *(none — run the skill to produce the first archive)*
+
+verification:
+  - check: python_available
+    probe: python --version
+    expects_regex: 'Python 3\.(1[0-9]|[2-9][0-9])'
+    on_fail: |
+      Python 3.10+ is required. Install via Phase -1 or OS package manager.
+
+  - check: directory_exists
+    path: memory/project/sessions/
+    on_fail: |
+      memory/project/sessions/ was not created. Check filesystem permissions
+      and re-run the install step. Without this directory the skill cannot
+      write archives.
+
+  - check: file_exists
+    path: memory/project/sessions/INDEX.md
+    on_fail: |
+      memory/project/sessions/INDEX.md is missing. Re-run the install step
+      or create the INDEX from the template above. The skill will still
+      archive individual sessions but cannot maintain a browsable view.
+
+  - check: file_contains
+    path: memory/project/sessions/INDEX.md
+    pattern: "# Session Archives INDEX"
+    on_fail: |
+      memory/project/sessions/INDEX.md exists but does not look like a
+      session archive index. Do NOT overwrite it — the user may have
+      customised it. Ask the user whether to migrate the existing content
+      or leave the custom INDEX in place.
+
+  - check: source_jsonl_reachable
+    probe: |
+      ls ~/.claude/projects/*/*.jsonl 2>/dev/null | head -1
+    on_fail: |
+      No JSONL transcripts found under ~/.claude/projects/*/. Either this
+      machine has never run a Claude Code session, or the path layout has
+      drifted. If the latter, refresh the claude-code-session-jsonl-format
+      research entry before the skill can operate.
+
+notes: |
+  This install step does NOT:
+    - Register any SessionEnd hook
+    - Modify settings.json
+    - Touch memory/MEMORY.md
+    - Install any Python packages via pip (stdlib only)
+    - Create archives retroactively for past sessions
+
+  Hook wiring is a v0.6+ candidate after three successful manual dogfood
+  runs (see SKILL.md "Manual testing for v0.5.0 before any hook wiring"
+  section). Retroactive processing of past sessions is deferred.
+
+  The install step is safe to re-run. All idempotency checks use
+  create_if_missing_only or existence probes that short-circuit on
+  already-present state.
