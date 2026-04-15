@@ -1,0 +1,90 @@
+# SPDX-License-Identifier: MIT
+# journal-system / install-manifest.yaml
+#
+# Creates the memory/journal/ directory and seeds INDEX.md in the target project.
+# Idempotent: running this step on a project that already has a journal/ directory
+# is a no-op except for updating the INDEX stub if it was missing sections.
+#
+# This skill has no external dependencies. It does not install packages, does not
+# create files outside memory/journal/, and does not touch any existing journal
+# entries. Safe to re-run at any time.
+
+skill: journal-system
+version: 0.4.0
+created_at: 2026-04-15
+
+targets:
+  - path: memory/journal/
+    kind: directory
+    idempotent: true
+    description: |
+      Root directory for journal entries. Created if missing, left untouched if
+      it already exists. Never deletes or overwrites existing entries.
+
+  - path: memory/journal/INDEX.md
+    kind: file
+    idempotent: true
+    create_if_missing_only: true
+    description: |
+      Starter INDEX file with the five state sections (Growing, Seed, Captured,
+      Dormant, Resolved) empty. If INDEX.md already exists, leave it alone — do
+      NOT rewrite or reformat user-authored index content.
+    template: |
+      <!-- SPDX-License-Identifier: MIT -->
+
+      # Journal INDEX
+
+      Stratified thought capture per the Layer 0 journal system spec
+      (`~/.claude/CLAUDE.md` → "Journal System — Universal Thought Capture").
+
+      Entries are **not auto-loaded** at session open — they are read intentionally.
+      Browse by state below, or `grep` across the directory for keywords.
+
+      ## Growing
+      *(none)*
+
+      ## Seed
+      *(none)*
+
+      ## Captured
+      *(none)*
+
+      ## Dormant
+      *(none)*
+
+      ## Resolved
+      *(none)*
+
+verification:
+  - check: directory_exists
+    path: memory/journal/
+    on_fail: |
+      The `memory/journal/` directory was not created. Check filesystem permissions
+      and re-run the install step. If the failure persists, the journal-system skill
+      cannot operate in this project until the directory is available.
+
+  - check: file_exists
+    path: memory/journal/INDEX.md
+    on_fail: |
+      `memory/journal/INDEX.md` is missing. The skill will still work on individual
+      entries but cannot maintain a browsable state view. Re-run the install step or
+      create the INDEX manually from the template above.
+
+  - check: file_contains
+    path: memory/journal/INDEX.md
+    pattern: "# Journal INDEX"
+    on_fail: |
+      `memory/journal/INDEX.md` exists but does not look like a journal index. Do
+      NOT overwrite it — the user may have customised it. Ask the user whether to
+      migrate the existing content or leave the custom INDEX in place.
+
+notes: |
+  The install step does not register any hooks, does not modify settings.json, and
+  does not touch memory/MEMORY.md. Wiring the journal INDEX into MEMORY.md is a
+  separate concern handled by the host project's memory conventions — in Project
+  Genesis itself, MEMORY.md already has a "Journal" pointer line added at bootstrap.
+
+  Auto-memory fallback (when the session is pre-worktree / pre-repo): the skill
+  writes to `~/.claude/projects/<slug>/memory/journal_*.md` instead, then migrates
+  into `memory/journal/` at the next worktree opportunity. This fallback is a
+  runtime behaviour of the skill, not an install target — no pre-created files.
