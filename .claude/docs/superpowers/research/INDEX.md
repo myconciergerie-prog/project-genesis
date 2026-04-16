@@ -16,6 +16,9 @@ Auto-maintained index of R8 research cache entries. Every entry has a TTL and mo
 | [claude-in-ide-tools](sota/claude-in-ide-tools_2026-04-15.md) | sota | 2026-04-15 | 2026-04-22 | high | VS Code extension IS an MCP server (`ide`); Google Antigravity runs Claude Sonnet 4.6/Opus 4.6 natively alongside Gemini 3.1 Pro, free for individuals, agent-first Manager Surface; one-liner Claude Code install `irm https://claude.ai/install.ps1 \| iex` on Windows |
 | [claude-ecosystem-cross-os](sota/claude-ecosystem-cross-os_2026-04-15.md) | sota | 2026-04-15 | 2026-04-22 | high | Per-OS capability matrix (Windows/macOS/Linux/iOS/Android); Claude Code Remote Control since Oct 2025; 280 verified MCP connectors; Android Termux local Claude Code; GitHub Codespaces cloud pattern; 7 wow combos identified |
 
+| [zero-friction-bootstrap-ux](sota/zero-friction-bootstrap-ux_2026-04-16.md) | sota | 2026-04-16 | 2026-04-23 | high | v0/Bolt/Replit "one prompt" pattern, @clack/prompts wizard skeleton, Charm Gum, conversational form data (72% higher completion), progressive disclosure, cli-spinners + terminal delight |
+| [gh-cli-single-click-auth](sota/gh-cli-single-click-auth_2026-04-16.md) | sota | 2026-04-16 | 2026-04-23 | high | 4-line auth revolution: `GH_BROWSER` for profile routing, `gh auth login --web` for OAuth, `gh auth setup-git` for HTTPS, `gh repo create --source=. --push` — 6 manual steps → 1 click |
+
 ## Archive
 
 - [claude-code-session-jsonl-format_2026-04-14.md](archive/claude-code-session-jsonl-format_2026-04-14.md) — superseded by the 2026-04-15 on-disk-verified entry
