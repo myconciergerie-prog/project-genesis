@@ -6,6 +6,7 @@
 **Reached**: Phase 3 Step 3.4 (SSH key registration to GitHub)
 **Stopped by**: auth wall — 0 of 6 manual browser steps could be automated
 **Primary deliverable**: this log + VISION_v2.md (Promptor fusion)
+**Updated**: 2026-04-16 — F18 + F19 added from atelier-playmobil-james-west bootstrap (first external project using Genesis as a plugin)
 
 ---
 
@@ -144,9 +145,29 @@
 
 | Severity | Count | Examples |
 |---|---|---|
-| STRUCTURAL | 5 | F9, F10, F11, F14, F17 — the auth wall |
-| DESIGN | 8 | F1, F2, F5, F6, F7, F8, F12, F16 — protocol says X, reality is Y |
+| STRUCTURAL | 6 | F9, F10, F11, F14, F17 — the auth wall; **F18 — plugin install doesn't exist** |
+| DESIGN | 9 | F1, F2, F5, F6, F7, F8, F12, F16, **F19 — config.txt undocumented** |
 | COSMETIC | 4 | F3, F4, F13, F15 — awkward but not blocking |
+
+### F18 — `/plugin install` doesn't exist in Claude Code [STRUCTURAL]
+
+**Phase**: pre-protocol (installation)
+**What**: Genesis ships `.claude-plugin/marketplace.json` and `.claude-plugin/plugin.json` documenting a `/plugin install project-genesis@myconciergerie-prog/project-genesis` flow. This command does not exist in Claude Code. The user typing `/plugin install` gets "Unknown command."
+**Root cause**: The marketplace.json schema and plugin.json were written speculatively — the plugin install mechanism was assumed to exist (or expected to be built) but was never verified against the actual Claude Code CLI. Claude Code has `--plugin-dir <path>` (CLI flag, requires session restart) and `~/.claude/skills/` (personal scope, live-detected), but no runtime `/plugin install` command.
+**Discovered**: 2026-04-16, atelier-playmobil-james-west bootstrap — user typed `/genesis-protocol` → "Unknown command", then `/plugin install project-genesis@myconciergerie-prog/project-genesis` → also unknown.
+**Workaround applied**: manual `cp -r` of all 6 skills from `project-genesis/skills/` to `~/.claude/skills/`. Skills then appeared in the session's skill list without restart.
+**Fix v1.1**: (a) Document the real installation paths in README: `cp -r` to `~/.claude/skills/` OR `claude --plugin-dir /path/to/project-genesis`. (b) Remove or clearly label `marketplace.json` as aspirational/future. (c) Add an `install.sh` one-liner script at repo root that copies skills to `~/.claude/skills/`.
+**Fix v2**: If Claude Code ever adds a plugin install mechanism, wire it up properly. Until then, don't document nonexistent commands.
+
+### F19 — config.txt format is undocumented outside the orchestrator internals [DESIGN]
+
+**Phase**: pre-protocol (seed preparation)
+**What**: Users creating a project don't know what `config.txt` should contain. The format is documented only inside `phase-0-seed-loading.md` (a Genesis internal runbook), not in README or any user-facing doc. The user's natural seed file (a project brief in `.txt`) was already valid but the user didn't know it.
+**Root cause**: Phase 0 is designed to handle free-form input gracefully (fill gaps interactively), but this is invisible to users who haven't read the internal runbooks.
+**Discovered**: 2026-04-16, atelier-playmobil-james-west bootstrap — user had a `.txt` brief and asked "what is the Genesis config.txt format?"
+**Fix v1.1**: Add a "Quick start" section to README showing a minimal `config.txt` example and explaining it's free-form with expected fields (name, vision, stack, license).
+
+---
 
 ## The meta-finding
 
