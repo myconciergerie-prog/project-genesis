@@ -34,6 +34,8 @@ outer="$(git -C "<target>" rev-parse --show-toplevel 2>/dev/null)"
 target_abs="$(cd "<target>" && pwd)"
 ```
 
+**Path normalization note**: on git-bash for Windows, `git rev-parse --show-toplevel` returns Windows-style `C:/Dev/...` while POSIX `pwd` returns `/c/Dev/...`. Before comparing the two strings below, the orchestrator must normalize both sides to the **same** representation. Two simple options: (a) use `cd "<target>" && pwd -W` on MSYS/git-bash (yields Windows-style) for `target_abs`; (b) use `git -C "<target>" rev-parse --show-toplevel` for both sides when a `.git/` already exists (on the "target is its own repo" branch, `git rev-parse` in the target returns the same format as `outer`). On POSIX (macOS, Linux) the formats already match and no adjustment is needed. A failed normalization would mis-dispatch case B (resume-own-root) as case C (nested), producing a false halt.
+
 Three-way dispatch:
 
 | `outer` | Interpretation | Action |
