@@ -1,0 +1,86 @@
+# config.txt — Genesis describing Genesis (v1.2.0 self-dogfood seed)
+#
+# This seed is deliberately Genesis-about-Genesis. Running genesis-protocol
+# on this file is the strange loop: the tool defines itself as its own input.
+# Every friction surfaced here is load-bearing — capture it, do not fix live.
+
+name: project-genesis
+slug: project-genesis
+
+vision: |
+  A Claude Code plugin that transforms a folder containing a config.txt seed
+  (plus optional mixed media — briefs, PDFs, images, transcripts, URLs) into
+  a fully bootstrapped project: rules, memory architecture, research cache,
+  git repo, and resume prompts. Orchestrated by Claude Code itself via a
+  7-phase protocol. Minimizes user friction to the security floor of
+  unavoidable manual interventions.
+
+  v1 shipped. v1.2 is about hardening through self-dogfood before v2.
+  v2 target: Promptor fusion — replace config.txt with a drag-and-drop box
+  where the user drops any document and Claude extracts a structured brief,
+  then formalizes through at-most-3 conversational questions. One-click auth.
+  Boomer-friendly. "Dis-moi ton idée, je m'occupe du reste."
+
+  Target user for v2: Victor, 77 years old, has a magnificent idea, no
+  technical vocabulary, hears a soft chime when his project is born on
+  GitHub.
+
+stack:
+  - distribution: Claude Code plugin (.claude-plugin/plugin.json + skills/)
+  - license: MIT with SPDX short-form headers on every source file
+  - language: Python / Bash / Markdown — whichever is simplest per skill
+  - version_mgmt: semver + git tag v<semver> + CHANGELOG entry with 5-axis self-rating
+  - memory: 7 types (user / feedback / project / reference / themes / journal / pepites)
+  - research_cache: R8 TTL (sota 7d / stack 1d / archive forensic)
+  - worktree: R2.1 — every session in .claude/worktrees/<type>_YYYY-MM-DD_<theme>/
+  - ssh_identity: per-project ed25519 key + github.com-<project> alias
+  - multidevice: Claude Code Remote Control (Max) / Codespaces (Pro)
+  - ide: VS Code + Claude Code extension (doubles as local ide MCP server)
+
+license: MIT
+
+is_plugin: true
+
+plan_tier: Max
+
+audience: |
+  Engineers who want a reproducible project bootstrap with discipline.
+  v2 audience expands to anyone who can describe an idea.
+
+constraints:
+  - must_not_break_aurum_frozen_scope_lock: true
+  - additive_auth_only: true
+  - no_new_windows: true
+  - r9_language_policy: |
+      Dev/tooling artefacts in English only.
+      User-facing runtime content bilingual FR + EN from day 1.
+  - anti_frankenstein_target: sub-10/10 on 5-axis self-rating rubric
+  - target_self_rating_v1_2_0: 8.6/10
+
+known_rough_edges:
+  # Anti-Frankenstein discipline requires declaring known limits upfront.
+  # These are inputs to the friction log, not apologies.
+  - F1..F19 already logged in memory/project/selfdogfood_friction_log_2026-04-16.md
+  - plugin_install_does_not_exist: F18 STRUCTURAL — /plugin install is not a real command
+  - config_txt_undocumented_to_users: F19 DESIGN — no user-facing doc of this file format
+  - auth_wall_absorbed_in_v1_1: gh auth login --web + setup-git is the one-click path
+  - strange_loop_paradox: |
+      Running genesis-protocol FROM the project-genesis repo ON a folder named
+      project-genesis is the paradox v1.1 hit. v1.2 runs it consciously in a
+      worktree subfolder (selfdogfood-target/) to isolate the target from the
+      orchestrator. The paradox is not resolved — it is contained.
+
+expected_frictions_to_validate:
+  # Things v1.2.0 should specifically check
+  - is Phase -1 skip-check aligned with host stack now that F1 was logged?
+  - does Phase 0 seed loading handle this YAML-ish .txt gracefully?
+  - does Phase 3 auth path (gh auth login --web) work without paste-back?
+  - does the orchestrator detect the target-is-itself paradox and gate?
+  - does the mode=auto propagate past Phase -1 into Phases 0-7? (F2 original)
+  - are the 6 skills actually invocable from the worktree's target folder?
+
+next_target_after_v1_2:
+  v2_vision: |
+    See specs/v2_vision_promptor_fusion.md + research/sota/v2_promptor_fusion_landscape_2026-04-17.md.
+    The drop zone (Étape 0 — Le Dépôt) is the new front door.
+    The 7-phase engine is unchanged. The surface is transcendent.

@@ -1,14 +1,102 @@
 # Genesis v2 — Dis-moi ton idee. Je m'occupe du reste.
 
+> **Amendment 2026-04-17** (v1.2.0 self-dogfood session): the "Promptor 4-part structure"
+> referenced throughout this spec is **Genesis-native**, inspired by the French-community
+> Mr Promptor / FlowGPT Promptor GPT Store prompts. The academic Promptor paper
+> (Zhu et al., arXiv 2310.08101, Oct 2023) does not describe a 4-part structure in its
+> public abstract. Do not cite "Promptor's published structure" as external canon — credit
+> Genesis for the synthesis. Source: research agent #3 in
+> `research/sota/v2_promptor_fusion_landscape_2026-04-17.md`.
+
 ## The insight
 
 Genesis v1 is an engineer's protocol that speaks to engineers.
-Promptor is a conversational interface that speaks to humans.
+The Promptor-inspired conversational layer speaks to humans.
 v0.app, Bolt.new, and Replit proved that "one prompt → running project" is the
 gold standard: 2 steps (sign up + describe), zero plumbing visible.
+**2026 update**: vibe-design tools replaced the old "pick a file type" upload
+dialog with a **unified intent box** where prompt + files + URLs land together
+(verified across v0 / Bolt / Lovable / Perplexity / Notion AI).
 
-Genesis v2 = a Promptor that creates projects instead of prompts,
-powered by the same 7-phase engine, with a v0/Bolt-grade surface.
+Genesis v2 = a Genesis-native conversational layer that creates projects instead of prompts,
+powered by the same 7-phase engine, with a v0/Bolt-grade surface **and a drop zone front door**.
+
+---
+
+## Étape 0 — Le Dépôt (NEW, v1.2.0 addition)
+
+Before the Étincelle (Étape 1), Genesis v2 presents a unified drop zone — the new front door.
+
+```
+┌────────────────────────────────────────────────────────────┐
+│                                                            │
+│     Depose ici ton idee.                                   │
+│                                                            │
+│     Un texte, un PDF, une photo, un lien, un audio —       │
+│     tout est bienvenu. Tu peux aussi juste ecrire.         │
+│                                                            │
+│     (Parcourir les fichiers)                               │
+│                                                            │
+│     Tes fichiers restent avec toi pendant cette session.   │
+│                                                            │
+└────────────────────────────────────────────────────────────┘
+```
+
+**UX canon (verified 2026-04-17 research)**:
+- **Intent-first unified box**: prompt, files, URLs land together (v0 / Bolt / Lovable pattern).
+- **Dual path always**: drop AND visible "Browse files" button — "some users won't drag, others won't click" (Filestack canonical rule).
+- **Micro-interactions for Victor**: drop zone 1.02× on hover, dotted → solid border; elevation signalling (shadow on grab, Trello-style); magnetic snap 100 ms; center-out reshuffling.
+- **Accept anything**: PDF, DOCX, PPTX, XLSX, HTML, images, audio, URLs, Figma / Notion links — IBM Docling set the 2026 bar, users never pick a parser.
+- **Privacy in relationship language, not compliance**: "Tes fichiers restent avec toi pendant cette session" — MIT Tech Review 2026-04 pattern, not "processed locally".
+- **Error messages without codes**: "Le fichier est trop gros. Max 2 Mo — essaie une image plus petite" — never "Upload failed: E_TOOLARGE".
+
+### Token-streamed acknowledgement (anti-freeze)
+
+Between drop and structured extraction, surface what Claude is seeing live — NOT a spinner:
+
+```
+ ◐ Je regarde ce que tu m'as donne...
+   . un brief "boulangerie a Lyon" (PDF, 3 pages)
+   . une photo de l'enseigne actuelle
+   . une note de budget manuscrite (3000 euros / mois)
+ ✓ J'ai tout lu.
+```
+
+Pattern from Ably AI UX research: decouple long tasks from the UI connection (SSE / resume-tokens), progressive data loading where loading state *transforms into* the final result.
+
+### The Claude API plumbing (invisible to Victor)
+
+- **Files API** (`anthropic-beta: files-api-2025-04-14`) — upload each dropped file once, reference via `file_id` in document / image content blocks.
+- **PDF** — URL / base64 / file_id; 32 MB & 600 pages per request; each page seen as BOTH text AND image so charts / tables / handwriting pass through.
+- **Vision** for images and handwritten scans — native to every Claude 3+ model.
+- **Order**: `document` blocks BEFORE the text prompt. Nest multiple docs with `title` + `context` metadata on each.
+
+### Extraction choice — Citations (Path A) vs Structured Outputs (Path B)
+
+⚠️ **Load-bearing incompatibility**: Structured Outputs and Citations are **mutually exclusive** — API returns 400 if both are set. v2.0 picks one.
+
+**v2.0 recommendation: Path A — Citations-audited.**
+
+Rationale: the "I see a brief for X, a photo, a budget note" live acknowledgement screen IS Promptor's whole point. Citations (`citations: {enabled: true}` per `document` block) gives us `cited_text` + `document_index` + location on every extracted fact. The mirror screen at Étape 2 can say "I saw 'boulangerie à Lyon' on page 1 of your brief" with traceability. Audit-trail by construction. Prompt-side JSON shape + light post-parse handle the structured fields.
+
+Schema-first Path B (`output_config.format` with Pydantic) is a v2.1 option if a strict engine consumer emerges (e.g. Genesis v3 auto-runs the protocol without user mirror confirmation).
+
+**Cache `ttl: "1h"` is MANDATORY.** Anthropic silently tightened the default from 1h → 5-min around March 2026. Explicit `ttl: "1h"` on the documents+system-prompt prefix, with `cache_control: {type: "ephemeral"}`. Break-even is ~10 follow-up queries against that cached prefix.
+
+### Multi-file cross-reference prompt pattern
+
+For 3+ dropped files, one prompt does extraction + contradiction detection in one pass:
+
+```
+Cross-reference the <brief>, <sketch>, and <transcript>.
+For each field in the target schema, prefer the source in priority
+order: transcript > brief > sketch.
+Flag any field where sources conflict in a `contradictions[]` array
+with {field, sources: [{document_index, value}], resolution,
+rationale}.
+```
+
+No second pass required.
 
 ## The Victor test
 
@@ -27,11 +115,20 @@ He never leaves the conversation. He hears a soft chime when it's done.
 Structural skeleton: @clack/prompts pattern
 (`intro → group → spinner/tasks → outro`), with Promptor's iteration loop.
 
-### Etape 1 — L'Etincelle
+### Etape 1 — L'Etincelle (revised 2026-04-17)
 
-Genesis greets warmly, then asks **at most 3 questions**.
+Genesis greets warmly, then asks **EVPI-selected questions, typically 0–3**.
+(Former "at most 3" fixed threshold — updated per research agent #3: arXiv
+2511.08798 + 2603.26233 confirmed fixed thresholds degrade performance 1–3
+points and ask 0.2–0.4 more questions than needed. Amazon Science: unnecessary
+clarification is the #1 complaint driver for voice agents. Target: "at most 3,
+often fewer, never padded".)
+
 Adaptive tone: if Victor writes casually, Genesis responds warmly with zero
-jargon. If a senior engineer writes technically, Genesis matches.
+jargon. If a senior engineer writes technically, Genesis matches. Pattern is
+**in-context style mirroring** via a one-line system-prompt directive — NOT
+a separate framework module (Latitude 2026, @clack/prompts confirmed not to
+do tone adaptation).
 
 ```
  Bienvenue dans Genesis.
