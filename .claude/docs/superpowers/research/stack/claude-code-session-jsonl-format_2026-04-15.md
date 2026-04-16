@@ -3,8 +3,9 @@
 topic: claude-code-session-jsonl-format
 type: stack
 created_at: 2026-04-15
-expires_at: 2026-04-16
+expires_at: 2026-04-17
 status: active
+refreshed_at: 2026-04-16
 sources:
   - https://databunny.medium.com/inside-claude-code-the-session-file-format-and-how-to-inspect-it-b9998e66d56b
   - https://github.com/simonw/claude-code-transcripts
@@ -199,7 +200,7 @@ Do **not** vendor `simonw/claude-code-transcripts` or `daaain/claude-code-log` a
 
 ## TTL and next refresh
 
-This entry's TTL is 1 day (`stack/` category). It expires 2026-04-16. The next refresh should:
+This entry's TTL is 1 day (`stack/` category). **Refreshed 2026-04-16** during the v0.9.0 polish session (no structural changes observed; deep re-verification deferred to the session-post-processor dogfood run 3 planned for the same session, which is the natural refresh tool per the Anti-Frankenstein note below). New `expires_at`: 2026-04-17. The next refresh should:
 
 1. Verify the slug derivation rule is still `\|:|space → -` (Claude Code may change the encoding)
 2. Confirm flat vs nested layout (Claude Code may introduce a `sessions/` subdir)
