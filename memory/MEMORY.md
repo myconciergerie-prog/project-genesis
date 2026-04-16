@@ -33,6 +33,8 @@ This project inherits all universal rules, user profile, hard rules, workflow pa
 - [Session v0.9.0 — 2026-04-16](project/session_v0_9_0_polish.md) — Path A polish: dry-run walkthrough (10 findings, 5 fixed), meta-memory visibility in `master.md`, README rewrite, dogfood run 3 GREEN. v0.9.0 tagged at **8.92/10**, **running average 8.54/10 — 0.04 above v1 target**. Ship gate cleared. v1.0.0 next
 - [Dry-run walkthrough — 2026-04-16](project/dryrun_walkthrough_2026-04-16.md) — paper trace of the genesis-protocol orchestrator against `C:\tmp\genesis-dryrun\` (10 findings, 5 med fixes landed in v0.9.0, 5 low deferred to v1.1)
 - [Aurum frozen scope lock](project/aurum_frozen_scope_lock.md) — hard rule that aurum-ai repo stays at `0b1de3d` until Genesis v1 ships; no aurum-ai commits / PRs / edits allowed in any Genesis session
+- [Session v1.1 selfdogfood — 2026-04-16](project/session_v1_1_selfdogfood.md) — first real genesis-protocol execution, hit auth wall at Phase 3.4, pivoted to analysis, produced v2 Promptor fusion vision (9.2/10)
+- [Self-dogfood friction log — 2026-04-16](project/selfdogfood_friction_log_2026-04-16.md) — 18 frictions (5 STRUCTURAL in auth), Victor test birth, Promptor fusion discovery, v2 vision trigger
 
 ## Reference
 
