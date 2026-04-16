@@ -8,6 +8,48 @@ Every version bump includes a **5-axis self-rating block** per R10.3 discipline,
 
 ---
 
+## [1.2.0] — 2026-04-17 — "The conscious strange loop — paradox surfaced"
+
+### Added
+
+- `memory/project/selfdogfood_friction_log_v1_2_0_2026-04-17.md` — **14 new frictions (F20–F34)** captured live during a conscious strange-loop self-dogfood: project-genesis running `genesis-protocol` on a worktree target whose `config.txt` describes Genesis itself. 5 STRUCTURAL, 7 DESIGN, 2 COSMETIC. Cumulative F1–F34.
+- `.claude/docs/superpowers/research/sota/v2_promptor_fusion_landscape_2026-04-17.md` — R8 SOTA entry consolidating 3 parallel research agents (drop-zone UX canon 2026, Claude API ingestion Path A/B, multi-file synthesis). TTL 2026-04-24. Seeds v2 Étape 0 design.
+
+### Changed
+
+- `specs/v2_vision_promptor_fusion.md` — **prepended Étape 0 "Le Dépôt"** (drop-zone front door): intent-first unified box, Claude Files API + Citations (Path A recommended), relationship-language privacy, token-streamed acknowledgement. Factual correction: the "Promptor 4-part structure" is credited as Genesis-native synthesis inspired by FR-community Mr Promptor / FlowGPT, **not** as a published pattern (academic Promptor arXiv 2310.08101 does not describe this structure).
+- `.claude-plugin/plugin.json` — version bumped from `1.1.0` to `1.2.0`.
+
+### Pépites (red-light, routed cross-project)
+
+1. **F29 — Genesis v1.1 plugin personal-scope install is broken today.** Every user who followed F18's `cp -r skills/ ~/.claude/skills/` hits a halt at Phase 1.3 — the three-levels-up rules-path heuristic resolves to `~/.claude/` which has no `.claude/docs/superpowers/rules/`. P0 fix in v1.2.1.
+2. **"Promptor 4-part structure" is Genesis-native.** Credit correctly in all external comms (v2 spec, blog, marketplace listing).
+
+### Meta-findings
+
+- The paradox is architectural, not user error. v1.1's "two sessions, two folders" fix is insufficient: the protocol has no self-defence against target-inside-orchestrator-repo (F23), slug-equals-orchestrator-slug (F27), nested `git init` (F30), or personal-scope rules-path resolution (F29). v1.2.1 must add defensive layers at Step 0 + Step 3.1.
+- `mode=auto` needs orchestrator-level semantics. The 3-mode ladder was Phase -1-only; every "consent gate in auto mode" friction (F2, F20, F22) shares this root.
+- The orchestrator is at the limits of pure-Markdown design (F32). Thin Python driver is the v1.3 path.
+
+### Notes
+
+- **v1.2.0 is a forensic release**, no code fixes. The friction log IS the deliverable. v1.2.1 applies the 3 P0 fixes (F29, F30, F23+F27) in a separate PR to preserve the diagnostic → treatment narrative.
+- Strange-loop target path (`selfdogfood-target/`) retained as forensic artefact on the branch.
+- Live execution halted mid-Phase 3 after F30 reproduced — nested `.git/` was cleaned up immediately.
+
+### Self-rating — v1.2.0
+
+| Axis | Rating | Notes |
+|---|---|---|
+| Pain-driven coverage | 9.2/10 | Every friction was experienced live, not predicted. The strange-loop target was chosen to stress-test the paradox — it succeeded. Two pépite-worthy findings produced. |
+| Prose cleanliness | 8.8/10 | Friction log is structured (15 entries × severity / phase / root cause / impact / fix), CHANGELOG is compact. v2 spec amendment is an additive Étape 0. |
+| Best-at-date alignment | 9.0/10 | R8 SOTA entry backed by 3 parallel 2026 research agents. Promptor attribution corrected from public sources. |
+| Self-contained | 7.5/10 | The forensic log is self-contained; the meta-findings reference R8 entries and Layer 0 files. The "3 P0 fixes" list pushes actionable work to v1.2.1 — correct separation, but the value of v1.2.0 alone is documentary. |
+| Anti-Frankenstein | 9.0/10 | Zero speculative code. Every pending fix is backed by a reproduced friction. Explicitly did NOT fix live. |
+| **Average** | **8.70/10** | Running average v0.2 → v1.2.0 = **8.57/10**. Above the 8.5 v1 target. |
+
+---
+
 ## [1.1.0] — 2026-04-16 — "The Victor test — auth wall demolished"
 
 ### Added
