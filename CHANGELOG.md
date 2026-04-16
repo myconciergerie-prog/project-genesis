@@ -8,6 +8,47 @@ Every version bump includes a **5-axis self-rating block** per R10.3 discipline,
 
 ---
 
+## [1.1.0] — 2026-04-16 — "The Victor test — auth wall demolished"
+
+### Added
+
+- `specs/v2_vision_promptor_fusion.md` — v2 vision born from self-dogfood: conversational bootstrap inspired by Promptor, backed by 5 parallel research agents (zero-friction UX, gh CLI auth, conversational onboarding, MCP tools, magical CLI)
+- `memory/project/selfdogfood_friction_log_2026-04-16.md` — 18 frictions (5 STRUCTURAL, 9 DESIGN, 4 COSMETIC) from first real genesis-protocol execution
+- `memory/project/session_v1_1_selfdogfood.md` — session memory
+- `research/sota/zero-friction-bootstrap-ux_2026-04-16.md` — v0/Bolt/Replit patterns, @clack/prompts, Charm Gum
+- `research/sota/gh-cli-single-click-auth_2026-04-16.md` — the 4-line auth revolution
+
+### Changed
+
+- **Phase 5.5 auth flow rewritten: 6 manual browser steps → 1 OAuth click + 2FA**
+  - `gh auth login --web` with device flow replaces fine-grained PAT creation
+  - `Start-Process chrome.exe -ArgumentList '--profile-directory=...'` for Chrome profile routing (GH_BROWSER env var proven unreliable)
+  - `gh ssh-key add` replaces browser paste-back for SSH key registration
+  - `gh repo create --private --source=. --remote=origin --push` replaces web UI repo creation
+  - HTTPS-first at bootstrap; per-project SSH identity remains for ongoing work
+- `.claude-plugin/plugin.json` — version bumped from `1.0.0` to `1.1.0`
+- `research/INDEX.md` — 2 new entries added
+
+### Notes
+
+- **Self-dogfood proven end-to-end**: `genesis-selfdogfood` repo created on GitHub (myconciergerie-prog/genesis-selfdogfood, private, v0.1.0 tagged) using the new auth path. 3-probe test GREEN/GREEN/GREEN.
+- **The Victor test**: new principle — every Genesis step must pass the "77-year-old non-developer" threshold. If a step requires understanding SSH/PAT/GitHub settings, it's a design failure, not a security floor.
+- **Browser paste-back retained as legacy fallback** for environments without `gh` CLI.
+- **v2 vision is a spec, not implementation** — conversational surface (Promptor fusion) is a future workstream. v1.1 delivers the auth fix only.
+
+### Self-rating — v1.1.0
+
+| Axis | Rating | Notes |
+|---|---|---|
+| Pain-driven coverage | 10/10 | Every change directly addresses a real friction found during actual execution. Zero speculative additions. The auth wall was hit, analyzed, and demolished. |
+| Prose cleanliness | 9/10 | Vision doc is clean. Friction log is structured. Research entries follow R8 format. |
+| Best-at-date alignment | 9.5/10 | 5 parallel research agents verified patterns against 2026 sources. gh CLI commands verified on this machine. |
+| Self-contained | 8.5/10 | Auth fix is self-contained. Vision doc references external research but is readable standalone. |
+| Anti-Frankenstein | 10/10 | Removed friction instead of adding features. Conversation surface deferred to v2. Only shipped what was proven. |
+| **Average** | **9.4/10** | New single-version high. Running average v0.2 → v1.1 = **8.67/10**. |
+
+---
+
 ## [1.0.0] — 2026-04-16 — "Ship — the strange loop closes"
 
 ### Added
