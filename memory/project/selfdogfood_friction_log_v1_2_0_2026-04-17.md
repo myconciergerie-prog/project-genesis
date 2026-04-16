@@ -138,6 +138,13 @@ seed: config.txt describing Genesis itself
 **Root cause**: Option A was the right v0.8 choice. But at v1.2, the orchestrator is at the limits of what Markdown-as-runbook can deliver.
 **Fix v1.3 or v2**: Introduce a lightweight Python driver (`genesis_protocol/driver.py`) that: (a) parses args with `argparse`, (b) loads the Phase X runbooks as templates, (c) tracks progress state in `.genesis/state.json`, (d) re-entrancy from the last completed phase. The Markdown runbooks remain the source of truth for prose; the driver is a thin executor. This is exactly the F5 fix path already flagged in v1.1 log.
 
+### F34 — `gh` active-account mismatch at PR create time [DESIGN]
+
+**Phase**: 6 (first PR open — surfaced at session wrap-up rather than protocol execution)
+**What**: Running `gh pr create --draft ...` against `myconciergerie-prog/project-genesis` returned `pull request create failed: GraphQL: must be a collaborator (createPullRequest)`. Cause: `gh auth status` showed active account was `myconciergerieavelizy-cloud` (unrelated project) while `myconciergerie-prog` was logged-in-but-inactive. `gh auth switch -h github.com -u myconciergerie-prog` resolved it, PR created successfully on retry.
+**Root cause**: Genesis assumes `gh auth status` implies the right account is active. On machines with multiple GitHub accounts (as per Layer 0's Chrome profile map + accounts-orgs-projects reference), this assumption breaks silently. Phase 6 of the protocol does not include a pre-flight "active account matches target owner" check.
+**Fix v1.2.1**: At Phase 6 Step 6.0 (pre-push / pre-PR), run `gh api user --jq .login` and compare against the `<owner>` resolved from `bootstrap_intent.md`. If mismatch, attempt `gh auth switch -u <owner>` automatically; if that fails, surface the mismatch with `gh auth status` output and halt until resolved.
+
 ### F33 — Research cache entry written in wrong repo scope [DESIGN]
 
 **Phase**: 2 (research cache init) — meta-observation, not a protocol defect
@@ -211,9 +218,9 @@ Two findings qualify as cross-project pépites per `specs/v1_pepite_discovery_fl
 | Severity | Count | IDs |
 |---|---|---|
 | STRUCTURAL | 5 | F20, F23, F27, F29, F30 |
-| DESIGN | 6 | F21, F22, F24, F25, F26, F32, F33 |
+| DESIGN | 7 | F21, F22, F24, F25, F26, F32, F33, F34 |
 | COSMETIC | 2 | F28, F31 |
-| **Total (v1.2.0)** | **13 new frictions (F20–F32 + F33)** | **cumulative F1–F33** |
+| **Total (v1.2.0)** | **14 new frictions (F20–F34)** | **cumulative F1–F34** |
 
 ## What v1.2.1 should fix (prioritized)
 
