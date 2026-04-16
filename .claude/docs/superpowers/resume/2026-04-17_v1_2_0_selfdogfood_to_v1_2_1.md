@@ -1,7 +1,7 @@
 <!-- SPDX-License-Identifier: MIT -->
 ---
 name: Resume prompt — 2026-04-17 v1.2.0 selfdogfood → v1.2.1 structural fixes
-description: Handoff from the second self-dogfood (conscious strange loop). 13 new frictions (F20–F33) captured, v2 spec amended with Étape 0 drop-zone + Promptor correction. v1.2.1 is the ship-fix cycle: close P0 structural issues before any further v2 work.
+description: Handoff from the second self-dogfood (conscious strange loop). 14 new frictions (F20–F34) captured, v2 spec amended with Étape 0 drop-zone + Promptor correction. v1.2.1 is the ship-fix cycle: close P0 structural issues before any further v2 work.
 type: resume
 previous_session: v1.2.0 selfdogfood (feat/v1.2.0-selfdogfood branch, PR #TBD)
 next_action: Land P0 fixes (F29 rules path + F30 nested-repo check + F23/F27 paradox guards) in a separate v1.2.1 session
@@ -12,7 +12,7 @@ next_action: Land P0 fixes (F29 rules path + F30 nested-repo check + F23/F27 par
 ## What v1.2.0-selfdogfood did
 
 - Closed the strange loop consciously (worktree target + config.txt describing Genesis).
-- Captured **13 new frictions F20–F33** live: 5 STRUCTURAL, 6 DESIGN, 2 COSMETIC.
+- Captured **14 new frictions F20–F34** live: 5 STRUCTURAL, 7 DESIGN, 2 COSMETIC.
 - Ran 3 research agents in parallel (drop-drop UX, doc extraction, conversational briefing) → consolidated SOTA entry at `research/sota/v2_promptor_fusion_landscape_2026-04-17.md` (TTL 2026-04-24).
 - Amended `specs/v2_vision_promptor_fusion.md` with a new **Étape 0 — Le Dépôt** and a factual correction ("Promptor 4-part structure" is Genesis-native, not a published pattern).
 - Self-rating v1.2.0-sd: **8.70/10**. Running average v0.1 → v1.2.0-sd: **8.51/10** (above 8.5 v1 target).
@@ -75,7 +75,7 @@ P2 polish:
 
 ## Phrase to paste at v1.2.1 open
 
-    Je reviens du selfdogfood v1.2.0. 13 frictions capturees (F20-F33).
+    Je reviens du selfdogfood v1.2.0. 14 frictions capturees (F20-F34).
     Pepites: F29 (plugin personal-scope install broken) + correction Promptor
     (Genesis-native, pas publie). Lis le friction log + session memory + research
     cache, puis on attaque v1.2.1 : P0 = F29 + F30 + F23/F27 paradox guards.
