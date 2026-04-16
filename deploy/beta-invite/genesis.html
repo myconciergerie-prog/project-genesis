@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Genesis v1.0.0 — Beta Priv&eacute;e</title>
+
+    <!-- Open Graph — WhatsApp / Facebook / LinkedIn preview -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Project Genesis — Beta Priv&eacute;e">
+    <meta property="og:description" content="Tu d&eacute;cris ton projet en quelques lignes, l'IA construit toute l'infrastructure. 7 phases, 6 comp&eacute;tences, 3 modes. Teste avant tout le monde.">
+    <meta property="og:url" content="https://www.myconciergerie.fr/genesis/">
+    <meta property="og:image" content="https://www.myconciergerie.fr/genesis/og-genesis.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="Project Genesis v1.0.0 — Beta Priv&eacute;e — Le bootstrap intelligent de projets par IA">
+    <meta property="og:locale" content="fr_FR">
+    <meta property="og:site_name" content="myconciergerie">
+
+    <!-- Twitter Card (aussi utilis&eacute; par d'autres apps) -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Project Genesis — Beta Priv&eacute;e">
+    <meta name="twitter:description" content="Tu d&eacute;cris ton projet, l'IA construit tout. 7 phases. 6 skills. Teste avant tout le monde.">
+    <meta name="twitter:image" content="https://www.myconciergerie.fr/genesis/og-genesis.png">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="noeud_icone.png">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #F5F0FF; color: #2D1B4E; line-height: 1.8; font-size: 16px;
+            -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: 100%;
+        }
+        a { color: #5B3A8C; }
+        .wrap { max-width: 600px; margin: 0 auto; background: #fff; box-shadow: 0 2px 24px rgba(45,27,78,.08); }
+
+        /* ── Hero ── */
+        .hero {
+            background: linear-gradient(135deg, #1a1028 0%, #2D1B4E 40%, #5B3A8C 100%);
+            color: #fff; padding: 44px 28px 36px; text-align: center;
+            position: relative; overflow: hidden;
+        }
+        .hero::before {
+            content: ''; position: absolute; top: -40%; right: -30%; width: 80%; height: 160%;
+            background: radial-gradient(circle, rgba(212,175,55,.10) 0%, transparent 60%); pointer-events: none;
+        }
+        .hero .logos { display: flex; align-items: center; justify-content: center; gap: 14px; margin-bottom: 18px; position: relative; }
+        .hero .logos img { height: 46px; border-radius: 6px; }
+        .hero .logos .x { color: rgba(255,255,255,.25); font-size: 16px; }
+        .hero h1 { font-size: 30px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 6px; position: relative; }
+        .hero .sub { font-size: 15px; color: rgba(255,255,255,.6); position: relative; }
+
+        /* ── Sections ── */
+        .sec { padding: 32px 28px; border-bottom: 1px solid #ede8f5; }
+        .sec:last-of-type { border-bottom: none; }
+        .sec h2 { font-size: 21px; font-weight: 700; color: #2D1B4E; margin-bottom: 16px; }
+        .sec p { margin-bottom: 14px; color: #5A4A6B; }
+
+        /* ── Boxes ── */
+        .box { background: #FAF8FF; border-left: 4px solid #D4AF37; border-radius: 0 10px 10px 0; padding: 18px 22px; margin: 16px 0; }
+        .box p { margin-bottom: 6px; color: #5A4A6B; } .box p:last-child { margin-bottom: 0; }
+        .box-purple { border-left-color: #5B3A8C; }
+
+        /* ── Use case cards ── */
+        .uc { background: #FAF8FF; border: 1px solid #ede8f5; border-radius: 12px; padding: 22px; margin: 16px 0; }
+        .uc .who { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+        .uc .avatar { width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+        .uc .who h3 { font-size: 15px; font-weight: 700; color: #2D1B4E; }
+        .uc .who .role { font-size: 12px; color: #8B7BA0; }
+        .uc .folder { background: #1a1028; color: #e2d9f0; padding: 12px 16px; border-radius: 8px; font-family: 'Courier New', monospace; font-size: 12px; line-height: 1.6; margin: 10px 0; }
+        .uc .folder .lbl { color: #D4AF37; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 6px; }
+        .uc .result { margin-top: 10px; font-size: 14px; color: #5A4A6B; }
+        .uc .result strong { color: #2D1B4E; }
+        .uc .wow { background: #FDF4E3; border: 1px solid #f0dca8; border-radius: 8px; padding: 10px 14px; margin-top: 10px; font-size: 13px; color: #7c5e14; font-weight: 500; }
+
+        /* ── Steps ── */
+        .step { margin: 24px 0; }
+        .step-head { display: flex; align-items: center; gap: 14px; margin-bottom: 10px; }
+        .step-num {
+            flex-shrink: 0; width: 36px; height: 36px; background: #D4AF37; color: #fff;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-size: 15px; font-weight: 800;
+        }
+        .step-head h3 { font-size: 16px; font-weight: 700; color: #2D1B4E; }
+        .code {
+            background: #1a1028; color: #e2d9f0; padding: 14px 18px; border-radius: 8px;
+            font-family: 'Courier New', monospace; font-size: 13px; line-height: 1.7;
+            overflow-x: auto; white-space: pre-wrap; word-break: break-all; margin: 10px 0;
+        }
+        .code .accent { color: #D4AF37; }
+
+        /* ── Visual mockups ── */
+        .mockup { border-radius: 10px; overflow: hidden; margin: 16px 0; box-shadow: 0 2px 12px rgba(45,27,78,.12); }
+        .mockup-bar {
+            background: #2D1B4E; color: #c4b5d9; padding: 8px 14px; font-size: 12px;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .mockup-bar .dots { display: flex; gap: 5px; }
+        .mockup-bar .dot { width: 10px; height: 10px; border-radius: 50%; }
+        .mockup-bar .dot.r { background: #ef4444; } .mockup-bar .dot.y { background: #eab308; } .mockup-bar .dot.g { background: #22c55e; }
+        .mockup-body {
+            background: #1a1028; color: #e2d9f0; padding: 16px 18px;
+            font-family: 'Courier New', monospace; font-size: 13px; line-height: 1.8;
+        }
+        .mockup-body .prompt { color: #D4AF37; }
+        .mockup-body .dim { color: #6b5a80; }
+        .mockup-body .green { color: #22c55e; }
+        .mockup-body .blue { color: #93c5fd; }
+
+        /* ── Windows mockup ── */
+        .win-menu {
+            background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 6px 0;
+            box-shadow: 0 4px 20px rgba(0,0,0,.12); margin: 16px auto; max-width: 320px;
+            font-size: 13px; color: #334155;
+        }
+        .win-menu .item { padding: 8px 18px; display: flex; align-items: center; gap: 10px; }
+        .win-menu .item:hover { background: #f1f5f9; }
+        .win-menu .item.hl { background: #EDE8F5; color: #2D1B4E; font-weight: 600; border-left: 3px solid #5B3A8C; }
+        .win-menu .sep { height: 1px; background: #e2e8f0; margin: 4px 0; }
+
+        /* ── Modes ── */
+        .mode { background: #FAF8FF; border: 1px solid #ede8f5; border-radius: 10px; padding: 16px 18px; margin: 10px 0; display: flex; align-items: flex-start; gap: 12px; }
+        .mode.rec { border-color: #D4AF37; background: #FDF4E3; }
+        .mode-icon { font-size: 22px; flex-shrink: 0; }
+        .mode-body h4 { font-size: 14px; font-weight: 700; color: #2D1B4E; margin-bottom: 2px; }
+        .mode-body p { font-size: 13px; color: #8B7BA0; margin: 0; }
+
+        /* ── Cards ── */
+        .card { background: #FAF8FF; border: 1px solid #ede8f5; border-radius: 10px; padding: 14px 18px; margin: 8px 0; font-size: 15px; }
+        .card .label { color: #D4AF37; font-weight: 700; }
+
+        /* ── Gift ── */
+        .gift { background: #FAF8FF; border: 1px solid #d9cef0; border-radius: 14px; padding: 24px 22px; margin: 20px 0; text-align: center; }
+        .gift h3 { font-size: 17px; color: #5B3A8C; margin-bottom: 10px; }
+        .gift p { color: #5A4A6B; margin-bottom: 10px; font-size: 15px; }
+        .gift-btn { display: inline-block; background: #5B3A8C; color: #fff; padding: 13px 30px; border-radius: 10px; text-decoration: none; font-weight: 700; font-size: 15px; }
+
+        /* ── Checklist ── */
+        .cklist { list-style: none; margin: 14px 0; }
+        .cklist li { padding: 6px 0 6px 28px; position: relative; font-size: 15px; color: #5A4A6B; }
+        .cklist li::before { content: '\2713'; position: absolute; left: 0; color: #D4AF37; font-weight: 700; }
+
+        /* ── Tech grid ── */
+        .tech-item { display: flex; gap: 10px; padding: 7px 0; border-bottom: 1px solid #ede8f5; font-size: 13px; }
+        .tech-item:last-child { border-bottom: none; }
+        .tech-item .k { color: #D4AF37; font-weight: 600; min-width: 105px; flex-shrink: 0; font-family: 'Courier New', monospace; font-size: 12px; }
+        .tech-item .v { color: #8B7BA0; }
+
+        /* ── CTA ── */
+        .cta-gold { display: inline-block; background: linear-gradient(135deg, #D4AF37, #b8941e); color: #fff; padding: 14px 32px; border-radius: 10px; text-decoration: none; font-weight: 700; font-size: 15px; box-shadow: 0 3px 12px rgba(212,175,55,.3); }
+
+        /* ── Footer ── */
+        .foot { background: #1a1028; color: #8B7BA0; padding: 28px; text-align: center; font-size: 13px; }
+        .foot a { color: #D4AF37; text-decoration: none; }
+    </style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- ═══════════ HERO ═══════════ -->
+<div class="hero">
+    <div class="logos">
+        <img src="logo_myc_mini.png" alt="myconciergerie" style="height:44px; border-radius:6px;">
+        <span class="x">&times;</span>
+        <svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" style="height:48px;">
+            <defs><linearGradient id="gld" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#F0D060"/><stop offset="100%" stop-color="#B8941E"/></linearGradient></defs>
+            <circle cx="40" cy="40" r="38" fill="#1a1028" stroke="url(#gld)" stroke-width="2.5"/>
+            <path d="M 40 62 A 22 22 0 0 1 18 40 A 22 22 0 0 1 40 18 A 22 22 0 0 1 60 32" fill="none" stroke="url(#gld)" stroke-width="5" stroke-linecap="round"/>
+            <line x1="40" y1="40" x2="60" y2="40" stroke="url(#gld)" stroke-width="5" stroke-linecap="round"/>
+            <path d="M 40 40 A 10 10 0 1 0 40 30" fill="none" stroke="url(#gld)" stroke-width="3" stroke-linecap="round" opacity="0.5"/>
+            <circle cx="40" cy="35" r="3" fill="#F0D060"/>
+        </svg>
+    </div>
+    <h1>Project Genesis</h1>
+    <div class="sub">Beta priv&eacute;e &mdash; avril 2026</div>
+</div>
+
+<!-- ═══════════ INTRO ═══════════ -->
+<div class="sec">
+    <h2>Salut !</h2>
+    <p>Tu re&ccedil;ois ce mail parce que tu fais partie d'un petit cercle de personnes &agrave; qui j'avais envie de montrer un projet sur lequel je travaille. Rien d'obligatoire, juste un truc que je trouve vraiment bluffant.</p>
+
+    <div class="box">
+        <p><strong>Si tu d&eacute;couvres :</strong> tu connais ChatGPT ? <strong>Claude</strong>, c'est le m&ecirc;me principe &mdash; une intelligence artificielle conversationnelle &mdash; mais avec un mode <strong>&laquo;&nbsp;Code&nbsp;&raquo;</strong> o&ugrave; l'IA peut directement cr&eacute;er des fichiers, installer des outils, et construire des projets sur ton ordinateur. Tu lui parles, elle fait.</p>
+    </div>
+    <div class="box box-purple">
+        <p><strong>Si tu connais d&eacute;j&agrave; :</strong> Genesis est un plugin Claude Code open source &mdash; 6 skills, 1 orchestrateur 7 phases, z&eacute;ro d&eacute;pendance hors Python stdlib. D&eacute;tails techniques en bas de ce mail.</p>
+    </div>
+
+    <p><strong>Genesis, en une phrase :</strong></p>
+    <p style="font-size:18px; color:#2D1B4E; font-weight:700; text-align:center; padding:14px 20px; line-height:1.5; background:#FDF4E3; border-radius:10px; border:1px solid #f0dca8;">
+        Tu d&eacute;cris ton projet &mdash; m&ecirc;me vaguement &mdash;<br>et l'IA construit toute l'infrastructure.
+    </p>
+</div>
+
+<!-- ═══════════ CAS CONCRETS ═══════════ -->
+<div class="sec">
+    <h2>Concr&egrave;tement, &ccedil;a donne quoi ?</h2>
+    <p>Tu mets dans un dossier tout ce qui d&eacute;crit ton projet &mdash; un texte, des photos, des PDFs &mdash; et Genesis analyse tout et construit sur mesure. Quelques exemples :</p>
+
+    <div class="uc">
+        <div class="who">
+            <div class="avatar" style="background:#FDF4E3;">&#127858;</div>
+            <div><h3>Marie &mdash; Restauratrice</h3><div class="role">&laquo;&nbsp;Je veux un site pour mon restaurant &agrave; V&eacute;lizy&nbsp;&raquo;</div></div>
+        </div>
+        <div class="folder">
+            <span class="lbl">&#128193; Son dossier de d&eacute;part</span>
+            config.txt &mdash; &laquo;&nbsp;La Table de Marie, bistro, r&eacute;servation en ligne&nbsp;&raquo;<br>menu-printemps.pdf<br>photo-salle.jpg &nbsp; photo-terrasse.jpg &nbsp; photo-plat.jpg
+        </div>
+        <div class="result"><strong>Genesis construit :</strong> un projet complet avec architecture de site vitrine + r&eacute;servation, d&eacute;p&ocirc;t de code s&eacute;curis&eacute;, documentation, cl&eacute;s d&eacute;di&eacute;es, et un r&eacute;sum&eacute; pour la prochaine session.</div>
+        <div class="wow">&#10024; En 5 min, Marie a la m&ecirc;me infra qu'une startup tech. Prochaine &eacute;tape : coder le site.</div>
+    </div>
+
+    <div class="uc">
+        <div class="who">
+            <div class="avatar" style="background:#EDE8F5;">&#127922;</div>
+            <div><h3>Julien &mdash; Vendeur de Playmobil</h3><div class="role">&laquo;&nbsp;Je vends des collector, je veux professionnaliser&nbsp;&raquo;</div></div>
+        </div>
+        <div class="folder">
+            <span class="lbl">&#128193; Son dossier de d&eacute;part</span>
+            config.txt &mdash; &laquo;&nbsp;Boutique Playmobil vintage, stock, paiement Stripe&nbsp;&raquo;<br>catalogue-200-refs.pdf<br>photos-stock/ (35 photos de pi&egrave;ces rares)
+        </div>
+        <div class="result"><strong>Genesis construit :</strong> architecture e-commerce, gestion de catalogue, paiement int&eacute;gr&eacute;, espace admin. Document&eacute; et pr&ecirc;t &agrave; d&eacute;velopper.</div>
+        <div class="wow">&#10024; Julien passe du tableur Excel + Leboncoin &agrave; un vrai projet e-commerce structur&eacute;.</div>
+    </div>
+
+    <div class="uc">
+        <div class="who">
+            <div class="avatar" style="background:#FCE7F3;">&#128663;</div>
+            <div><h3>Karim &mdash; Chauffeur VTC de luxe</h3><div class="role">&laquo;&nbsp;5 v&eacute;hicules + une conciergerie vers Senlis&nbsp;&raquo;</div></div>
+        </div>
+        <div class="folder">
+            <span class="lbl">&#128193; Son dossier de d&eacute;part</span>
+            config.txt &mdash; &laquo;&nbsp;Gestion flotte VTC + conciergerie, zone Senlis/Chantilly&nbsp;&raquo;<br>tarifs-vtc.pdf &nbsp; tarifs-conciergerie.pdf<br>photos-flotte/ &nbsp; services.txt
+        </div>
+        <div class="result"><strong>Genesis construit :</strong> un projet multi-service : flotte d'un c&ocirc;t&eacute;, conciergerie de l'autre, dans une architecture unifi&eacute;e. R&eacute;sa, dispatch, CRM &mdash; structur&eacute; d&egrave;s le d&eacute;part.</div>
+        <div class="wow">&#10024; Ses 2 activit&eacute;s ont une base technique qui grandit avec lui, pas besoin de repartir de z&eacute;ro.</div>
+    </div>
+
+    <div class="uc">
+        <div class="who">
+            <div class="avatar" style="background:#ECFDF5;">&#128187;</div>
+            <div><h3>Thomas &mdash; D&eacute;veloppeur</h3><div class="role">&laquo;&nbsp;API Go + Supabase, setup propre d&egrave;s le d&eacute;part&nbsp;&raquo;</div></div>
+        </div>
+        <div class="folder">
+            <span class="lbl">&#128193; Son dossier de d&eacute;part</span>
+            config.txt &mdash; &laquo;&nbsp;API REST Go, Supabase, auth JWT, deploy Fly.io&nbsp;&raquo;<br>specs-api.md
+        </div>
+        <div class="result"><strong>Genesis construit :</strong> repo GitHub + cl&eacute; SSH d&eacute;di&eacute;e, rules R1-R10, memory architecture, research cache TTL, <code>.gitignore</code>, <code>CLAUDE.md</code> Layer 0, premier commit + tag <code>v0.1.0</code>.</div>
+        <div class="wow">&#10024; 2 jours de setup &eacute;conomis&eacute;s. Le premier commit a la rigueur du 100&egrave;me.</div>
+    </div>
+</div>
+
+<!-- ═══════════ CADEAU ═══════════ -->
+<div class="sec">
+    <h2>Avant de commencer</h2>
+    <p>Genesis tourne sur <strong>Claude Code</strong>, qui n&eacute;cessite un abonnement Claude (Pro ou Max).</p>
+    <p>D&eacute;j&agrave; abonn&eacute; ? Passe directement au tuto d'installation juste en dessous.</p>
+
+    <div class="gift">
+        <h3>&#127873; Mon cadeau de bienvenue</h3>
+        <p>Si tu n'as pas encore Claude, je t'offre <strong>une semaine d'essai gratuit</strong> pour tester tout &ccedil;a tranquillement, sans engagement.</p>
+        <p style="font-size:14px; color:#8B7BA0;">J'ai 2 invitations &mdash; premiers arriv&eacute;s, premiers servis ;-)</p>
+        <a href="https://claude.ai/referral/GUu1Br9bBA" class="gift-btn">Essayer Claude gratuitement</a>
+        <p style="font-size:12px; color:#8B7BA0; margin-top:12px;">Lien de parrainage Anthropic. Annulable &agrave; tout moment, z&eacute;ro pi&egrave;ge.</p>
+    </div>
+</div>
+
+<!-- ═══════════ TUTO INSTALLATION ═══════════ -->
+<div class="sec" style="background:#FDF4E3;">
+    <h2>Tuto d'installation</h2>
+    <p>Pas besoin d'&ecirc;tre un pro. Suis les &eacute;tapes dans l'ordre, et en 10 minutes c'est pr&ecirc;t.</p>
+
+    <!-- STEP 1 : Ouvrir le terminal -->
+    <div class="step">
+        <div class="step-head"><div class="step-num">1</div><h3>Ouvre le &laquo;&nbsp;Terminal&nbsp;&raquo; de ton ordinateur</h3></div>
+        <p>C'est une fen&ecirc;tre o&ugrave; tu peux taper des commandes. Sur Windows 11, c'est tout simple :</p>
+
+        <div class="win-menu">
+            <div class="item">&#128196; &nbsp; Applis et fonctionnalit&eacute;s</div>
+            <div class="item">&#9881; &nbsp; Param&egrave;tres</div>
+            <div class="item">&#128193; &nbsp; Explorateur de fichiers</div>
+            <div class="sep"></div>
+            <div class="item hl">&#9000; &nbsp; <strong>Terminal</strong></div>
+            <div class="item">&#128187; &nbsp; Gestionnaire de t&acirc;ches</div>
+        </div>
+        <p style="text-align:center; font-size:14px; color:#8B7BA0;">&#8593; <strong>Clic droit sur le bouton D&eacute;marrer</strong> (en bas &agrave; gauche) &rarr; clique sur <strong>Terminal</strong></p>
+    </div>
+
+    <!-- STEP 2 : Installer Claude Code -->
+    <div class="step">
+        <div class="step-head"><div class="step-num">2</div><h3>Installe Claude Code</h3></div>
+        <p>Copie-colle cette ligne dans le Terminal et appuie sur Entr&eacute;e :</p>
+
+        <div class="mockup">
+            <div class="mockup-bar"><div class="dots"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div> Terminal</div>
+            <div class="mockup-body">
+<span class="prompt">PS C:\Users\toi&gt;</span> irm https://claude.ai/install.ps1 | iex<br>
+<span class="dim">Installing Claude Code...</span><br>
+<span class="green">&#10003; Claude Code installed successfully!</span>
+            </div>
+        </div>
+        <p style="font-size:14px; color:#8B7BA0;">Une seule fois. Le script installe tout automatiquement.</p>
+    </div>
+
+    <!-- STEP 3 : Préparer le dossier -->
+    <div class="step">
+        <div class="step-head"><div class="step-num">3</div><h3>Pr&eacute;pare ton dossier projet</h3></div>
+        <p>Cr&eacute;e un dossier n'importe o&ugrave; (sur le Bureau par exemple) et mets-y tout ce qui d&eacute;crit ton projet :</p>
+
+        <div class="card"><span class="label">&#128196; Un fichier texte</span> &mdash; ton id&eacute;e en quelques lignes (m&ecirc;me 3 suffisent)</div>
+        <div class="card"><span class="label">&#128247; Des photos</span> &mdash; ton produit, ton local, tes r&eacute;f&eacute;rences</div>
+        <div class="card"><span class="label">&#128206; Des PDFs</span> &mdash; menu, tarifs, cahier des charges</div>
+        <div class="card"><span class="label">&#128279; Des liens</span> &mdash; dans un fichier texte, un lien par ligne</div>
+
+        <p style="font-size:14px; color:#8B7BA0; margin-top:12px;">Pas d'id&eacute;e de quoi &eacute;crire ? M&ecirc;me un dossier vide fonctionne &mdash; Genesis te guidera.</p>
+    </div>
+
+    <!-- STEP 4 : Ouvrir Claude dans le dossier -->
+    <div class="step">
+        <div class="step-head"><div class="step-num">4</div><h3>Ouvre Claude Code dans ton dossier</h3></div>
+        <p>Le plus simple sur Windows 11 : ouvre ton dossier dans l'Explorateur, puis :</p>
+
+        <div class="win-menu">
+            <div class="item">&#128193; &nbsp; Ouvrir</div>
+            <div class="item">&#9998; &nbsp; Renommer</div>
+            <div class="sep"></div>
+            <div class="item hl">&#9000; &nbsp; <strong>Ouvrir dans le terminal</strong></div>
+            <div class="sep"></div>
+            <div class="item">&#128203; &nbsp; Copier</div>
+            <div class="item">&#128465; &nbsp; Supprimer</div>
+        </div>
+        <p style="text-align:center; font-size:14px; color:#8B7BA0;">&#8593; <strong>Clic droit dans le dossier</strong> (sur un espace vide) &rarr; <strong>Ouvrir dans le terminal</strong></p>
+
+        <p>Ensuite, tape <strong>claude</strong> et appuie sur Entr&eacute;e :</p>
+
+        <div class="mockup">
+            <div class="mockup-bar"><div class="dots"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div> Terminal &mdash; mon-projet</div>
+            <div class="mockup-body">
+<span class="prompt">PS C:\Users\toi\Desktop\mon-projet&gt;</span> claude<br>
+<br>
+<span class="dim">  &#9608;&#9608;&#9608;  Claude Code</span><br>
+<span class="dim">  Welcome! How can I help you today?</span><br>
+<span class="prompt">&gt;</span> <span class="blue">_</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- STEP 5 : Installer Genesis -->
+    <div class="step">
+        <div class="step-head"><div class="step-num">5</div><h3>Installe le plugin Genesis</h3></div>
+        <p>Dans Claude Code, tape cette ligne :</p>
+        <div class="code"><span class="accent">&gt;</span> /plugin install project-genesis@myconciergerie-prog/project-genesis</div>
+        <p style="font-size:14px; color:#8B7BA0;">Une seule fois. Apr&egrave;s, Genesis est install&eacute; pour tous tes projets.</p>
+    </div>
+
+    <!-- STEP 6 : Lancer Genesis -->
+    <div class="step">
+        <div class="step-head"><div class="step-num">6</div><h3>Lance Genesis !</h3></div>
+        <p>Toujours dans Claude Code, dis simplement :</p>
+
+        <div class="mockup">
+            <div class="mockup-bar"><div class="dots"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div> Claude Code &mdash; mon-projet</div>
+            <div class="mockup-body">
+<span class="prompt">&gt;</span> Bootstrap this project using genesis-protocol<br>
+<br>
+<span class="green">&#9889; Genesis v1.0.0 activated</span><br>
+<span class="dim">Analysing folder contents...</span><br>
+<span class="dim">Found: config.txt, menu.pdf, 3 photos</span><br>
+<span class="dim">Parsing project intent...</span><br>
+<br>
+<span class="blue">&#128203; Parsed intent card</span><br>
+<span class="dim">  Project: La Table de Marie</span><br>
+<span class="dim">  Vision:  Site vitrine + r&eacute;servation</span><br>
+<span class="dim">  Mode:    Semi-auto</span><br>
+<br>
+<span class="prompt">Proceed? (yes / edit / abort)</span> <span class="green">yes</span>
+            </div>
+        </div>
+
+        <div class="box">
+            <p><strong>&#128161; Astuce permissions :</strong> Claude va te demander des autorisations pendant le processus (pour cr&eacute;er des fichiers, lancer des commandes&hellip;). Tape <strong>a</strong> pour tout accepter d'un coup, ou <strong>y</strong> pour valider une par une.</p>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════ 3 VITESSES ═══════════ -->
+<div class="sec">
+    <h2>3 vitesses &mdash; &agrave; toi de choisir</h2>
+    <div class="mode">
+        <span class="mode-icon">&#9889;</span>
+        <div class="mode-body"><h4>Automatique &mdash; ~5 min</h4><p>L'IA fait tout. Pause uniquement pour mots de passe et confirmations de s&eacute;curit&eacute;.</p></div>
+    </div>
+    <div class="mode rec">
+        <span class="mode-icon">&#9881;</span>
+        <div class="mode-body"><h4>Semi-auto &mdash; ~15 min &#11088; Id&eacute;al 1er test</h4><p>L'IA montre ce qu'elle fait &agrave; chaque &eacute;tape. Tu valides ou tu corriges.</p></div>
+    </div>
+    <div class="mode">
+        <span class="mode-icon">&#128218;</span>
+        <div class="mode-body"><h4>Pas &agrave; pas &mdash; ~45 min</h4><p>L'IA t'explique tout. Tu tapes, tu apprends. Pour comprendre le &laquo;&nbsp;sous le capot&nbsp;&raquo;.</p></div>
+    </div>
+</div>
+
+<!-- ═══════════ POUR LES DEVS ═══════════ -->
+<div class="sec">
+    <h2>Pour les devs &mdash; sous le capot</h2>
+    <div class="tech-item"><span class="k">Architecture</span><span class="v">6 skills Markdown + orchestrateur 7 phases, z&eacute;ro runtime hors Python 3.10+ stdlib</span></div>
+    <div class="tech-item"><span class="k">Phase -1</span><span class="v">detect.sh cross-platform, install-manifest YAML, 3 modes d'interaction</span></div>
+    <div class="tech-item"><span class="k">Phase 5.5</span><span class="v">SSH ed25519 + IdentitiesOnly, fine-grained PAT, 3-probe gate</span></div>
+    <div class="tech-item"><span class="k">Post-processor</span><span class="v">JSONL &rarr; Markdown, 14 redaction patterns, halt-on-leak gate</span></div>
+    <div class="tech-item"><span class="k">Memory</span><span class="v">7 types, Layer 0 inheritance, journal + p&eacute;pites discovery</span></div>
+    <div class="tech-item"><span class="k">Hook</span><span class="v">SessionEnd auto-archive (3 dogfood runs GREEN)</span></div>
+    <div class="tech-item"><span class="k">Self-rating</span><span class="v">5 axes, running avg 8.59/10 sur 9 versions</span></div>
+    <div class="box box-purple" style="margin-top:16px;">
+        <p><strong>Code source :</strong> <a href="https://github.com/myconciergerie-prog/project-genesis">github.com/myconciergerie-prog/project-genesis</a> &mdash; MIT</p>
+    </div>
+</div>
+
+<!-- ═══════════ FEEDBACK ═══════════ -->
+<div class="sec" style="background: linear-gradient(180deg, #FAF8FF, #EDE8F5); text-align: center;">
+    <h2>Dis-moi ce que tu en penses</h2>
+    <p>Tu es parmi les tout premiers &agrave; essayer Genesis. Ton avis va directement fa&ccedil;onner la suite.</p>
+    <p style="font-size:15px; color:#2D1B4E; font-weight:500;">Ce qui m'int&eacute;resse le plus :</p>
+    <ul class="cklist" style="display:inline-block; text-align:left;">
+        <li>O&ugrave; est-ce que &ccedil;a coince ou que c'est flou ?</li>
+        <li>Qu'est-ce qui manque &agrave; l'appel ?</li>
+        <li>Qu'est-ce qui t'a bluff&eacute; &mdash; ou d&eacute;&ccedil;u ?</li>
+    </ul>
+    <p style="margin-top:18px;">
+        <a href="https://github.com/myconciergerie-prog/project-genesis/issues" class="cta-gold">&#128172; Donner mon avis</a>
+    </p>
+    <p style="font-size:13px; color:#8B7BA0; margin-top:14px;">Ou r&eacute;ponds simplement &agrave; ce message, en fran&ccedil;ais &eacute;videmment ;-)</p>
+</div>
+
+<!-- ═══════════ FOOTER ═══════════ -->
+<div class="foot">
+    <div style="margin-bottom:10px;">
+        <svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" style="height:30px; vertical-align:middle;">
+            <defs><linearGradient id="gf" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#F0D060"/><stop offset="100%" stop-color="#B8941E"/></linearGradient></defs>
+            <circle cx="40" cy="40" r="38" fill="#1a1028" stroke="url(#gf)" stroke-width="2.5"/>
+            <path d="M 40 62 A 22 22 0 0 1 18 40 A 22 22 0 0 1 40 18 A 22 22 0 0 1 60 32" fill="none" stroke="url(#gf)" stroke-width="5" stroke-linecap="round"/>
+            <line x1="40" y1="40" x2="60" y2="40" stroke="url(#gf)" stroke-width="5" stroke-linecap="round"/>
+            <path d="M 40 40 A 10 10 0 1 0 40 30" fill="none" stroke="url(#gf)" stroke-width="3" stroke-linecap="round" opacity="0.5"/>
+            <circle cx="40" cy="35" r="3" fill="#F0D060"/>
+        </svg>
+    </div>
+    <p><strong>Project Genesis v1.0.0</strong> &mdash; Logiciel libre (MIT)</p>
+    <p style="margin-top:4px;">par <a href="https://github.com/myconciergerie-prog">myconciergerie-prog</a></p>
+</div>
+
+</div>
+</body>
+</html>

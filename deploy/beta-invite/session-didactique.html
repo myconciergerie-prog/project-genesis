@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Session v1.0.0 — Le closing move de Project Genesis</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            line-height: 1.7;
+            -webkit-font-smoothing: antialiased;
+        }
+        .wrap { max-width: 900px; margin: 0 auto; padding: 0 24px; }
+
+        /* ── Hero ── */
+        .hero {
+            padding: 80px 0 60px;
+            text-align: center;
+            position: relative;
+        }
+        .hero::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 10%; right: 10%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, #f59e0b, transparent);
+        }
+        .hero .tag {
+            display: inline-block;
+            background: rgba(245,158,11,.15);
+            color: #f59e0b;
+            padding: 6px 20px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 24px;
+            border: 1px solid rgba(245,158,11,.3);
+        }
+        .hero h1 {
+            font-size: 48px;
+            font-weight: 800;
+            letter-spacing: -1.5px;
+            background: linear-gradient(135deg, #ffffff 0%, #94a3b8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 16px;
+        }
+        .hero .sub {
+            font-size: 20px;
+            color: #94a3b8;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .hero .sub strong { color: #f59e0b; }
+
+        /* ── Sections ── */
+        .sec {
+            padding: 56px 0;
+            position: relative;
+        }
+        .sec + .sec {
+            border-top: 1px solid rgba(255,255,255,.06);
+        }
+        .sec h2 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #f8fafc;
+            margin-bottom: 24px;
+        }
+        .sec h2 .accent { color: #f59e0b; }
+        .sec h3 {
+            font-size: 18px;
+            font-weight: 700;
+            color: #f8fafc;
+            margin: 24px 0 12px;
+        }
+        .sec p {
+            font-size: 16px;
+            color: #94a3b8;
+            margin-bottom: 16px;
+            max-width: 720px;
+        }
+        .sec p strong { color: #e2e8f0; }
+
+        /* ── Gate cards ── */
+        .gate-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin: 24px 0;
+        }
+        .gate-card {
+            background: rgba(255,255,255,.04);
+            border: 1px solid rgba(255,255,255,.08);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+        .gate-card.pass { border-color: rgba(34,197,94,.4); }
+        .gate-card .icon { font-size: 28px; margin-bottom: 8px; }
+        .gate-card .label {
+            font-size: 12px;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+        }
+        .gate-card .value {
+            font-size: 18px;
+            font-weight: 700;
+            color: #22c55e;
+        }
+
+        /* ── Question blocks ── */
+        .qblock {
+            background: rgba(255,255,255,.03);
+            border-left: 4px solid #f59e0b;
+            border-radius: 0 12px 12px 0;
+            padding: 24px 28px;
+            margin: 20px 0;
+        }
+        .qblock .q {
+            font-size: 17px;
+            font-weight: 700;
+            color: #f59e0b;
+            margin-bottom: 10px;
+            font-style: italic;
+        }
+        .qblock .a {
+            font-size: 15px;
+            color: #cbd5e1;
+            line-height: 1.7;
+        }
+        .qblock .a strong { color: #f8fafc; }
+
+        /* ── Dual cards ── */
+        .dual {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 24px 0;
+        }
+        .dcard {
+            background: rgba(255,255,255,.04);
+            border: 1px solid rgba(255,255,255,.08);
+            border-radius: 12px;
+            padding: 28px;
+        }
+        .dcard h4 {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+        .dcard.boot h4 { color: #3b82f6; }
+        .dcard.disc h4 { color: #22c55e; }
+        .dcard ul {
+            list-style: none;
+            font-size: 14px;
+            color: #94a3b8;
+        }
+        .dcard ul li {
+            padding: 4px 0 4px 20px;
+            position: relative;
+        }
+        .dcard.boot ul li::before { content: '~'; position: absolute; left: 0; color: #3b82f6; font-weight: 700; }
+        .dcard.disc ul li::before { content: '+'; position: absolute; left: 0; color: #22c55e; font-weight: 700; }
+
+        /* ── Timeline ── */
+        .timeline {
+            position: relative;
+            margin: 32px 0;
+            padding-left: 40px;
+        }
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 15px; top: 0; bottom: 0;
+            width: 2px;
+            background: linear-gradient(180deg, #f59e0b 0%, #3b82f6 50%, #8b5cf6 100%);
+        }
+        .tl-item {
+            position: relative;
+            margin-bottom: 28px;
+        }
+        .tl-item::before {
+            content: '';
+            position: absolute;
+            left: -29px; top: 6px;
+            width: 12px; height: 12px;
+            border-radius: 50%;
+            border: 2px solid;
+        }
+        .tl-item.now::before { background: #f59e0b; border-color: #f59e0b; box-shadow: 0 0 12px rgba(245,158,11,.5); }
+        .tl-item.next::before { background: transparent; border-color: #3b82f6; }
+        .tl-item.later::before { background: transparent; border-color: #8b5cf6; }
+        .tl-item .version {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+        .tl-item.now .version { color: #f59e0b; }
+        .tl-item.next .version { color: #3b82f6; }
+        .tl-item.later .version { color: #8b5cf6; }
+        .tl-item .desc { font-size: 14px; color: #94a3b8; }
+        .tl-item .desc strong { color: #e2e8f0; }
+
+        /* ── Ship block ── */
+        .ship-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin: 24px 0;
+        }
+        .ship-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(34,197,94,.08);
+            border: 1px solid rgba(34,197,94,.2);
+            border-radius: 10px;
+            padding: 14px 18px;
+        }
+        .ship-item .check { color: #22c55e; font-size: 20px; font-weight: 700; }
+        .ship-item .text { font-size: 14px; color: #cbd5e1; }
+
+        /* ── Retrofit diagram ── */
+        .retro-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin: 24px 0;
+        }
+        .retro-card {
+            background: rgba(255,255,255,.04);
+            border: 1px solid rgba(255,255,255,.08);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+        .retro-card .name {
+            font-weight: 700;
+            font-size: 14px;
+            color: #f8fafc;
+            margin-bottom: 6px;
+        }
+        .retro-card .status {
+            font-size: 12px;
+            padding: 2px 10px;
+            border-radius: 10px;
+            display: inline-block;
+            margin-bottom: 8px;
+        }
+        .retro-card .status.has { background: rgba(34,197,94,.15); color: #22c55e; }
+        .retro-card .status.need { background: rgba(245,158,11,.15); color: #f59e0b; }
+        .retro-card .detail { font-size: 12px; color: #64748b; line-height: 1.5; }
+
+        /* ── Quote ── */
+        .quote {
+            text-align: center;
+            padding: 40px;
+            margin: 32px 0;
+            position: relative;
+        }
+        .quote::before, .quote::after {
+            content: '';
+            position: absolute;
+            left: 10%; right: 10%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(245,158,11,.3), transparent);
+        }
+        .quote::before { top: 0; }
+        .quote::after { bottom: 0; }
+        .quote p {
+            font-size: 22px;
+            font-style: italic;
+            color: #f59e0b;
+            max-width: 600px;
+            margin: 0 auto;
+            font-weight: 500;
+        }
+        .quote .attr {
+            font-size: 13px;
+            color: #64748b;
+            font-style: normal;
+            margin-top: 12px;
+        }
+
+        /* ── Stats bar ── */
+        .stats-bar {
+            display: flex;
+            justify-content: space-around;
+            background: rgba(255,255,255,.04);
+            border: 1px solid rgba(255,255,255,.08);
+            border-radius: 16px;
+            padding: 28px;
+            margin: 32px 0;
+            text-align: center;
+        }
+        .stat .num {
+            font-size: 36px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .stat .lbl {
+            font-size: 11px;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 4px;
+        }
+
+        /* ── Footer ── */
+        .foot {
+            text-align: center;
+            padding: 40px 0;
+            border-top: 1px solid rgba(255,255,255,.06);
+            margin-top: 20px;
+        }
+        .foot p { font-size: 13px; color: #475569; margin: 4px auto; }
+        .foot a { color: #f59e0b; text-decoration: none; }
+
+        /* ── Responsive ── */
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 32px; }
+            .gate-grid, .dual, .ship-grid { grid-template-columns: 1fr; }
+            .retro-grid { grid-template-columns: 1fr; }
+            .stats-bar { flex-wrap: wrap; gap: 20px; }
+        }
+    </style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- ════════════════════════════════════════════ -->
+<!-- HERO                                        -->
+<!-- ════════════════════════════════════════════ -->
+<div class="hero">
+    <div class="tag">Session didactique</div>
+    <h1>Session v1.0.0 &mdash; Le closing move</h1>
+    <p class="sub">Comment <strong>Project Genesis</strong> est pass&eacute; d'un scaffold vide &agrave; un produit livr&eacute; en <strong>9 sessions</strong>, et ce que cette derni&egrave;re session a d&eacute;cid&eacute; pour la suite.</p>
+</div>
+
+<!-- ════════════════════════════════════════════ -->
+<!-- LE GATE                                      -->
+<!-- ════════════════════════════════════════════ -->
+<div class="sec">
+    <h2>Le <span class="accent">gate</span> &mdash; est-ce qu'on ship ?</h2>
+    <p>Avant de tagger v1.0.0, chaque crit&egrave;re du &laquo;&nbsp;ship gate&nbsp;&raquo; a &eacute;t&eacute; v&eacute;rifi&eacute; :</p>
+
+    <div class="gate-grid">
+        <div class="gate-card pass">
+            <div class="icon">&#9989;</div>
+            <div class="label">Running average</div>
+            <div class="value">8.59 / 10</div>
+        </div>
+        <div class="gate-card pass">
+            <div class="icon">&#9989;</div>
+            <div class="label">Skills livr&eacute;s</div>
+            <div class="value">6 / 6</div>
+        </div>
+        <div class="gate-card pass">
+            <div class="icon">&#9989;</div>
+            <div class="label">Dogfood runs</div>
+            <div class="value">3 GREEN</div>
+        </div>
+        <div class="gate-card pass">
+            <div class="icon">&#9989;</div>
+            <div class="label">README</div>
+            <div class="value">Public-facing</div>
+        </div>
+        <div class="gate-card pass">
+            <div class="icon">&#9989;</div>
+            <div class="label">Orchestrateur</div>
+            <div class="value">Valid&eacute; (dry-run)</div>
+        </div>
+        <div class="gate-card pass">
+            <div class="icon">&#9989;</div>
+            <div class="label">Git status</div>
+            <div class="value">Clean</div>
+        </div>
+    </div>
+
+    <p><strong>Verdict : toutes les conditions sont remplies.</strong> Le tag v1.0.0 est l&eacute;gitime. Pas un tag par d&eacute;faut &mdash; un tag m&eacute;rit&eacute; par 9 versions auto-&eacute;valu&eacute;es sur 5 axes, avec une moyenne finale 0.09 au-dessus de la cible.</p>
+</div>
+
+<!-- ════════════════════════════════════════════ -->
+<!-- LES 4 QUESTIONS                              -->
+<!-- ════════════════════════════════════════════ -->
+<div class="sec">
+    <h2>Les <span class="accent">4 questions</span> qui ont guid&eacute; la session</h2>
+    <p>Avant de lancer le ship, quatre questions strat&eacute;giques ont &eacute;t&eacute; pos&eacute;es. Chacune a d&eacute;bloqu&eacute; une d&eacute;cision&nbsp;:</p>
+
+    <div class="qblock">
+        <div class="q">&laquo;&nbsp;&Ccedil;a peut encore s'am&eacute;liorer dans cette phase&nbsp;?&nbsp;&raquo;</div>
+        <div class="a"><strong>Marginalement, oui. Mais ce n'est plus le bon levier.</strong> La running average est &agrave; 8.54, les six skills sont stables. Le prochain palier d'am&eacute;lioration ne viendra pas de polish suppl&eacute;mentaire &mdash; il viendra de <strong>frictions r&eacute;elles</strong> lors d'une vraie ex&eacute;cution. On ship, puis on apprend du terrain.</div>
+    </div>
+
+    <div class="qblock">
+        <div class="q">&laquo;&nbsp;On passe Genesis v1 &agrave; travers Genesis v1 pour l'am&eacute;liorer&nbsp;?&nbsp;&raquo;</div>
+        <div class="a"><strong>Oui &mdash; c'est le strange loop.</strong> Comme un compilateur C &eacute;crit en C qui se compile lui-m&ecirc;me. Le dry-run v0.9 &eacute;tait un paper trace. La session v1.1 sera la <strong>premi&egrave;re ex&eacute;cution r&eacute;elle</strong> du genesis-protocol. Chaque friction captur&eacute;e deviendra un patch v1.1.</div>
+    </div>
+
+    <div class="qblock">
+        <div class="q">&laquo;&nbsp;Comment Genesis s'ins&egrave;re au quotidien dans un projet existant&nbsp;?&nbsp;&raquo;</div>
+        <div class="a"><strong>Genesis est deux choses</strong> (voir ci-dessous) : un bootstrapper utilis&eacute; une seule fois par projet, et un plugin de discipline utilis&eacute; &agrave; chaque session. Les 5 skills non-orchestrateurs fonctionnent dans <strong>tous</strong> les projets d&egrave;s que le plugin est install&eacute; &mdash; sans aucune action suppl&eacute;mentaire.</div>
+    </div>
+
+    <div class="qblock">
+        <div class="q">&laquo;&nbsp;C'est quoi le livrable concret pour mes amis beta testeurs&nbsp;?&nbsp;&raquo;</div>
+        <div class="a"><strong>2 commandes dans PowerShell. Z&eacute;ro Chrome. Z&eacute;ro VS Code.</strong><br>
+        <code style="background:rgba(245,158,11,.1); color:#f59e0b; padding:2px 8px; border-radius:4px; font-size:13px;">irm https://claude.ai/install.ps1 | iex</code> installe Claude Code.<br>
+        <code style="background:rgba(245,158,11,.1); color:#f59e0b; padding:2px 8px; border-radius:4px; font-size:13px;">/plugin install project-genesis@myconciergerie-prog/project-genesis</code> installe Genesis.<br>
+        Ensuite : un <code style="color:#f59e0b;">config.txt</code> + une phrase trigger. Claude prend la main.</div>
+    </div>
+</div>
+
+<!-- ════════════════════════════════════════════ -->
+<!-- GENESIS = 2 CHOSES                           -->
+<!-- ════════════════════════════════════════════ -->
+<div class="sec">
+    <h2>Genesis = <span class="accent">2 choses</span></h2>
+    <p>L'insight cl&eacute; de cette session : Genesis n'est pas qu'un outil de bootstrap. C'est un <strong>plugin de discipline</strong> qui reste actif longtemps apr&egrave;s le setup initial.</p>
+
+    <div class="dual">
+        <div class="dcard boot">
+            <h4>&#127959; Un bootstrapper</h4>
+            <p style="font-size:13px; color:#94a3b8; margin-bottom:12px;">Utilis&eacute; <strong>une seule fois</strong> par projet</p>
+            <ul>
+                <li>7 phases automatis&eacute;es</li>
+                <li>config.txt &rarr; projet complet</li>
+                <li>SSH, PAT, repo GitHub</li>
+                <li>Architecture m&eacute;moire</li>
+                <li>R&egrave;gles R1-R10</li>
+                <li>Premier commit + tag v0.1.0</li>
+            </ul>
+        </div>
+        <div class="dcard disc">
+            <h4>&#128161; Un plugin de discipline</h4>
+            <p style="font-size:13px; color:#94a3b8; margin-bottom:12px;">Actif <strong>&agrave; chaque session</strong>, dans tout projet</p>
+            <ul>
+                <li>Journal system (capture de pens&eacute;es)</li>
+                <li>Session post-processor (archivage auto)</li>
+                <li>P&eacute;pite flagging (d&eacute;couvertes)</li>
+                <li>Research cache avec TTL</li>
+                <li>Discipline worktree R2.1</li>
+                <li>Self-rating R10.3</li>
+            </ul>
+        </div>
+    </div>
+
+    <p>Pour les projets <strong>existants</strong> comme Aurum ou Cyrano, c'est le c&ocirc;t&eacute; &laquo;&nbsp;plugin de discipline&nbsp;&raquo; qui apporte le plus de valeur imm&eacute;diate. Le c&ocirc;t&eacute; bootstrapper n&eacute;cessite un <strong>mode retrofit</strong> (d&eacute;tecter ce qui existe d&eacute;j&agrave;, combler les trous) &mdash; c'est le premier d&eacute;veloppement v1.1.</p>
+</div>
+
+<!-- ════════════════════════════════════════════ -->
+<!-- RETROFIT                                     -->
+<!-- ════════════════════════════════════════════ -->
+<div class="sec">
+    <h2>Le concept <span class="accent">retrofit</span></h2>
+    <p>Genesis v1.0 bootstrap des projets <strong>neufs</strong>. Mais les projets existants ont d&eacute;j&agrave; git, SSH, un repo&hellip; ce qu'il leur manque, c'est l'architecture m&eacute;moire et les r&egrave;gles de session. Le mode retrofit (v1.1+) d&eacute;tecte l'existant et comble les trous :</p>
+
+    <div class="retro-grid">
+        <div class="retro-card">
+            <div class="name">aurum-ai</div>
+            <div class="status has">git &#10003; &nbsp; SSH &#10003; &nbsp; memory &#10003;</div>
+            <div class="detail">Manque : r&egrave;gles R1-R10, research cache, journal/, pepites/, sessions/</div>
+        </div>
+        <div class="retro-card">
+            <div class="name">myconciergerie</div>
+            <div class="status need">&#192; analyser</div>
+            <div class="detail">D&eacute;pend de l'&eacute;tat actuel. Full bootstrap ou retrofit partiel.</div>
+        </div>
+        <div class="retro-card">
+            <div class="name">cyrano</div>
+            <div class="status need">Dual-path</div>
+            <div class="detail">Existe &agrave; 2 chemins (Claude_cowork + AntiGravity). Unification via Meta-Memory Layer 1.</div>
+        </div>
+    </div>
+</div>
+
+<!-- ════════════════════════════════════════════ -->
+<!-- MIXED MEDIA + PROMPTOR                       -->
+<!-- ════════════════════════════════════════════ -->
+<div class="sec">
+    <h2>Le dossier de d&eacute;part = <span class="accent">tout ce qui d&eacute;crit ton projet</span></h2>
+    <p>Genesis ne se limite pas &agrave; un fichier texte. Phase 0 analyse <strong>tout le contenu du dossier</strong> :</p>
+
+    <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin:24px 0;">
+        <div style="background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); border-radius:10px; padding:16px; text-align:center;">
+            <div style="font-size:28px; margin-bottom:6px;">&#128196;</div>
+            <div style="font-size:13px; font-weight:600; color:#f8fafc;">config.txt</div>
+            <div style="font-size:11px; color:#64748b; margin-top:4px;">Id&eacute;e, stack, objectif</div>
+        </div>
+        <div style="background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); border-radius:10px; padding:16px; text-align:center;">
+            <div style="font-size:28px; margin-bottom:6px;">&#128247;</div>
+            <div style="font-size:13px; font-weight:600; color:#f8fafc;">Photos</div>
+            <div style="font-size:11px; color:#64748b; margin-top:4px;">Claude voit les images</div>
+        </div>
+        <div style="background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); border-radius:10px; padding:16px; text-align:center;">
+            <div style="font-size:28px; margin-bottom:6px;">&#128206;</div>
+            <div style="font-size:13px; font-weight:600; color:#f8fafc;">PDFs</div>
+            <div style="font-size:11px; color:#64748b; margin-top:4px;">Menus, tarifs, briefs</div>
+        </div>
+        <div style="background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); border-radius:10px; padding:16px; text-align:center;">
+            <div style="font-size:28px; margin-bottom:6px;">&#128279;</div>
+            <div style="font-size:13px; font-weight:600; color:#f8fafc;">URLs</div>
+            <div style="font-size:11px; color:#64748b; margin-top:4px;">R&eacute;f&eacute;rences, concurrence</div>
+        </div>
+    </div>
+
+    <p><strong>Un restaurateur</strong> met son menu.pdf + les photos de ses chambres + 3 lignes de config.txt. <strong>Un prof</strong> met sa grille tarifaire + son planning. <strong>Un d&eacute;veloppeur</strong> met un cahier des charges complet. Genesis s'adapte au volume et &agrave; la richesse du seed.</p>
+
+    <div class="qblock">
+        <div class="q">Et si le user ne sait pas quoi &eacute;crire ?</div>
+        <div class="a"><strong>Concept Promptor (v1.2)</strong> &mdash; int&eacute;grer une interview guid&eacute;e dans Phase 0 quand le dossier est vide ou le config.txt trop maigre. Inspir&eacute; de <a href="file:///C:/Dev/Promptor/promptor.txt" style="color:#f59e0b;">Promptor</a>, un outil de reverse prompt engineering qui aide &agrave; structurer ses id&eacute;es par questions successives. Le power user qui arrive avec un config.txt complet skip tout &ccedil;a automatiquement &mdash; z&eacute;ro friction ajout&eacute;e.</div>
+    </div>
+</div>
+
+<!-- ════════════════════════════════════════════ -->
+<!-- LE PLAN                                      -->
+<!-- ════════════════════════════════════════════ -->
+<div class="sec">
+    <h2>Le <span class="accent">plan</span></h2>
+
+    <div class="timeline">
+        <div class="tl-item now">
+            <div class="version">v1.0.0 &mdash; Aujourd'hui</div>
+            <div class="desc"><strong>Ship.</strong> Tag. Release GitHub. Beta testers invit&eacute;s. Aurum freeze lev&eacute;. Hook SessionEnd wir&eacute;.</div>
+        </div>
+        <div class="tl-item next">
+            <div class="version">v1.1 &mdash; Self-dogfood</div>
+            <div class="desc"><strong>Genesis se mouline lui-m&ecirc;me.</strong> Premi&egrave;re ex&eacute;cution r&eacute;elle du protocole. Frictions captur&eacute;es. Hook valid&eacute;. Feedback beta int&eacute;gr&eacute;.</div>
+        </div>
+        <div class="tl-item next">
+            <div class="version">v1.2 &mdash; Projets r&eacute;els</div>
+            <div class="desc"><strong>Mode retrofit + premiers vrais projets.</strong> Aurum v1 kickoff via Genesis. Meta-Memory bootstrap. myconciergerie retrofit.</div>
+        </div>
+        <div class="tl-item later">
+            <div class="version">v2 &mdash; Marketplace</div>
+            <div class="desc">Soumission &agrave; la marketplace Anthropic officielle. Automation navigateur via Playwright.</div>
+        </div>
+    </div>
+</div>
+
+<!-- ════════════════════════════════════════════ -->
+<!-- LE STRANGE LOOP                              -->
+<!-- ════════════════════════════════════════════ -->
+<div class="quote">
+    <p>&laquo;&nbsp;Le premier compilateur C a &eacute;t&eacute; &eacute;crit en assembleur, r&eacute;&eacute;crit en C, puis compil&eacute; par lui-m&ecirc;me. Chaque compilateur C depuis 1971 se compile. Genesis suit le m&ecirc;me mouvement.&nbsp;&raquo;</p>
+    <div class="attr">&mdash; memory/master.md, la m&eacute;taphore Hofstadter qui guide le projet depuis le jour 1</div>
+</div>
+
+<!-- ════════════════════════════════════════════ -->
+<!-- CE QUI A ÉTÉ SHIPPÉ                        -->
+<!-- ════════════════════════════════════════════ -->
+<div class="sec">
+    <h2>Ce qui a &eacute;t&eacute; <span class="accent">shipp&eacute;</span> dans cette session</h2>
+
+    <div class="ship-grid">
+        <div class="ship-item">
+            <span class="check">&#10003;</span>
+            <span class="text"><strong>hooks.json</strong> &mdash; SessionEnd auto-archivage</span>
+        </div>
+        <div class="ship-item">
+            <span class="check">&#10003;</span>
+            <span class="text"><strong>plugin.json</strong> &mdash; version 1.0.0</span>
+        </div>
+        <div class="ship-item">
+            <span class="check">&#10003;</span>
+            <span class="text"><strong>Aurum freeze</strong> &mdash; lev&eacute; apr&egrave;s 2 jours</span>
+        </div>
+        <div class="ship-item">
+            <span class="check">&#10003;</span>
+            <span class="text"><strong>CHANGELOG</strong> &mdash; 9.0/10 self-rating</span>
+        </div>
+        <div class="ship-item">
+            <span class="check">&#10003;</span>
+            <span class="text"><strong>Tag v1.0.0</strong> &mdash; push&eacute; sur origin</span>
+        </div>
+        <div class="ship-item">
+            <span class="check">&#10003;</span>
+            <span class="text"><strong>GitHub Release</strong> &mdash; publi&eacute;e</span>
+        </div>
+        <div class="ship-item">
+            <span class="check">&#10003;</span>
+            <span class="text"><strong>Beta invite</strong> &mdash; HTML pr&ecirc;t &agrave; envoyer</span>
+        </div>
+        <div class="ship-item">
+            <span class="check">&#10003;</span>
+            <span class="text"><strong>Resume prompt</strong> &mdash; v1.1 self-dogfood</span>
+        </div>
+    </div>
+</div>
+
+<!-- ════════════════════════════════════════════ -->
+<!-- STATS FINALES                                -->
+<!-- ════════════════════════════════════════════ -->
+<div class="sec">
+    <h2>Les <span class="accent">chiffres</span></h2>
+
+    <div class="stats-bar">
+        <div class="stat">
+            <div class="num">10</div>
+            <div class="lbl">Sessions</div>
+        </div>
+        <div class="stat">
+            <div class="num">2</div>
+            <div class="lbl">Jours</div>
+        </div>
+        <div class="stat">
+            <div class="num">6</div>
+            <div class="lbl">Skills</div>
+        </div>
+        <div class="stat">
+            <div class="num">7</div>
+            <div class="lbl">Phases</div>
+        </div>
+        <div class="stat">
+            <div class="num">8.59</div>
+            <div class="lbl">Avg /10</div>
+        </div>
+        <div class="stat">
+            <div class="num">19</div>
+            <div class="lbl">PRs merg&eacute;s</div>
+        </div>
+    </div>
+
+    <p style="text-align:center; font-size:14px; color:#64748b;">Chaque version auto-&eacute;valu&eacute;e sur 5 axes : utilit&eacute; pain-driven, clart&eacute; prose, modernit&eacute; best-at-date, autonomie self-contained, minimalisme anti-Frankenstein. La cible &eacute;tait 8.5/10. Atteinte avec 0.09 de marge &mdash; pas par perfectionnisme, mais par discipline de ship.</p>
+</div>
+
+<!-- ════════════════════════════════════════════ -->
+<!-- FOOTER                                       -->
+<!-- ════════════════════════════════════════════ -->
+<div class="foot">
+    <p><strong>Project Genesis v1.0.0</strong> &mdash; MIT License &mdash; 16 avril 2026</p>
+    <p>Repo : <a href="https://github.com/myconciergerie-prog/project-genesis">github.com/myconciergerie-prog/project-genesis</a></p>
+    <p style="margin-top:12px; font-size:11px;">Construit en 10 sessions avec Claude Code (Opus 4.6, 1M context) &mdash; le compilateur qui se compile lui-m&ecirc;me.</p>
+</div>
+
+</div><!-- .wrap -->
+</body>
+</html>
