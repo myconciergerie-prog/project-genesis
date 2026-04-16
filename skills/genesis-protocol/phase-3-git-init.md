@@ -18,18 +18,66 @@ Phase 3 handles the git plumbing (plumbing = low-level git mechanics); Phase 4 h
 
 - Phase 1 + Phase 2 are complete — `memory/MEMORY.md`, `CLAUDE.md`, rules, research cache INDEX are all present.
 - `memory/project/bootstrap_intent.md` exists (Phase 0 output) with the project slug, vision, license, is-a-plugin flag, plan tier, scope locks.
-- The target folder does **not yet** contain `.git/`. If it does, Phase 3 stops and asks whether the user meant to resume a partial bootstrap (in which case the orchestrator re-reads the intent and skips to the next incomplete phase).
+- The target folder is **not inside any existing git repository**. This is stricter than "no `.git/` in the target": it also rejects targets nested inside a parent repo that owns an outer `.git/` (as v1.2.0 strange-loop self-dogfood reproduced — friction F30). The check is `git -C "<target>" rev-parse --show-toplevel 2>/dev/null`:
+  - non-zero exit → target is outside any repo → proceed with Step 3.1;
+  - exit 0 + output == target absolute path → target is already a repo root (possibly from a partial bootstrap resume) → ask the user whether to resume;
+  - exit 0 + output != target absolute path → target is nested inside `<output>` → STOP (see Step 3.1 halt template).
 
 ## Phase 3 — The flow
 
 ### Step 3.1 — `git init` in the target folder
 
-Run `git init` inside the target folder. Use `git init -b main` so the default branch is `main` (aligns with R2, the canonical main branch for all Genesis-bootstrapped projects).
+**Pre-init probe** (mandatory since v1.2.1 — added after friction F30 proved the old literal `.git/` check let nested-repo bootstraps slip through silently):
+
+```bash
+outer="$(git -C "<target>" rev-parse --show-toplevel 2>/dev/null)"
+target_abs="$(cd "<target>" && pwd)"
+```
+
+Three-way dispatch:
+
+| `outer` | Interpretation | Action |
+|---|---|---|
+| empty (command exited non-zero) | Target is outside any git repo | Proceed with `git init -b main` |
+| `$target_abs` | Target is already a repo root | Ask: "Resume partial bootstrap? (yes / abort)" — on yes, skip `git init` and advance; on abort, exit |
+| any other path | Target is **nested inside** the outer repo | **STOP — do not `git init`** (see halt template below) |
+
+**Halt template for the nested case** (fill in `<outer>` and `<target>` from the probe above):
+
+```
+❌ Phase 3 Step 3.1 — nested git repository refused
+
+Target folder:  <target>
+Outer repo:     <outer>  (git rev-parse --show-toplevel reports this)
+
+`git init` inside an existing repository would create a nested repo, which
+breaks: push flow (wrong remote), PR lifecycle (wrong repo), worktree
+archive, and every downstream assumption Phase 3 / 5.5 / 6 make about the
+project being its own root.
+
+Recommended fix: pick a sibling directory OUTSIDE the outer repo.
+Example: instead of
+    <outer>/sub/path/<target-basename>/
+use
+    <parent-of-outer>/<target-basename>/
+
+If you intentionally want a nested-bootstrap workflow, that is a v2
+candidate and currently not supported by the orchestrator.
+```
+
+**On the happy path** (outer is empty), run:
+
+```bash
+git -C "<target>" init -b main
+```
+
+`-b main` makes the default branch `main` (aligns with R2, the canonical main branch for all Genesis-bootstrapped projects).
 
 After init, confirm:
 
-- `.git/` exists
-- `git config --local init.defaultBranch` returns `main` OR `git branch --show-current` returns `main` after the first commit
+- `.git/` exists inside the target
+- `git -C "<target>" rev-parse --show-toplevel` now returns `$target_abs`
+- `git -C "<target>" config --local init.defaultBranch` returns `main` OR `git -C "<target>" branch --show-current` returns `main` after the first commit
 
 ### Step 3.2 — Generate the per-project SSH identity
 
@@ -291,6 +339,7 @@ Phase 3 + Phase 4 are complete when:
 
 - **`ssh -T` fails after pushing the key** — 30s propagation delay, retry once, then stop if still failing
 - **`~/.ssh/config` has conflicting `Host github.com-*` blocks from earlier projects** — do not auto-merge. Ask the user, append the new block, and verify the new alias works
+- **Target folder is nested inside an existing repo (no `.git/` in target, but `git rev-parse --show-toplevel` returns an outer path)** — stop. Nested-repo bootstraps are structurally unsupported (see Step 3.1). Recommend a sibling directory outside the outer repo. Never `git init` in this case. Friction F30 from 2026-04-17 self-dogfood documents the failure mode — the literal `.git/` check at earlier versions did not catch the worktree-as-subdir case
 - **Target folder contains a stale `.git/`** — stop, ask whether the user wanted to resume a partial bootstrap. Never blow away a `.git/` directory silently
 - **`is-a-plugin: yes` but `plugin.json` already exists in the target folder** — stop, surface the situation, ask the user whether to keep the existing manifest or overwrite
 - **Scope lock target repo does not exist on the machine** — warn but do not block. The lock is a rule, not a verification target
