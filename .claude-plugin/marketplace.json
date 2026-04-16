@@ -1,0 +1,18 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "project-genesis-marketplace",
+  "description": "Project Genesis — bootstrap any project with a 7-phase protocol",
+  "owner": {
+    "name": "myconciergerie-prog",
+    "email": "myconciergerie@gmail.com"
+  },
+  "plugins": [
+    {
+      "name": "project-genesis",
+      "description": "Bootstrap any project from an idea to a GitHub repo via a 7-phase protocol. One OAuth click, zero SSH, zero config files.",
+      "category": "development",
+      "source": ".",
+      "homepage": "https://github.com/myconciergerie-prog/project-genesis"
+    }
+  ]
+}
