@@ -24,7 +24,7 @@ The orchestrator does **not** reimplement any of the five shipped Genesis skills
   - "genesis bootstrap"
 - The user is sitting inside an **empty or near-empty project folder** that contains a `config.txt` seed (or is about to create one).
 
-**Do not auto-run.** The orchestrator touches git, creates SSH keys, creates PATs, creates a GitHub repo, and writes files into a new project directory. Every single one of those is a concentrated privilege. The first action is always a top-level consent card showing the full plan before any phase starts.
+**Do not auto-run.** The orchestrator touches git, creates SSH keys, creates PATs, creates a GitHub repo, and writes files into a new project directory. Every single one of those is a concentrated privilege. The first action is always a top-level consent card showing the full plan before any phase starts. **Two paradox guards run before the card** (target-inside-orchestrator-tree and self-collision-slug) — structural stops added in v1.2.1 after the v1.2.0 strange-loop self-dogfood proved a user could create a nested repo or a colliding GitHub name by accident.
 
 ## Prerequisites
 
@@ -116,7 +116,52 @@ The user must confirm the full card before Phase 0 starts. No silent bootstraps.
 
 The orchestrator is a strict sequence. It never runs phases in parallel. It never skips ahead on optimism.
 
-1. **Step 0 — Top-level consent card**. Render the full plan, collect every field listed in the "concentrated privilege" section. Wait for explicit yes. If no, exit cleanly.
+1. **Step 0 — Paradox guards + top-level consent card**. Before rendering the consent card, run two structural pre-checks (a v1.2.1 defensive layer against conscious-strange-loop targets that surfaced as frictions F23 + F27 in the 2026-04-17 self-dogfood).
+
+   - **Guard A — target-inside-orchestrator-tree (F23)**: compute the orchestrator plugin root as three levels above this `SKILL.md` file's absolute path (same walk used by `phase-1-rules-memory.md` Step 1.3 fallback). If the target absolute path starts with the orchestrator plugin-root absolute path, **STOP** with:
+
+     ```
+     ❌ Step 0 Guard A — target is inside the Genesis plugin tree
+
+     Target:         <target>
+     Plugin root:    <orchestrator-plugin-root>
+
+     The orchestrator refuses to bootstrap a project inside its own
+     plugin tree — every phase would corrupt the plugin's state (Phase 3
+     git init nested, Phase 5.5 repo name collision, Phase 6 push to
+     wrong origin).
+
+     Recommended target: a sibling directory outside the plugin repo.
+     Example: C:/Dev/Claude_cowork/<your-project>/
+
+     Override (not recommended): there is no --allow-nested flag in
+     v1.2.1. If you truly need this, create a directory outside the
+     plugin and start over.
+     ```
+
+   - **Guard B — self-collision slug (F27)**: after the planned slug is resolved (either from `config.txt` at Phase 0.2 or derived from target folder name at the consent card), compare against the structural-stop list:
+
+     - `project-genesis` (literal orchestrator slug)
+     - the value of `"name"` in `<plugin-root>/.claude-plugin/plugin.json`, when that file resolves
+
+     If the target slug matches any entry, **STOP** with:
+
+     ```
+     ❌ Step 0 Guard B — slug collision with orchestrator itself
+
+     Proposed slug:  <slug>
+     Collides with:  <reserved>
+
+     Bootstrapping with the orchestrator's own slug would collide at
+     Phase 5.5 when Genesis tries to 'gh repo create <owner>/<slug>' —
+     the repo already exists. The strange-loop target is refused for
+     safety.
+
+     Pick a differentiated slug: append '-selfdogfood', '-test', a date
+     stamp, or rename the project. Edit config.txt and re-invoke.
+     ```
+
+   If both guards pass, render the top-level consent card (the full plan, every field listed in the "concentrated privilege" section). Wait for explicit yes. If no, exit cleanly.
 2. **Phase -1** — invoke `phase-minus-one` unless skipped.
 3. **Phase 0** — run `phase-0-seed-loading.md`.
 4. **Phase 1** + **Phase 2** — run `phase-1-rules-memory.md`. Phase 1 lands the memory scaffold; Phase 2 lands the research cache INDEX and seed entries.
