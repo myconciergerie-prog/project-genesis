@@ -1,106 +1,147 @@
 <!-- SPDX-License-Identifier: MIT -->
 ---
 name: Resume prompt — 2026-04-16 v1.1.0 → v1.2 dogfood toward v2
-description: Handoff from the v1.1 self-dogfood session to the next session. v1.1 demolished the auth wall and produced the v2 Promptor fusion vision. v1.2 continues the dogfood with the proven auth path, then begins the conversational surface.
+description: Handoff from the v1.1 self-dogfood session. v1.2 tests Genesis on a REAL downstream project in a SEPARATE folder — Genesis must not know it's being tested. Two sessions needed, two separate Claude Code instances.
 type: resume
 previous_session: v1.1.0 self-dogfood (PR #20, tag v1.1.0)
-next_action: Complete the self-dogfood with v1.1 auth fix, then begin v2 conversational surface
+next_action: Bootstrap a real downstream project from a fresh folder, then bring findings back
 ---
 
 # Resume — 2026-04-16 v1.1.0 → v1.2 dogfood toward v2
 
 ## What v1.1 did
 
-The self-dogfood session ran the genesis-protocol against itself and hit the
-auth wall at Phase 3 Step 3.4. Instead of forcing completion, the session
-pivoted to analysis — producing the v2 vision and proving the CLI-first auth
-path. Key deliverables:
-
-- **Auth revolution proven**: `gh auth login --web` + `Start-Process` Chrome
-  Profile routing + `gh ssh-key add` + `gh repo create --push` = 1 OAuth click
-  instead of 6 manual browser steps. Tested end-to-end on this machine.
-- **v2 Vision spec**: `specs/v2_vision_promptor_fusion.md` — Promptor-style
-  conversational bootstrap, backed by 5 parallel research agents.
-- **18 frictions logged**: `memory/project/selfdogfood_friction_log_2026-04-16.md`
-- **4 feedback principles** at workspace level: Victor test, security floor
-  honesty, execution tunnel vision, automation claim verification.
-- **Working auth path** documented at workspace level:
-  `~/.claude/projects/C--Dev-Claude-cowork/memory/feedback_gh_auth_working_path.md`
+Auth wall demolished. 6 manual browser steps → 1 OAuth click.
+v2 Promptor fusion vision produced. 18 frictions logged. 4 principles gravés.
+See `memory/project/session_v1_1_selfdogfood.md` for full details.
 
 ## Current state
 
-- Repo: `myconciergerie-prog/project-genesis` on main @ v1.1.0
-- git status: clean
-- All pushed, all synced
-- `genesis-selfdogfood` standalone repo: DELETED (paradox resolved —
-  self-dogfood is a branch of project-genesis, not a separate repo)
-- `gh auth`: `myconciergerie-prog` active with OAuth scopes
-  `repo,workflow,read:org,admin:public_key`
-- SSH: `github.com-genesis-selfdogfood` alias exists in `~/.ssh/config`
-  (can be cleaned up or left — not harmful)
+- Repo: `myconciergerie-prog/project-genesis` on main, tag v1.1.0
+- git status: clean, all pushed
+- `gh auth`: `myconciergerie-prog` active (OAuth, all scopes)
 
-## What v1.2 needs to do — TWO PHASES
+## CRITICAL — How v1.2 dogfood MUST be structured
 
-### Phase A — Complete the dogfood (v1.2.0)
+### The paradox lesson from v1.1
 
-Re-run the genesis-protocol with the v1.1 auth fix on a REAL downstream
-project (not Genesis itself — that was the paradox). Pick a simple project
-idea and bootstrap it end-to-end:
+v1.1 ran Genesis on itself from inside project-genesis/. This caused:
+- Standalone repo paradox (had to delete genesis-selfdogfood)
+- Genesis "knew" it was self-testing (contaminated the test)
+- Deployment confusion (which repo is the real one?)
 
-1. Create an empty folder with a `config.txt`
-2. Run the full 7-phase protocol using the v1.1 CLI-first auth
-3. Verify: repo on GitHub, v0.1.0 tagged, all probes GREEN
-4. Log any NEW frictions (the 18 from v1.1 should be resolved)
-5. If clean → v1.2.0 tagged as "first successful downstream bootstrap"
+### The correct structure for v1.2
 
-Suggested test project: something simple and real — not another self-reference.
-Ask the user what they want to bootstrap.
+**TWO separate Claude Code sessions. TWO separate folders. Genesis does not know it's being tested.**
 
-### Phase B — Begin v2 surface (v1.3+)
+```
+SESSION 1 — The user bootstrapping a new project
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+WHERE:   Open Claude Code in C:\Dev\Claude_cowork\<new-project>\
+         (an EMPTY folder at the ROOT of Claude_cowork, sibling
+         to project-genesis, NOT inside it)
 
-With the protocol proven end-to-end, begin implementing the conversational
-surface from `specs/v2_vision_promptor_fusion.md`:
+WHAT:    Write a config.txt describing a simple real project.
+         Then say "bootstrap this project" or "lance genesis".
+         Genesis runs as a PLUGIN — the user is a user, not a tester.
 
-1. Replace `config.txt` with a conversation (Etape 1 — L'Etincelle)
-   - 2-3 natural language questions
-   - Derive slug, license, plugin flag from answers
-   - The meta-question: "Tu veux decider ou je decide ?"
-2. Replace consent cards with a progress stream (Etape 2 — La Creation)
-   - "Je prepare ton espace..." / "Je connecte a GitHub..." / "C'est pret!"
-3. Add the mirror step (Etape 3 — Le Miroir)
-   - Show what was created, ask if adjustments needed
+AUTH:    The FULL auth flow must execute:
+         - gh auth login --web (even if already authenticated —
+           the protocol must handle "already logged in" gracefully)
+         - SSH keygen for the new project
+         - gh ssh-key add
+         - gh repo create
+         This tests the v1.1 auth fix for real.
 
-The UX toolkit research is in:
-- `research/sota/zero-friction-bootstrap-ux_2026-04-16.md`
-- `research/sota/gh-cli-single-click-auth_2026-04-16.md`
+END:     The new project is on GitHub, v0.1.0 tagged, 3 probes GREEN.
+         The new project has its OWN memory/, rules, research cache.
+         Session closes with ITS OWN resume prompt inside the new project.
 
-Key tools identified: @clack/prompts for wizard skeleton, Charm Gum for
-beautiful prompts, cli-spinners for progress, terminal bell for completion.
+NOTE:    DO NOT open project-genesis during this session.
+         DO NOT reference the friction log.
+         DO NOT mention "dogfood" or "testing".
+         Be a user. Experience the protocol as Victor would.
+         Note frictions as they happen — in your head, not in project-genesis.
 
-## Files to read at session open
 
-1. `memory/MEMORY.md` (index)
-2. `memory/master.md` (stable vision)
-3. `memory/project/session_v1_1_selfdogfood.md` (what just happened)
-4. `specs/v2_vision_promptor_fusion.md` (where we're going)
-5. `memory/project/selfdogfood_friction_log_2026-04-16.md` (what to NOT repeat)
-6. This resume prompt
+SESSION 2 — Bringing findings back to Genesis
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+WHERE:   Open Claude Code in C:\Dev\Claude_cowork\project-genesis\
 
-## Feedback principles to load from workspace memory
+WHAT:    Report what happened in Session 1.
+         - New frictions found (or "zero new frictions" if clean)
+         - Auth flow outcome (did the v1.1 path work without surprises?)
+         - Anything that surprised a "first-time user"
+         - Update friction log if needed
+         - Tag v1.2.0 if the downstream bootstrap was clean
 
-At `~/.claude/projects/C--Dev-Claude-cowork/memory/`:
-- `feedback_victor_test.md` — every step must pass the 77-year-old threshold
-- `feedback_security_floor_honesty.md` — 5 true categories, rest is artefact
-- `feedback_execution_tunnel_vision.md` — friction IS the finding
-- `feedback_automation_claim_verification.md` — prove X works before claiming X
-- `feedback_gh_auth_working_path.md` — the exact auth sequence that works
+THEN:    Begin Phase B — the v2 conversational surface.
+         Read specs/v2_vision_promptor_fusion.md and start implementing.
+```
 
-## Exact phrase for the next session
+### Why two sessions matter
 
-Open Claude Code in `C:\Dev\Claude_cowork\project-genesis\` and say:
+| Single session (WRONG) | Two sessions (RIGHT) |
+|---|---|
+| Genesis sees its own code and memory | Genesis sees only the new project |
+| Auth is pre-configured, shortcuts happen | Auth runs fresh, tests the real flow |
+| Frictions get "fixed live" instead of logged | Frictions are experienced, then reported |
+| The downstream project is entangled with Genesis | The downstream project is independent |
+| Deployment confusion (which repo?) | Clean: one repo per project |
 
-    On continue le dogfood Genesis. v1.1 a prouve le chemin auth CLI-first.
-    Lis le resume v1.1→v1.2 et la vision v2. Phase A : bootstrap un vrai
-    projet downstream end-to-end avec le protocole corrige. Phase B : on
-    commence la surface conversationnelle Promptor. Propose un projet test
-    simple et reel pour Phase A.
+## Suggested test project for Session 1
+
+Something simple, real, NOT a developer tool:
+- A recipe collection app
+- A neighborhood event board
+- A personal finance tracker ("Mon Budget" — the Victor example)
+- A reading list / book notes app
+
+Ask the user to pick or propose. The project must be real enough that
+it would survive beyond the test — not a throwaway.
+
+## Auth pre-check before Session 1
+
+Before opening Claude Code in the new folder, verify:
+```bash
+gh auth status
+# Should show myconciergerie-prog as active
+# If not: the auth flow in Session 1 will handle it — that's the test
+```
+
+Also verify Genesis plugin is installable:
+```bash
+# In any Claude Code session:
+/plugin install project-genesis@myconciergerie-prog/project-genesis
+```
+
+If the plugin install doesn't work, Session 1 falls back to
+manual skill invocation (reading the SKILL.md files directly).
+Either path is a valid dogfood.
+
+## Files to read at Session 2 open (NOT Session 1)
+
+1. `memory/MEMORY.md`
+2. `memory/master.md`
+3. `specs/v2_vision_promptor_fusion.md`
+4. `memory/project/selfdogfood_friction_log_2026-04-16.md`
+5. This resume prompt
+6. Whatever the Session 1 user noted as frictions
+
+## Exact phrases
+
+**Session 1** — open Claude Code in `C:\Dev\Claude_cowork\<new-project>\` :
+
+    J'ai une idee de projet. (puis decrire l'idee naturellement)
+
+That's it. No mention of Genesis, no "lance le protocole", no technical
+language. If Genesis is installed as a plugin, it should recognize the
+trigger and propose to bootstrap. If not, the user says "bootstrap this
+project" and Genesis activates.
+
+**Session 2** — open Claude Code in `C:\Dev\Claude_cowork\project-genesis\` :
+
+    Je reviens du dogfood v1.2. J'ai bootstrappé <nom-du-projet> dans
+    un dossier séparé. Voilà ce qui s'est passé : <findings>.
+    Lis le resume v1.1→v1.2 et on met à jour Genesis avec les résultats.
+    Puis on attaque Phase B — la surface conversationnelle v2.
