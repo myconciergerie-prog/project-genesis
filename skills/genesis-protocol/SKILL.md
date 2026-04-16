@@ -110,6 +110,7 @@ The user must confirm the full card before Phase 0 starts. No silent bootstraps.
 | `phase-6-commit-push.md` | Phase 6 + Phase 7 runbook — first commit + push + PR + merge + tag, resume prompt, session archive invocation |
 | `install-manifest.yaml` | Verification-only manifest (no dirs or files to create; confirms the five sibling skills exist) |
 | `verification.md` | Two-mode health card — post-install (sibling skills present) + post-action (7 phases green, downstream project bootstrapped) |
+| `rules/v1_rules.md` | Canonical R1-R10 rules template copied verbatim to the target's `.claude/docs/superpowers/rules/v1_rules.md` at Phase 1 Step 1.3. Relocated into the skill in v1.2.1 so the orchestrator works in personal-scope install (friction F29). |
 
 ## How the orchestrator runs — the ordered flow
 

@@ -60,9 +60,17 @@ Use `Write` to create the scaffold files listed above. Idempotent — if any sca
 
 ### Step 1.3 — Copy the rules
 
-Copy the canonical R1-R10 rules from the Genesis plugin's own `.claude/docs/superpowers/rules/v1_rules.md` to the target folder's `.claude/docs/superpowers/rules/v1_rules.md`.
+Copy the canonical R1-R10 rules template shipped inside this skill at `<skill_dir>/rules/v1_rules.md` to the target folder's `.claude/docs/superpowers/rules/v1_rules.md`. The *source* is skill-local (lives inside the Genesis plugin's `skills/genesis-protocol/` directory); the *destination* remains the conventional `<target>/.claude/docs/superpowers/rules/v1_rules.md` path — every Genesis-bootstrapped project keeps its rules under the standard Claude Code docs location.
 
-**Source resolution**: the orchestrator runs inside the Genesis plugin's own `skills/genesis-protocol/` directory. The plugin root is always three levels above this skill's `SKILL.md` file (walking up from `skills/genesis-protocol/SKILL.md` gives `skills/genesis-protocol/` → `skills/` → `<plugin-root>/`). From the plugin root, the rules file is at `<plugin-root>/.claude/docs/superpowers/rules/v1_rules.md`. The orchestrator reads the absolute path of the currently-executing `SKILL.md` and derives the plugin root deterministically — it never guesses or hardcodes `~/.claude/plugins/...`. This resolution rule is the same in dogfood mode (Genesis repo at `C:\Dev\...\project-genesis\`) and in marketplace-installed mode (`~/.claude/plugins/project-genesis/`), because the three-levels-up relationship holds in both layouts. Fallback: if the rules file is not found at the derived path, halt and surface the expected path in the error — do not silently try alternate locations.
+**Source resolution**: the canonical rules template lives inside this skill at `<skill_dir>/rules/v1_rules.md`, where `<skill_dir>` is the directory containing this skill's `SKILL.md`. The orchestrator derives `<skill_dir>` from the absolute path of the currently-executing `SKILL.md` and reads `rules/v1_rules.md` as a sibling file. This works in all three install modes:
+
+- **Dogfood / dev** — `<repo>/skills/genesis-protocol/SKILL.md` → `<repo>/skills/genesis-protocol/rules/v1_rules.md`
+- **Plugin-dir install** (`claude --plugin-dir <path>`) — `<plugin-dir>/skills/genesis-protocol/SKILL.md` → `<plugin-dir>/skills/genesis-protocol/rules/v1_rules.md`
+- **Personal-scope install** (`cp -r skills/ ~/.claude/skills/` per F18 workaround) — `~/.claude/skills/genesis-protocol/SKILL.md` → `~/.claude/skills/genesis-protocol/rules/v1_rules.md`
+
+**Fallback (legacy)**: if `<skill_dir>/rules/v1_rules.md` is not present — which can only happen if the skill was installed from a source earlier than v1.2.1 — look for the file at `<plugin-root>/.claude/docs/superpowers/rules/v1_rules.md` (three levels above this skill's `SKILL.md`). If neither path resolves, halt and surface BOTH expected paths in the error message. Do not silently skip the rules copy.
+
+**Why skill-local**: v1.2.0 self-dogfood reproduced F29 — the three-levels-up heuristic resolved to `~/.claude/` (which has no `.claude/docs/superpowers/rules/`) when Genesis was installed to personal scope. Making the skill self-contained (shipping `rules/v1_rules.md` inside the skill package) eliminates the install-mode coupling.
 
 **Adaptation**: the rules are mostly generic, but two sections are per-project:
 

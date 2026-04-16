@@ -55,7 +55,7 @@ This project inherits all universal rules, user profile, hard rules, workflow pa
 
 ## Pointers to dev-internal docs (not memory, but related)
 
-- `.claude/docs/superpowers/rules/v1_rules.md` — R1-R10 for this project (adapted from Aurum v1)
+- `skills/genesis-protocol/rules/v1_rules.md` — R1-R10 for this project (adapted from Aurum v1); relocated from `.claude/docs/superpowers/rules/` in v1.2.1 to make the `genesis-protocol` skill self-contained (friction F29)
 - `.claude/docs/superpowers/research/INDEX.md` — R8 research cache with TTL, 7 active entries as of bootstrap
 - `.claude/docs/superpowers/specs/` — design specs (4 v1 specs + 1 v2 spec captured during bootstrap)
 - `.claude/docs/superpowers/plans/` — implementation plans

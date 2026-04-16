@@ -44,7 +44,7 @@ The user framed it as a "strange loop" (Hofstadter). Compiler bootstrapping phil
 
 ## Rules
 
-Full rule set in `.claude/docs/superpowers/rules/v1_rules.md`. Adapted from Aurum v1 per the Étape 2 scoreboard:
+Full rule set in `skills/genesis-protocol/rules/v1_rules.md` (relocated in v1.2.1 from `.claude/docs/superpowers/rules/` so the `genesis-protocol` skill is self-contained — friction F29). Adapted from Aurum v1 per the Étape 2 scoreboard:
 
 - **KEEP intégral**: R2 (worktree & branch discipline)
 - **ADAPT**: R1 (session lifecycle, drop OVH deploy check), R3 (deploy = plugin version bump + marketplace manifest), R4 (memory — add `journal/` + `pepites/` dirs), R5 (dual-layer docs: plugin content at root, dev docs in `.claude/docs/superpowers/`), R6 (sub-agents only, drop R6.3 Managed Agents)
@@ -80,7 +80,7 @@ Genesis's project memory (this `memory/` directory plus `CLAUDE.md`) does **not*
 
 Concretely, the following are **owned by Layer 0**, not by this project: the user profile (identity, language, working style, AI stack); hard rules R2.1 worktree discipline, R9 language policy, additive auth, no-new-windows, async-mid-flow; workflow patterns (per-project SSH identity, `GH_TOKEN` env override, fine-grained PAT scope checklist, Chrome profile map); the journal system spec (6th memory type, trigger phrases, stratified format); the R8 research cache convention (TTL, sota/stack/archive split); the best-practice-at-date default and anti-Frankenstein discipline. Genesis's `CLAUDE.md` at the repo root is a short pointer file that names what Layer 0 provides and what lives project-locally — it is explicitly **not** a duplicate of Layer 0.
 
-Project-local additions Genesis **does** own: the v1 rules R1–R10 in `.claude/docs/superpowers/rules/v1_rules.md` (which inherit R8 and R9 from Layer 0 by reference and add R10 plugin conventions), the six shipped skills, the pépite discovery system (7th memory type, `memory/pepites/`), project-specific references (`memory/reference/ssh_genesis_identity.md`, `memory/reference/github_genesis_account.md`), and the scope lock rule for Aurum. Everything else defers up to Layer 0. This inheritance is the Meta-Memory Path C pattern confirmed as the primary path on 2026-04-15 and baked into Genesis v1 as the reference implementation — any project bootstrapped via the `genesis-protocol` skill inherits the same split.
+Project-local additions Genesis **does** own: the v1 rules R1–R10 in `skills/genesis-protocol/rules/v1_rules.md` (which inherit R8 and R9 from Layer 0 by reference and add R10 plugin conventions), the six shipped skills, the pépite discovery system (7th memory type, `memory/pepites/`), project-specific references (`memory/reference/ssh_genesis_identity.md`, `memory/reference/github_genesis_account.md`), and the scope lock rule for Aurum. Everything else defers up to Layer 0. This inheritance is the Meta-Memory Path C pattern confirmed as the primary path on 2026-04-15 and baked into Genesis v1 as the reference implementation — any project bootstrapped via the `genesis-protocol` skill inherits the same split.
 
 ## Cross-skill patterns — the three that emerged through v0.2 → v0.8
 

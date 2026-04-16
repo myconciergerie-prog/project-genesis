@@ -18,11 +18,13 @@ All universal rules, user profile, hard rules, workflow patterns, and machine-sp
 
 ### Rules
 
-Project-specific rules R1–R10 adapted for Genesis live at:
+Project-specific rules R1–R10 adapted for Genesis live **inside the `genesis-protocol` skill package** at:
 
 ```
-.claude/docs/superpowers/rules/v1_rules.md
+skills/genesis-protocol/rules/v1_rules.md
 ```
+
+This is the single canonical location. The skill is self-contained — it ships its own rules template so the plugin works in all three install modes (dogfood, `--plugin-dir`, personal-scope `~/.claude/skills/`). Relocated from `.claude/docs/superpowers/rules/` in v1.2.1 after friction F29 proved the old location broke personal-scope installs.
 
 These inherit R8 and R9 from Layer 0 by reference, drop R7 (multi-backend MCP BYO-AI — Aurum-runtime-specific), and add R10 (plugin conventions + self-rating discipline + SPDX headers + anti-Frankenstein gate + pépite discipline).
 
