@@ -35,6 +35,8 @@ This project inherits all universal rules, user profile, hard rules, workflow pa
 - [Aurum frozen scope lock](project/aurum_frozen_scope_lock.md) — hard rule that aurum-ai repo stays at `0b1de3d` until Genesis v1 ships; no aurum-ai commits / PRs / edits allowed in any Genesis session
 - [Session v1.1 selfdogfood — 2026-04-16](project/session_v1_1_selfdogfood.md) — first real genesis-protocol execution, hit auth wall at Phase 3.4, pivoted to analysis, produced v2 Promptor fusion vision (9.2/10)
 - [Self-dogfood friction log — 2026-04-16](project/selfdogfood_friction_log_2026-04-16.md) — 18 frictions (5 STRUCTURAL in auth), Victor test birth, Promptor fusion discovery, v2 vision trigger
+- [Session v1.2.0 self-dogfood — 2026-04-17](project/selfdogfood_friction_log_v1_2_0_2026-04-17.md) — conscious strange-loop self-dogfood, 14 new frictions (F20-F34), two pépite-worthy findings (F29 plugin-install broken + Promptor attribution correction), v2 Étape 0 drop-zone surfaced
+- [Session v1.2.1 paradox guards — 2026-04-17](project/session_v1_2_1_paradox_guards.md) — three P0 fixes from v1.2.0 landed surgically: F29 skill-self-contained rules, F30 git-aware nested-repo probe, F23+F27 Step 0 paradox guards. One follow-up commit for git-bash path normalization. v1.2.1 tagged
 
 ## Reference
 
@@ -55,7 +57,7 @@ This project inherits all universal rules, user profile, hard rules, workflow pa
 
 ## Pointers to dev-internal docs (not memory, but related)
 
-- `.claude/docs/superpowers/rules/v1_rules.md` — R1-R10 for this project (adapted from Aurum v1)
+- `skills/genesis-protocol/rules/v1_rules.md` — R1-R10 for this project (adapted from Aurum v1); relocated from `.claude/docs/superpowers/rules/` in v1.2.1 to make the `genesis-protocol` skill self-contained (friction F29)
 - `.claude/docs/superpowers/research/INDEX.md` — R8 research cache with TTL, 7 active entries as of bootstrap
 - `.claude/docs/superpowers/specs/` — design specs (4 v1 specs + 1 v2 spec captured during bootstrap)
 - `.claude/docs/superpowers/plans/` — implementation plans

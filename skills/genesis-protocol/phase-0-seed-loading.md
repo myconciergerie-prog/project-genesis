@@ -155,6 +155,7 @@ Phase 0 is complete when:
 - **Folder contains existing code** — stop, surface the situation, direct the user to the right skill (`phase-5-5-auth-preflight` for an existing project needing GitHub setup, `journal-system` for capturing reflections, etc.). Do not overwrite.
 - **Vision paragraph is empty in `config.txt` and user does not provide one during edit** — cannot proceed. Phase 1 and Phase 4 need the vision. Abort cleanly.
 - **Slug conflicts with an existing sibling project on this machine** — warn, suggest appending `-2` or editing `config.txt`. Do not auto-rename.
+- **Slug equals the orchestrator's own slug** (`project-genesis` or whatever the current plugin's `.claude-plugin/plugin.json` reports as `name`) — **structural stop, not a warning**. This is Guard B from `SKILL.md` Step 0 re-confirmed at Phase 0.2 in case the slug was derived rather than explicit. Halt with the Guard B message template. The user must pick a differentiated slug (e.g. append `-selfdogfood`, `-test`, a date stamp, or rename the project) before the orchestrator can continue. Added in v1.2.1 after friction F27.
 - **Mixed media file is too large to `Read` in one shot** — extract what fits, note the truncation in the intent card, ask the user whether to proceed or split.
 
 ## Anti-Frankenstein reminders

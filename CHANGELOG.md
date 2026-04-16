@@ -8,6 +8,42 @@ Every version bump includes a **5-axis self-rating block** per R10.3 discipline,
 
 ---
 
+## [1.2.1] — 2026-04-17 — "Paradox guards — F29 + F30 + F23/F27"
+
+### Added
+
+- `skills/genesis-protocol/rules/v1_rules.md` — canonical R1-R10 rules template now lives **inside the skill** (relocated from `.claude/docs/superpowers/rules/` via `git mv`, history preserved). Makes the skill self-contained across all three install modes: dogfood, `--plugin-dir`, and personal-scope `~/.claude/skills/` (fixes F29 — the install path that F18's workaround produces was silently broken pre-v1.2.1).
+- `memory/project/session_v1_2_1_paradox_guards.md` — session trace with four verification replays (F23 mental walk-through, F27 derivation, F30 scratch shell test, F29 on-disk check) and explicit deferral list for v1.2.2+.
+- `.claude/docs/superpowers/plans/2026-04-17-v1.2.1-paradox-guards.md` — implementation plan (subagent-driven-development discipline), retained as dev-internal artefact.
+
+### Changed
+
+- **F29 — path resolver rewritten** (`skills/genesis-protocol/phase-1-rules-memory.md` Step 1.3): canonical source now `<skill_dir>/rules/v1_rules.md`; legacy fallback at `<plugin-root>/.claude/docs/superpowers/rules/v1_rules.md` retained for pre-v1.2.1 installs; halt surfaces BOTH expected paths if neither resolves.
+- **F30 — Phase 3.1 git-aware probe** (`skills/genesis-protocol/phase-3-git-init.md`): literal `.git/` check replaced with `git -C "<target>" rev-parse --show-toplevel 2>/dev/null` three-way dispatch (outside-any-repo → proceed; target-is-own-root → resume prompt; nested-inside-outer → HALT with actionable sibling-directory recommendation). Prerequisites, Step 3.1, and Common Failures all updated in lockstep. A follow-up commit adds a git-bash path normalization note (MSYS returns `C:/...` while POSIX `pwd` returns `/c/...`).
+- **F23 + F27 — Step 0 paradox guards** (`skills/genesis-protocol/SKILL.md` + `phase-0-seed-loading.md`): two structural pre-checks added before the consent card renders. Guard A refuses targets inside the orchestrator plugin tree; Guard B refuses slugs colliding with `project-genesis` or the orchestrator's `plugin.json` name. No override flag in v1.2.1. Phase 0 Common Failures entry for slug collision upgraded from WARN to STRUCTURAL STOP for self-collision specifically.
+- `CLAUDE.md`, `memory/MEMORY.md`, `memory/master.md` — rules pointer path updated to the new skill-local location.
+- `.claude-plugin/plugin.json` — version bumped `1.2.0` → `1.2.1`.
+
+### Notes
+
+- **Four commits, narrow scope**: `c707023` (F29), `90c7777` (F30), `40a96e4` (F23+F27), `a53dd48` (F30 follow-up normalization note). Every other v1.2.0 finding — mode-auto orchestrator semantics (F20/F22), argument schema (F21), config.txt templates (F25/F31), cleanup skill (F28), Python driver (F32), R8 scope (F33), gh active-account pre-flight (F34) — explicitly deferred to v1.2.2+ and listed in the session trace.
+- **Target-side path unchanged**: every Genesis-bootstrapped downstream project continues to have its rules at `.claude/docs/superpowers/rules/v1_rules.md`. Only the source location inside the Genesis plugin moved.
+- **Verification was manual, not automated**: pure Markdown runbooks + scenario replays (per Option A pure-Markdown discipline from v0.8.0, reaffirmed in v1.2.0 meta-finding #5). F30 probe verified live against the v1.2.1 worktree itself (reproduced the nested-repo detection case).
+- **Strange-loop targets now refused by default**: the v1.2.0 exact configuration (`target = project-genesis/.claude/worktrees/*/selfdogfood-target/`) is blocked by Guard A before Phase 0 begins. The v2 candidate `--allow-nested-paradox` override remains deliberately unimplemented.
+
+### Self-rating — v1.2.1
+
+| Axis | Rating | Notes |
+|---|---|---|
+| Pain-driven coverage | 9.6/10 | Every fix maps 1:1 to a v1.2.0 friction with its exact reproducer. The F30 normalization follow-up emerged from live verification, not speculation. Zero speculative additions. |
+| Prose cleanliness | 9.0/10 | Each commit has a 3-paragraph narrative body. Halt templates are copy-paste-ready. Plan + session trace are self-contained documents. Minor deduction: the plan file is ≈ 550 lines — thorough but verbose, could be tighter. |
+| Best-at-date alignment | 8.8/10 | `git rev-parse --show-toplevel` is the standard git-aware probe. Path normalization note acknowledges the MSYS/POSIX split. No external R8 refresh needed — changes are skill-internal. |
+| Self-contained | 9.4/10 | F29 explicitly makes the skill more self-contained (the core purpose of that fix). Plan and session-trace are dev-internal, not shipped. One file relocated via `git mv` (history preserved). |
+| Anti-Frankenstein | 9.5/10 | No new runtime. No test harness. No config surface. No Python. Pure Markdown edits + one file rename. F32 (Python driver) explicitly deferred to v1.3 despite the "runbook ceiling" signal from v1.2.0 meta-finding #5. |
+| **Average** | **9.26/10** | New single-version high. Running average v0.2 → v1.2.1 = **8.65/10** (well above the 8.5 v1 target). |
+
+---
+
 ## [1.2.0] — 2026-04-17 — "The conscious strange loop — paradox surfaced"
 
 ### Added
