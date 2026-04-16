@@ -1,0 +1,196 @@
+# SPDX-License-Identifier: MIT
+# genesis-protocol / install-manifest.yaml
+#
+# The genesis-protocol skill is an orchestrator — it does NOT write
+# files into the downstream project at install time. Every file the
+# orchestrator creates during its run lands via one of the seven phases
+# (see SKILL.md and the phase-*.md runbooks). The install-manifest's
+# job is narrower: verify that the orchestrator's prerequisites are
+# satisfied and that the five sibling skills it composes are all
+# present under skills/ at the plugin root.
+#
+# Idempotent by construction: this manifest creates no files and
+# creates no directories. Running it repeatedly is a no-op. It only
+# reads and verifies.
+
+skill: genesis-protocol
+version: 0.8.0
+created_at: 2026-04-16
+
+dependencies:
+  runtime:
+    - name: none
+      rationale: |
+        Option A — pure Markdown skill. The orchestrator follows the
+        phase runbooks as natural language instructions. No Python, no
+        shell scripts, no external binaries. A Python driver is a
+        deferred v1.1 candidate.
+
+  sibling_skills:
+    - name: phase-minus-one
+      required: true
+      reason: Phase -1 of the 7-phase protocol
+      invoked_at: Phase -1 (inline via SKILL.md pointer)
+    - name: phase-5-5-auth-preflight
+      required: true
+      reason: Phase 5.5 of the 7-phase protocol (SSH + PAT + empty repo + 3-probe gate)
+      invoked_at: Phase 5.5 (via phase-5-5-auth.md pointer)
+    - name: journal-system
+      required: true
+      reason: 6th memory type installed into the downstream project at Phase 1
+      invoked_at: Phase 1 (install-manifest only; runtime invocation is user-driven in downstream sessions)
+    - name: session-post-processor
+      required: true
+      reason: Session JSONL archiver with halt-on-leak gate, invoked at Phase 7 to archive the bootstrap session
+      invoked_at: Phase 1 (install-manifest) + Phase 7 (runtime invocation to archive the bootstrap session)
+    - name: pepite-flagging
+      required: true
+      reason: 7th memory type installed into the downstream project at Phase 1
+      invoked_at: Phase 1 (install-manifest only; runtime detection is automatic during research operations in downstream sessions)
+
+targets:
+  # genesis-protocol creates nothing of its own at install time. It
+  # consumes the downstream project's filesystem via its phase
+  # runbooks, which are triggered when the user actually invokes the
+  # orchestrator. The install step is verification-only.
+  - path: (none)
+    kind: noop
+    idempotent: true
+    description: |
+      The orchestrator does not install any files or directories at
+      plugin install time. Every target it writes is created during
+      its runtime invocation, per the phase runbooks. This targets
+      entry is a placeholder to document the no-op intentionally.
+
+verification:
+  # Post-install verification: confirm the five sibling skills exist
+  # under skills/ at the plugin root. If any sibling is missing, the
+  # orchestrator cannot run and the install is RED.
+  - check: directory_exists
+    path: skills/phase-minus-one/
+    on_fail: |
+      skills/phase-minus-one/ is missing. The orchestrator cannot
+      invoke Phase -1 without this sibling skill. Install or restore
+      the phase-minus-one skill and re-run the genesis-protocol
+      install verification.
+
+  - check: file_exists
+    path: skills/phase-minus-one/SKILL.md
+    on_fail: |
+      skills/phase-minus-one/SKILL.md is missing. The sibling skill
+      directory exists but the SKILL.md entry point is absent. Fix
+      the sibling before the orchestrator can invoke it.
+
+  - check: directory_exists
+    path: skills/phase-5-5-auth-preflight/
+    on_fail: |
+      skills/phase-5-5-auth-preflight/ is missing. The orchestrator
+      cannot invoke Phase 5.5 without this sibling skill. Install or
+      restore the phase-5-5-auth-preflight skill and re-run.
+
+  - check: file_exists
+    path: skills/phase-5-5-auth-preflight/SKILL.md
+    on_fail: |
+      skills/phase-5-5-auth-preflight/SKILL.md is missing. Fix the
+      sibling before the orchestrator can invoke it.
+
+  - check: directory_exists
+    path: skills/journal-system/
+    on_fail: |
+      skills/journal-system/ is missing. The 6th memory type scaffold
+      cannot be installed into downstream projects at Phase 1. Fix
+      the sibling before invoking the orchestrator.
+
+  - check: file_exists
+    path: skills/journal-system/install-manifest.yaml
+    on_fail: |
+      skills/journal-system/install-manifest.yaml is missing. Phase 1
+      of the orchestrator invokes this manifest to seed the downstream
+      project's memory/journal/ directory. Fix the sibling.
+
+  - check: directory_exists
+    path: skills/session-post-processor/
+    on_fail: |
+      skills/session-post-processor/ is missing. The orchestrator
+      cannot archive the bootstrap session at Phase 7 without this
+      sibling skill. Fix the sibling.
+
+  - check: file_exists
+    path: skills/session-post-processor/SKILL.md
+    on_fail: |
+      skills/session-post-processor/SKILL.md is missing. Fix the
+      sibling before invoking the orchestrator.
+
+  - check: directory_exists
+    path: skills/pepite-flagging/
+    on_fail: |
+      skills/pepite-flagging/ is missing. The 7th memory type scaffold
+      cannot be installed into downstream projects at Phase 1. Fix
+      the sibling.
+
+  - check: file_exists
+    path: skills/pepite-flagging/install-manifest.yaml
+    on_fail: |
+      skills/pepite-flagging/install-manifest.yaml is missing. Phase 1
+      of the orchestrator invokes this manifest to seed the downstream
+      project's memory/pepites/ directory. Fix the sibling.
+
+  # Structural check on the orchestrator's own runbooks — if any phase
+  # runbook is missing, the orchestrator has been corrupted and cannot
+  # run. Fail loudly rather than running with a silent gap.
+  - check: file_exists
+    path: skills/genesis-protocol/SKILL.md
+    on_fail: |
+      skills/genesis-protocol/SKILL.md is missing. The orchestrator
+      entry point is corrupted. Restore from git before invoking.
+
+  - check: file_exists
+    path: skills/genesis-protocol/phase-0-seed-loading.md
+    on_fail: |
+      phase-0-seed-loading.md is missing. Phase 0 runbook corrupted.
+
+  - check: file_exists
+    path: skills/genesis-protocol/phase-1-rules-memory.md
+    on_fail: |
+      phase-1-rules-memory.md is missing. Phase 1+2 runbook corrupted.
+
+  - check: file_exists
+    path: skills/genesis-protocol/phase-3-git-init.md
+    on_fail: |
+      phase-3-git-init.md is missing. Phase 3+4 runbook corrupted.
+
+  - check: file_exists
+    path: skills/genesis-protocol/phase-5-5-auth.md
+    on_fail: |
+      phase-5-5-auth.md is missing. Phase 5.5 pointer corrupted.
+
+  - check: file_exists
+    path: skills/genesis-protocol/phase-6-commit-push.md
+    on_fail: |
+      phase-6-commit-push.md is missing. Phase 6+7 runbook corrupted.
+
+  - check: file_exists
+    path: skills/genesis-protocol/verification.md
+    on_fail: |
+      verification.md is missing. Post-install and post-action health
+      cards cannot be emitted. Restore from git.
+
+notes: |
+  This install step does NOT:
+    - Create any directories in the downstream project (the
+      orchestrator does that at runtime, one phase at a time)
+    - Invoke the five sibling install-manifests at install time (they
+      are invoked at orchestrator runtime during Phase 1)
+    - Write files of any kind
+    - Install Python packages or external binaries
+    - Register hooks in settings.json (hook wiring is deferred per R10)
+
+  Running this install verification is safe and idempotent — it is
+  read-only. The checks are designed to fail loudly if any sibling
+  skill is missing, because the orchestrator's value is composition
+  and a missing component means the composition is broken.
+
+  The version field (0.8.0) matches the plugin.json version bump at
+  the end of the v0.8.0 session. Future versions update both in lock
+  step: the orchestrator's install-manifest version tracks the plugin
+  release version, not the sibling versions.
