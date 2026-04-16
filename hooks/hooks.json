@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "SessionEnd": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "test -f skills/session-post-processor/run.py && python skills/session-post-processor/run.py --project-root . 2>/dev/null || true"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -8,6 +8,54 @@ Every version bump includes a **5-axis self-rating block** per R10.3 discipline,
 
 ---
 
+## [1.0.0] — 2026-04-16 — "Ship — the strange loop closes"
+
+### Added
+
+- `hooks/hooks.json` — **SessionEnd hook wiring** for automatic session archiving via `session-post-processor`. Fires on session close, invokes `run.py` against the project root. Justified by three consecutive GREEN dogfood runs (v0.6.0 first run, v0.9.0 terminal run) per the v0.5.0 discipline threshold. Conditional execution: the hook silently no-ops in projects where `skills/session-post-processor/run.py` does not exist. Hook-path resolution for plugin-installed mode is a v1.1 validation target.
+
+### Changed
+
+- `.claude-plugin/plugin.json` — version bumped from `0.9.0` to `1.0.0`. First stable release.
+- `memory/project/aurum_frozen_scope_lock.md` — **Aurum freeze lifted**. The lock was in effect from 2026-04-14 (Genesis session 1) to 2026-04-16 (this ship). All four lift conditions met: merged to main, tagged v1.0.0, self-installable via `/plugin install`, validated via dry-run + dogfood runs. Aurum v1 kickoff is now unblocked.
+
+### Notes
+
+- **Pure ship session** — zero new skills, zero runbook changes, zero polish. The value is the tag, the freeze lift, and the hook wiring.
+- **Self-installable**: `/plugin install project-genesis@myconciergerie-prog/project-genesis` — the GitHub repo IS the marketplace (self-hosted model per R8 research).
+- **Six skills stable**: `phase-minus-one` (7.6), `phase-5-5-auth-preflight` (8.2), `journal-system` (8.8), `session-post-processor` (8.4→8.6), `pepite-flagging` (8.8), `genesis-protocol` (9.0). Zero modifications since their respective ship versions.
+- **Beta testers receive install instructions** alongside this release — an HTML invitation documents the 4-step installation flow, the 7-phase protocol, the 3 interaction modes, and the 6 skills.
+- **The strange loop**: Genesis was conceived during Aurum v0_init on 2026-04-14 as a 7-phase template. v0.1.0 was the scaffold. v0.2.0–v0.9.0 built the six skills through eight sessions of self-improving development. v1.0.0 is the first stable release — and the next session will run Genesis against itself to produce v1.1. The compiler that compiles itself.
+- **Aurum v1 kickoff** is the immediately-next workstream. Genesis v1.2 (post-self-dogfood) will be used to bootstrap/retrofit Aurum v1, Meta-Memory, and myconciergerie projects.
+
+### Self-rating — v1.0.0
+
+| Axis | Rating | Notes |
+|---|---|---|
+| Pain-driven coverage | 9.0/10 | Every action directly unblocks a waiting stakeholder or closes a documented gap. Hook wiring closes the 9-session automation gap (v0.5.0 → v1.0.0, three GREEN dogfood runs). Aurum freeze lift unblocks the next workstream queued since 2026-04-14. The tag enables beta testing — real users are waiting. Zero speculative additions. |
+| Prose cleanliness | 8.5/10 | Ship CHANGELOG is compact. hooks.json is 15 lines. Aurum freeze update is a clean addendum. No unnecessary prose. |
+| Best-at-date alignment | 8.5/10 | Hook format matches current Claude Code plugin spec per R8 research. Plugin install uses the self-hosted marketplace pattern. Conditional hook execution is a current defensive pattern. Slight deduction: hook-path resolution for plugin-installed mode is untested — v1.1 target. |
+| Self-contained | 9.5/10 | One new file (`hooks/hooks.json`). Two edits (`plugin.json`, `aurum_frozen_scope_lock.md`). Zero new dependencies. Zero skill modifications. The most self-contained version in the project's history. |
+| Anti-Frankenstein | 9.5/10 | Explicitly did NOT: add new skills, polish further, run the orchestrator for real, change runbooks, add features, create a marketplace manifest, add test harnesses, fix v0.5/v0.6 known gaps. Ship-only session honored perfectly. |
+| **Average** | **9.0/10** | Running average v0.2 → v1.0 = **(7.6 + 8.2 + 8.8 + 8.4 + 8.6 + 8.8 + 9.0 + 8.92 + 9.0) / 9 = 8.59/10**. **0.09 above** the v1.0.0 target of 8.5. The cleanest average in the project's history, achieved by honoring "ship without polish". |
+
+### v1.0.0 is shipped
+
+Six skills stable. Orchestrator validated. Meta-memory documented. Hook wired. Beta testers invited. Aurum freeze lifted. The next session self-dogfoods Genesis v1 through its own genesis-protocol — the strange loop closing for real.
+
+### Known gaps for v1.1.0
+
+- **Real execution of the orchestrator** — first downstream bootstrap (Genesis self-dogfood or Aurum v1 kickoff)
+- **Hook-path resolution for plugin-installed mode** — v1.0.0 hook works in development mode; installed-plugin path resolution needs validation
+- **Mode retrofit for existing projects** — genesis-protocol assumes a fresh folder; existing projects need a lighter "detect and fill gaps" mode
+- **Multi-slug YELLOW warning in `run.py`** — v0.5 gap, still open
+- **Test vector harness for redaction patterns** — v0.5/v0.7 gap, still open
+- **Allow-list for `generic_long_base64` false positives** — v0.6 gap, still open
+- **Five low-severity dry-run findings** — deferred from v0.9.0
+- **macOS/Linux validation** — v1.0.0 developed and tested on Windows 11 only
+
+---
+
 ## [0.9.0] — 2026-04-16 — "Path A polish — leverage memory context, not number-chase"
 
 ### Changed

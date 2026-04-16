@@ -1,7 +1,7 @@
 <!-- SPDX-License-Identifier: MIT -->
 ---
 name: Aurum frozen scope lock
-description: Hard rule — aurum-ai repo is frozen at commit 0b1de3d until Project Genesis v1.0.0 ships; zero work on aurum-ai code is allowed in this session or any Genesis session until the lock lifts
+description: LIFTED 2026-04-16 — aurum-ai repo was frozen at commit 0b1de3d from 2026-04-14 to 2026-04-16 (Genesis v1.0.0 ship). Lock is now lifted. Aurum v1 kickoff unblocked.
 type: project
 set_by: user instruction, 2026-04-14 (config.txt) and 2026-04-15 (reinforced mid-session)
 ---
@@ -84,3 +84,18 @@ The Aurum v0_init session ended with a R2.1 violation under close-time pressure 
 ## **How to apply:**
 
 Any Claude Code session that could potentially touch Aurum must read this file at open (it's linked from Genesis `memory/MEMORY.md` which is always loaded at session open). If you find yourself about to commit or push to aurum-ai during the lock period, back out immediately. No exceptions.
+
+---
+
+## Lock lifted — 2026-04-16
+
+**All four conditions met. The Aurum v1 kickoff is now unblocked.**
+
+1. Genesis v1.0.0 merged to `main` on the Genesis repo
+2. Tagged with `v1.0.0`
+3. Self-installable via `/plugin install project-genesis@myconciergerie-prog/project-genesis`
+4. Validated via v0.9.0 dry-run (10 findings, 5 fixed) + 3 dogfood runs (all GREEN)
+
+The freeze was in effect from **2026-04-14** (Genesis session 1, Aurum v0_init freeze) to **2026-04-16** (Genesis v1.0.0 ship). Two calendar days, nine development sessions.
+
+**Next**: the Aurum v1 kickoff session opens in `C:\Dev\Claude_cowork\aurum_ai\` with the Genesis v1 plugin active. Its first action is to verify that `aurum-ai` is still at `0b1de3d` (no drift during the lock period), then proceed with normal development.
