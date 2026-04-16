@@ -15,6 +15,11 @@ Auth wall demolished. 6 manual browser steps → 1 OAuth click.
 v2 Promptor fusion vision produced. 18 frictions logged. 4 principles gravés.
 See `memory/project/session_v1_1_selfdogfood.md` for full details.
 
+**Late addition (end of v1.1 session):** 5 more research agents validated the
+Claude Cowork direction — Genesis stays the engine, Cowork becomes the vessel.
+Evolutionary path: v1.2 → v1.3 → v2 → v3. Full roadmap at workspace memory:
+`~/.claude/projects/C--Dev-Claude-cowork/memory/project_claude_cowork_roadmap.md`
+
 ## Current state
 
 - Repo: `myconciergerie-prog/project-genesis` on main, tag v1.1.0
