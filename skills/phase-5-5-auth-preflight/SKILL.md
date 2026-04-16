@@ -30,20 +30,41 @@ Full design rationale: `.claude/docs/superpowers/specs/v1_phase_5_5_auth_preflig
 - The user has a GitHub account (any tier) that owns — or will own — the target repository.
 - The user is signed into the correct Chrome profile for this project (per Layer 0 Chrome profile mapping). If unknown, the consent card asks.
 
-## The flow — six numbered steps
+## The flow — six numbered steps (v1.1 — CLI-first auth)
 
-Phase 5.5 is a six-step linear flow. Every step has an exit condition; no step is silent-failure.
+Phase 5.5 is a six-step linear flow. v1.1 replaces the browser-heavy v1.0 path with a CLI-first approach proven during the 2026-04-16 self-dogfood. User intervention reduced from 4 browser steps to 1 OAuth click + 2FA.
 
 | # | Step | Purpose | User intervention |
 |---|---|---|---|
-| 5.5.0 | Consent + scope card | Confirm which project, which GitHub owner, which PAT scopes, which Chrome profile | One prompt |
-| 5.5.1 | SSH keygen + alias | Generate dedicated ed25519 key, write `~/.ssh/config` alias, add public key to GitHub | Paste public key into web UI |
-| 5.5.2 | PAT walkthrough | Create fine-grained PAT with the canonical scope list (incl. Administration RW) | Fill the form, copy the token |
-| 5.5.3 | Empty repo create | Create the empty target repo via web UI (fine-grained PATs cannot create user repos via API) | Fill the form, click Create |
+| 5.5.0 | Consent + scope card | Confirm which project, which GitHub owner, which Chrome profile | One prompt |
+| 5.5.1 | OAuth login via `gh` | `gh auth login --web` with device flow, browser opened via `Start-Process` to correct Chrome profile | One click "Authorize" + 2FA code (true security floor) |
+| 5.5.2 | SSH keygen + `gh ssh-key add` | Generate dedicated ed25519 key, write `~/.ssh/config` alias, upload public key via CLI | None (fully automated) |
+| 5.5.3 | Repo create via `gh repo create` | Create private repo + set remote + push in one command | None (fully automated) |
 | 5.5.4 | Three-probe test | Run `ssh -T`, `gh api user`, `gh api repos/<owner>/<repo>`, gated exit | None if green |
 | 5.5.5 | Verification card | Render health card, write `memory/reference/github_<project>_account.md` + `memory/reference/ssh_<project>_identity.md` | Read the card |
 
-Steps 5.5.1–5.5.3 can each fall back to paste-back if Playwright MCP is not available (see `playwright-automation.md`). The three-probe test at 5.5.4 is the gate — if any probe fails, the skill stops and surfaces a targeted recovery for that single probe, then re-runs 5.5.4 only.
+**v1.1 auth path (proven 2026-04-16):**
+
+```bash
+# Step 5.5.1 — ONE user interaction (OAuth + 2FA)
+gh auth login --hostname github.com --web --git-protocol https \
+  --scopes "repo,workflow,read:org,admin:public_key" &
+# Open device auth URL in correct Chrome profile
+powershell -NoProfile -Command "Start-Process '<chrome-path>' \
+  -ArgumentList '--profile-directory=\"<profile>\"','https://github.com/login/device'"
+# Copy device code to clipboard
+echo -n "<code>" | clip.exe
+
+# Step 5.5.2 — zero interaction
+gh auth setup-git
+ssh-keygen -t ed25519 -f "$HOME/.ssh/id_ed25519_<slug>" -C "<slug>-genesis-bootstrap" -N ""
+gh ssh-key add "$HOME/.ssh/id_ed25519_<slug>.pub" --title "<slug>" --type authentication
+
+# Step 5.5.3 — zero interaction
+gh repo create <owner>/<repo> --private --source=. --remote=origin --push
+```
+
+Steps 5.5.2–5.5.3 require zero user intervention — they use the OAuth token from Step 5.5.1. The three-probe test at 5.5.4 is unchanged. Browser paste-back (`pat-walkthrough.md`, `empty-repo-create.md`, `playwright-automation.md`) remains as legacy fallback for environments where `gh` CLI is unavailable.
 
 ## Files in this skill
 
