@@ -62,10 +62,13 @@ Proceed with first commit?  (yes / inspect / abort)
 
 ### Step 6.2 — First commit
 
-Run:
+The commit message is multi-line and structured so `git log` on the downstream project shows an auditable trail of the bootstrap phases. Use a HEREDOC so the embedded newlines survive across shells — a `-m "..."` string with literal newlines works in bash but breaks in Windows `cmd` and requires backtick-escaping in PowerShell. HEREDOC works in bash, zsh, and git-bash on Windows; a file-backed fallback using `-F` works in every shell including `cmd` and PowerShell.
+
+**Preferred form (bash / zsh / git-bash on Windows)**:
 
 ```bash
-git -C <target_folder> commit -m "feat(bootstrap): initial Genesis bootstrap of <project name> [v0.1.0]
+git -C <target_folder> commit -m "$(cat <<'EOF'
+feat(bootstrap): initial Genesis bootstrap of <project name> [v0.1.0]
 
 Seeded via Project Genesis 7-phase protocol:
 - Phase -1 dependencies pre-flight
@@ -78,10 +81,19 @@ Seeded via Project Genesis 7-phase protocol:
 
 License: <license>
 Genesis version: <genesis_plugin_version>
-"
+EOF
+)"
 ```
 
-The commit message is multi-line and structured so `git log` on the downstream project shows an auditable trail of the bootstrap phases. No trailing `Co-Authored-By` line — the downstream project is user-owned, not co-authored by Claude.
+**Fallback form (any shell, including PowerShell and `cmd`)**: write the message to a temp file under `.git/` (git ignores everything under `.git/` so the file never gets staged) and use `git commit -F`.
+
+```bash
+# 1. Write the message to .git/COMMIT_BOOTSTRAP_MSG via Claude Code's Write tool
+# 2. Commit from that file:
+git -C <target_folder> commit -F .git/COMMIT_BOOTSTRAP_MSG
+```
+
+No trailing `Co-Authored-By` line — the downstream project is user-owned. The orchestrator is a tool that ran once; the commit belongs to the user.
 
 ### Step 6.3 — Push to remote
 

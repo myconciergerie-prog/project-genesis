@@ -52,15 +52,17 @@ memory/
     └── INDEX.md           (seeded by pepite-flagging install-manifest at Step 1.5)
 ```
 
-Use `Write` to create each file. Idempotent — if any file already exists (e.g. `memory/project/bootstrap_intent.md` does), leave it in place.
+Step 1.2 creates **only** the directory scaffold plus `MEMORY.md` (scaffold index), `master.md` (placeholder), and the four `README.md` files under `user/`, `feedback/`, `themes/`, `reference/`. The three sibling-owned `INDEX.md` files (`journal/INDEX.md`, `pepites/INDEX.md`, `project/sessions/INDEX.md`) are **not** created by Step 1.2 — they are delegated to the sibling install-manifests invoked at Step 1.5. This split is deliberate: each sibling owns its own index content and the orchestrator never duplicates it. `memory/project/bootstrap_intent.md` was already written at Phase 0.
 
-`MEMORY.md` at this stage contains only the scaffold index (pointers to master, user, feedback, project, reference, themes, journal, pepites) with placeholder entries. Phase 4 will fill in the project-specific entries.
+Use `Write` to create the scaffold files listed above. Idempotent — if any scaffold file already exists, leave it in place.
+
+`MEMORY.md` at this stage contains only the scaffold index (pointers to master, user, feedback, project, reference, themes, journal, pepites) with placeholder entries. Step 1.6 re-opens `MEMORY.md` after the sibling install-manifests have run to list the now-present INDEX files. Phase 4 will fill in the project-specific entries.
 
 ### Step 1.3 — Copy the rules
 
 Copy the canonical R1-R10 rules from the Genesis plugin's own `.claude/docs/superpowers/rules/v1_rules.md` to the target folder's `.claude/docs/superpowers/rules/v1_rules.md`.
 
-**Source**: the installed Genesis plugin's rules file — either under `~/.claude/plugins/project-genesis/.claude/docs/superpowers/rules/v1_rules.md` (once Genesis is published) or under the plugin's development location (for local dogfood).
+**Source resolution**: the orchestrator runs inside the Genesis plugin's own `skills/genesis-protocol/` directory. The plugin root is always three levels above this skill's `SKILL.md` file (walking up from `skills/genesis-protocol/SKILL.md` gives `skills/genesis-protocol/` → `skills/` → `<plugin-root>/`). From the plugin root, the rules file is at `<plugin-root>/.claude/docs/superpowers/rules/v1_rules.md`. The orchestrator reads the absolute path of the currently-executing `SKILL.md` and derives the plugin root deterministically — it never guesses or hardcodes `~/.claude/plugins/...`. This resolution rule is the same in dogfood mode (Genesis repo at `C:\Dev\...\project-genesis\`) and in marketplace-installed mode (`~/.claude/plugins/project-genesis/`), because the three-levels-up relationship holds in both layouts. Fallback: if the rules file is not found at the derived path, halt and surface the expected path in the error — do not silently try alternate locations.
 
 **Adaptation**: the rules are mostly generic, but two sections are per-project:
 
@@ -126,10 +128,10 @@ Every session opened in this directory must run R1.1 from
 
 Phase 1 invokes the `install-manifest.yaml` steps of four sibling skills, in order:
 
-1. **`phase-minus-one/install-manifest.yaml`** — creates `memory/reference/automation-stack.md` placeholder if missing (the actual content is written when `phase-minus-one` runs, which happened at Phase -1).
-2. **`journal-system/install-manifest.yaml`** — creates `memory/journal/INDEX.md` with the canonical stratified capture format. Idempotent; if the file already exists it is left alone.
-3. **`session-post-processor/install-manifest.yaml`** — creates `memory/project/sessions/INDEX.md` with the session archive scaffold and declares the Python 3.10+ requirement.
-4. **`pepite-flagging/install-manifest.yaml`** — creates `memory/pepites/INDEX.md` with the red-light criteria and surfacing protocol embedded.
+1. **`phase-minus-one/install-manifest.yaml`** — this is a **stack-install spec** (per-OS package list), not a file-target manifest; it has no `targets:` section. Phase 1 Step 1.5 merely verifies the file is present and well-formed. The actual `memory/reference/automation-stack.md` is written at runtime when `phase-minus-one` runs during Phase -1 (before Phase 1 starts). If `automation-stack.md` is missing at this point, Phase -1 was skipped or incomplete — halt and surface the gap, do not attempt to fabricate a placeholder.
+2. **`journal-system/install-manifest.yaml`** — creates `memory/journal/` directory and `memory/journal/INDEX.md` with the canonical stratified capture format. Idempotent via `create_if_missing_only: true`; if `INDEX.md` already exists it is left alone.
+3. **`session-post-processor/install-manifest.yaml`** — creates `memory/project/sessions/` directory and `memory/project/sessions/INDEX.md` with the session archive scaffold and declares the Python 3.10+ runtime requirement. Idempotent via `create_if_missing_only: true`.
+4. **`pepite-flagging/install-manifest.yaml`** — creates `memory/pepites/` directory and `memory/pepites/INDEX.md` with the red-light criteria and surfacing protocol embedded. Idempotent via `create_if_missing_only: true`.
 
 **The orchestrator invokes these manifests — it never re-writes their content.** Each sibling skill owns its own install output. The orchestrator's job is to call them in the right order, one after the other, and halt immediately if any fails a verification check.
 
@@ -233,7 +235,9 @@ and apply to every project on this machine:
 
 ### Step 2.3 — Copy stack-relevant entries from the Genesis plugin's own cache
 
-The Genesis plugin ships its own R8 cache at `.claude/docs/superpowers/research/` with entries that are also relevant to any downstream project, specifically the ones about Claude Code itself (plugin structure, session JSONL format, in-IDE tools, cross-OS ecosystem). Phase 2 **copies** these entries — not by-reference, because they are project-level references the downstream project needs to read offline.
+The Genesis plugin ships its own R8 cache at `<plugin-root>/.claude/docs/superpowers/research/` — where `<plugin-root>` is derived via the same "three levels up from `skills/genesis-protocol/SKILL.md`" rule used at Phase 1 Step 1.3. This cache contains entries that are also relevant to any downstream project, specifically the ones about Claude Code itself (plugin structure, session JSONL format, in-IDE tools, cross-OS ecosystem). Phase 2 **copies** these entries — not by-reference, because they are project-level references the downstream project needs to read offline.
+
+These entries apply to any Claude Code project, plugin or not — a non-plugin downstream still benefits from understanding plugin structure (the SKILL.md it already has inherited from Genesis uses plugin conventions), the JSONL session format (for `session-post-processor` to run), and the SPDX header rule (enforced by R10). No branching on `is-a-plugin` at this step.
 
 Entries to copy (subject to availability and TTL):
 

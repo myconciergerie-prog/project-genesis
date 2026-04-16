@@ -3,8 +3,9 @@
 topic: claude-code-plugin-structure
 type: stack
 created_at: 2026-04-14
-expires_at: 2026-04-15
+expires_at: 2026-04-17
 status: active
+refreshed_at: 2026-04-16
 sources:
   - https://code.claude.com/docs/en/plugins
   - https://github.com/affaan-m/everything-claude-code/blob/main/.claude-plugin/PLUGIN_SCHEMA_NOTES.md

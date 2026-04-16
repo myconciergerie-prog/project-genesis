@@ -36,18 +36,19 @@ After init, confirm:
 Per Layer 0's "per-project SSH identity" workflow pattern, generate a dedicated ed25519 key:
 
 ```bash
-ssh-keygen -t ed25519 -f ~/.ssh/id_ed25519_<slug> -C "<slug>-genesis-bootstrap-<YYYY-MM-DD>" -N ""
+ssh-keygen -t ed25519 -f "$HOME/.ssh/id_ed25519_<slug>" -C "<slug>-genesis-bootstrap-<YYYY-MM-DD>" -N ""
 ```
 
-- `<slug>` is the project slug from `bootstrap_intent.md`
-- The `-N ""` means no passphrase. Per-project keys are stored in `~/.ssh/` with filesystem permissions; they are not extracted to a password manager. If the user opted for a passphrase in the top-level consent card, respect that choice and prompt for the passphrase here.
-- The comment encodes slug + provenance + date for future forensics
+- Use `$HOME` rather than `~` in shell commands — tilde expansion is shell-dependent (bash and zsh expand it, Windows `cmd` does not, and PowerShell only expands it in some contexts). `$HOME` resolves correctly in bash, zsh, and PowerShell (where `$HOME` is an automatic variable). Genesis supports all three as host shells for the bootstrap run.
+- `<slug>` is the project slug from `bootstrap_intent.md`.
+- The `-N ""` means no passphrase. Per-project keys are stored in `$HOME/.ssh/` with filesystem permissions; they are not extracted to a password manager. If the user opted for a passphrase in the top-level consent card, respect that choice and prompt for the passphrase here.
+- The comment encodes slug + provenance + date for future forensics.
 
 **Isolated copy-paste rule (from R9.1 / Layer 0)**: the public key and the host alias go into their own dedicated fenced blocks so the user can paste them unambiguously. The private key is **never** printed, logged, or copied.
 
 ### Step 3.3 — Register the SSH host alias
 
-Append to `~/.ssh/config` (or create it with 0600 permissions if missing):
+Append to `$HOME/.ssh/config` (create the file if missing):
 
 ```
 Host github.com-<slug>
@@ -56,6 +57,10 @@ Host github.com-<slug>
   IdentityFile ~/.ssh/id_ed25519_<slug>
   IdentitiesOnly yes
 ```
+
+The `IdentityFile` line keeps the `~` form — this block is OpenSSH's own config file, and OpenSSH parses `~` correctly on every supported OS regardless of shell. The `$HOME` vs `~` distinction only matters for shell commands (Step 3.2), not for the content of OpenSSH config files.
+
+**Permissions**: `$HOME/.ssh/config` should be `0600` (owner read/write only). On POSIX systems run `chmod 0600 "$HOME/.ssh/config"`. On Windows, OpenSSH for Windows uses ACLs rather than POSIX mode bits; `chmod` inside git-bash is a no-op. OpenSSH usually auto-fixes inherited permissions on first use, but if `ssh -T` at Step 3.4 fails with a permissions warning, fix ACLs explicitly: `icacls "%USERPROFILE%\.ssh\config" /inheritance:r /grant:r "%USERNAME%:F"` in `cmd`, or the PowerShell equivalent.
 
 The `IdentitiesOnly yes` is non-negotiable — without it, SSH tries every loaded key before reaching the project-specific one, and GitHub refuses the second attempt from the same source IP as a protection against enumeration.
 
@@ -253,6 +258,8 @@ If `bootstrap_intent.md` lists scope locks (other projects that must be treated 
 - Until when (trigger to unfreeze — e.g. "Genesis v1.0 shipped")
 - Why (context the user provided at Phase 0)
 - Hard rule (no commits, no PRs, no edits allowed in any session opened on this project)
+
+The `<lock_slug>` is the machine slug derived at Phase 0 Step 0.2 from the free-form scope lock entry in `config.txt` (first whitespace-terminated token, lowercased, punctuation stripped, internal non-alphanumerics replaced with `-`). The verbatim original string from `config.txt` goes into the file's "Until when" / "Why" body as context — Phase 4 does not re-parse or re-split it. If Phase 0 stored both a derived slug and a verbatim string in `bootstrap_intent.md`, Phase 4 reads both fields; it never re-derives.
 
 Scope locks are **additive** — if the downstream project is bootstrapped as a spin-off of another project, those locks propagate by explicit user declaration, not by inheritance.
 

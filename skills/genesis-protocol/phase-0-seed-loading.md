@@ -44,7 +44,7 @@ Use `Glob` with `*` in the target folder to list top-level entries. Use `Read` o
 - **License** — defaults to MIT per `memory/master.md`; Apache-2 as documented pivot path
 - **Is-this-a-plugin flag** — optional; if true, the orchestrator lands skill stubs at Phase 4
 - **Plan tier hint** — optional; affects multidevice branch in Phase -1 if re-run, otherwise consumed at Phase 5.5 consent card
-- **Scope lock references** — optional; names other projects that must be respected as frozen during this bootstrap (like the Aurum freeze rule from this very Genesis project)
+- **Scope lock references** — optional; names other projects that must be respected as frozen during this bootstrap (like the Aurum freeze rule from this very Genesis project). Each entry in `config.txt` can be either a bare slug (`aurum-ai`) or a free-form phrase (`aurum-ai (frozen at 0b1de3d until Genesis v1 ships)`). Phase 0 stores the original verbatim string in `bootstrap_intent.md` under "Scope locks", **and also** derives a machine slug for each entry: take the first whitespace-terminated token, lowercase it, strip surrounding punctuation, and replace internal non-alphanumerics with `-`. Phase 4 Step 4.5 uses the derived slug as the filename (`memory/project/<slug>_frozen_scope_lock.md`) and the verbatim string as the "until when" context inside the file.
 
 If `config.txt` is missing fields, **do not invent them**. Record the gap and surface it at Step 0.4.
 
