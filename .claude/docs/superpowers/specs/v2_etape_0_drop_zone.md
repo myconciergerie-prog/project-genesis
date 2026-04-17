@@ -65,15 +65,13 @@ The skill is invoked in two ways:
 | FR | `"je veux créer un projet"`, `"nouveau projet"`, `"démarre un projet"`, `"dis-moi comment commencer"` |
 | EN | `"I want to create a project"`, `"start a new project"`, `"new project"` |
 
-**Context guard (mitigates false positives)**: before the welcome box prints, the skill evaluates a single condition:
+**Context guard (mitigates false positives)**: before the welcome box prints, the skill evaluates `is_fresh_context`, which is true if ALL of the following hold:
 
-```
-is_fresh_context = (
-    not in_existing_genesis_project_directory
-    AND (cwd has no CLAUDE.md OR cwd has no populated memory/)
-    AND git log count < 3 (or not in a git repo at all)
-)
-```
+- cwd has no `CLAUDE.md` at its root, AND
+- cwd has no populated `memory/` directory (directory absent, or present but with fewer than 2 non-template files), AND
+- either cwd is not a git repository, or `git rev-list --count HEAD` returns fewer than 3.
+
+All three are `AND`-conjoined — a single `false` disables the welcome. No disjunction, no precedence to parse.
 
 If `is_fresh_context` is false, the skill does not print the welcome box. Instead it prints:
 
@@ -131,7 +129,7 @@ Both variants are authored in `phase-0-welcome.md` from day 1 per R9. FR is prin
 - **Dual path rule** — "drop AND browse, always" [Filestack canonical rule on boomer-friendly file upload]. The line `(Parcourir les fichiers)` makes the button visible.
 - **Accept-anything line** — IBM Docling established the 2026 bar (PDF, DOCX, PPTX, XLSX, HTML, images, audio → unified representation). Users never pick a parser.
 - **Privacy in relationship language, not compliance** — "Tes fichiers restent avec toi pendant cette session" instead of "processed locally" [MIT Tech Review 2026-04-15, "Building trust in the AI era with privacy-led UX"].
-- **Accented chars dropped (Depose not Déposez)** — Claude Code terminal rendering on Windows is box-drawing-safe but accent-fragile in some harness configs. The FR variant uses plain ASCII per observed v1.2.0 friction around FR accent rendering in the dogfood session.
+- **ASCII-only inside the box, accents allowed outside** — the box mixes Unicode box-drawing characters (`┌ │ ─ └ ┐ ┘`) with content on the same line. That combination has been observed to render unstably on some Windows code-page configurations when content also carries combining diacritics. The bridge message (below) and the context-guard redirect (above) are plain prose lines with no box-drawing, routed through the terminal's stream path which is UTF-8-stable — they keep their accents (`à`, `é`, `ê`, `ô`). This asymmetry is intentional and documented once here, not repeated at every Layer A string the plugin will ship.
 
 ASCII-box dimensions: 60 chars wide, 10 lines high. Fits inside 80-col terminal comfortably, preserves text-centering illusion.
 
@@ -190,18 +188,24 @@ Precedent: `journal-system` declared `none` in the map. The welcome + acknowledg
 
 Cross-skill-pattern #1: when a skill is a faithful implementation of a canonical source document, `SKILL.md` mirrors the source structurally — same sections, same ordering. Drift = merge-blocker.
 
-| This spec section | `genesis-drop-zone/SKILL.md` section |
-|---|---|
-| Position in the v2 architecture | `## Purpose` (condensed one-paragraph form) |
-| Scope — v1.3.0 vertical slice | `## Scope` (in/out bullets, copied verbatim) |
-| Trigger evaluation gate | `## Trigger` + `## Context guard` (two sections in SKILL.md for dispatch clarity) |
-| Welcome body | `## Phase 0 — welcome` with pointer to `phase-0-welcome.md` (no duplicated template text in SKILL.md) |
-| Token-streamed acknowledgement | `## Phase 0 — acknowledgement` (pattern description only; full template lives in `phase-0-welcome.md`) |
-| Bridge message | `## Phase 0 — bridge` with pointer to `phase-0-welcome.md` |
-| Concentrated privilege declaration | `## Concentrated privilege` (verbatim `none` + journal-system precedent reference) |
-| Deferred to v1.3.1+ | `## Deferred scope` (verbatim bullet list) |
+| This spec section | `genesis-drop-zone/SKILL.md` section | Mirror status |
+|---|---|---|
+| Position in the v2 architecture | `## Purpose` (condensed one-paragraph form) | Mirrored |
+| Scope — v1.3.0 vertical slice | `## Scope` (in/out bullets, copied verbatim) | Mirrored |
+| Trigger evaluation gate | `## Trigger` + `## Context guard` (two sections in SKILL.md for dispatch clarity) | Mirrored |
+| Welcome body | `## Phase 0 — welcome` with pointer to `phase-0-welcome.md` (no duplicated template text in SKILL.md) | Mirrored (pointer) |
+| Token-streamed acknowledgement | `## Phase 0 — acknowledgement` (pattern description only; full template lives in `phase-0-welcome.md`) | Mirrored (pattern) |
+| Bridge message | `## Phase 0 — bridge` with pointer to `phase-0-welcome.md` | Mirrored (pointer) |
+| Concentrated privilege declaration | `## Concentrated privilege` (verbatim `none` + journal-system precedent reference) | Mirrored |
+| Deferred to v1.3.1+ | `## Deferred scope` (verbatim bullet list) | Mirrored |
+| Problem statement | — | **Spec-only** (design rationale) |
+| UX canon backing | — | **Spec-only** (design rationale) |
+| R9 language policy applied | — | **Spec-only** (tier map across artefacts, dev-internal) |
+| References / R8 citations | — | **Spec-only** (dev-internal provenance) |
+| Verification scenarios | — | **Spec-only** (ship gate, dev-internal) |
+| Relation to the vision doc | — | **Spec-only** (cross-doc navigation) |
 
-SKILL.md does **not** restate UX canon citations nor verification scenarios — those are spec-only. SKILL.md is the dispatch surface; spec is the design record.
+Rule of thumb for the drift-check gate: **every row tagged `Mirrored` must show section-for-section correspondence; every row tagged `Spec-only` is an expected asymmetry** and is not flagged during review. SKILL.md is the dispatch surface; spec is the design record.
 
 ## R9 language policy applied
 
@@ -213,7 +217,7 @@ Three tiers per Layer 0 R9:
 | `skills/genesis-drop-zone/SKILL.md` | Dev/tooling skill dispatch | English only |
 | `skills/genesis-drop-zone/phase-0-welcome.md` — **comments + section headings** | Dev/tooling | English only |
 | `skills/genesis-drop-zone/phase-0-welcome.md` — **runtime string templates (welcome box, ack template, bridge)** | User-facing runtime | Bilingual FR + EN coauthored day 1 |
-| Trigger phrases in `SKILL.md` `description:` frontmatter | User-facing invocation surface | Bilingual FR + EN day 1 |
+| Trigger phrases in `SKILL.md` `description:` frontmatter | User-facing invocation surface | Bilingual FR + EN day 1 — covers both the one-line `description:` text AND the embedded trigger phrase list; written as one frontmatter block, not two |
 
 The mixed-tier nature of `phase-0-welcome.md` is intentional: the file's structure and comments are dev-facing (so a maintainer reads the file in English), but the string templates it ships are what Victor sees and must be bilingual. This is the standard pattern for runtime-text-bearing skill bodies — a precedent to establish here, to reuse when LAYER A grows further (Étapes 1, 2, 3).
 
@@ -253,7 +257,7 @@ External sources cited (resolved inside the R8 entry above):
 | 1 | Fresh empty dir, Claude Code opens, user types `/genesis-drop-zone`. | Welcome box prints (FR), skill awaits, ack token-streamed on response, bridge bilingual, skill exits clean. |
 | 2 | Fresh empty dir, user types "je veux créer un projet pour gérer mes dépenses". | Claude auto-invokes the skill via intent match; same as #1. |
 | 3 | Open Claude Code inside `C:/Dev/Claude_cowork/project-genesis/` (active repo), type `/genesis-drop-zone`. | Context guard fires; bilingual redirect prints; skill does not welcome. |
-| 4 | Fresh empty dir, user types trigger + attaches `@C:/tmp/sample-brief.pdf`. | Ack names the PDF and summarises its content in one bullet. |
+| 4 | Fresh empty dir, user types trigger + attaches `@tests/fixtures/sample-brief.pdf` (fixture lives in the worktree, honours the "no deliverables in C:\tmp" auto-memory rule). | Ack names the PDF and summarises its content in one bullet. |
 | 5 | Fresh empty dir, user types "I want to create a project to track my expenses". | Intent matches (EN trigger), welcome box still FR (no locale detection in v1.3.0). Bridge covers the bilingual gap. |
 | 6 | R9 audit — grep SKILL.md + this spec for French strings outside trigger list. | Zero matches. Grep `phase-0-welcome.md` for both FR and EN markers. Both present. |
 
