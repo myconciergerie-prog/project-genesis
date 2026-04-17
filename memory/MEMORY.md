@@ -37,6 +37,7 @@ This project inherits all universal rules, user profile, hard rules, workflow pa
 - [Self-dogfood friction log — 2026-04-16](project/selfdogfood_friction_log_2026-04-16.md) — 18 frictions (5 STRUCTURAL in auth), Victor test birth, Promptor fusion discovery, v2 vision trigger
 - [Session v1.2.0 self-dogfood — 2026-04-17](project/selfdogfood_friction_log_v1_2_0_2026-04-17.md) — conscious strange-loop self-dogfood, 14 new frictions (F20-F34), two pépite-worthy findings (F29 plugin-install broken + Promptor attribution correction), v2 Étape 0 drop-zone surfaced
 - [Session v1.2.1 paradox guards — 2026-04-17](project/session_v1_2_1_paradox_guards.md) — three P0 fixes from v1.2.0 landed surgically: F29 skill-self-contained rules, F30 git-aware nested-repo probe, F23+F27 Step 0 paradox guards. One follow-up commit for git-bash path normalization. v1.2.1 tagged
+- [Session v1.2.2 mode-auto args — 2026-04-17](project/session_v1_2_2_mode_auto_args.md) — P1 cluster bundled in one PR: F21 `## Arguments` section, F20 mode is first-class argument (detailed/semi-auto/auto), F22 Step 0 consent card dispatches per mode. Three phase runbooks reference the canonical `## Mode dispatch` table. v1.2.2 tagged at **9.14/10**, third consecutive ≥ 9.0 ship. F34 named as v1.2.3 target
 
 ## Reference
 
