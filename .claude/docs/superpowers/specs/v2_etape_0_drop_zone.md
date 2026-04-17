@@ -161,7 +161,7 @@ Both variants are authored in `phase-0-welcome.md` from day 1 per R9. FR is prin
 - **Dual path rule** — "drop AND browse, always" [Filestack canonical rule on boomer-friendly file upload]. The line `(Parcourir les fichiers)` makes the button visible.
 - **Accept-anything line** — IBM Docling established the 2026 bar (PDF, DOCX, PPTX, XLSX, HTML, images, audio → unified representation). Users never pick a parser.
 - **Privacy in relationship language, not compliance** — "Tes fichiers restent avec toi pendant cette session" instead of "processed locally" [MIT Tech Review 2026-04-15, "Building trust in the AI era with privacy-led UX"].
-- **ASCII-only inside the box, accents allowed outside** — the box mixes Unicode box-drawing characters (`┌ │ ─ └ ┐ ┘`) with content on the same line. That combination has been observed to render unstably on some Windows code-page configurations when content also carries combining diacritics. The bridge message (below) and the context-guard redirect (above) are plain prose lines with no box-drawing, routed through the terminal's stream path which is UTF-8-stable — they keep their accents (`à`, `é`, `ê`, `ô`). This asymmetry is intentional and documented once here, not repeated at every Layer A string the plugin will ship.
+- **ASCII-only inside the box, accents allowed outside** — the box mixes Unicode box-drawing characters (`┌ │ ─ └ ┐ ┘`) with content on the same line. That combination has been observed to render unstably on some Windows code-page configurations when content also carries combining diacritics. The bridge message (below) and the context-guard redirect (above) are plain prose lines with no box-drawing, routed through the terminal's stream path which is UTF-8-stable — they keep their accents (`à`, `é`, `ê`, `ô`). This asymmetry is intentional and documented here; it **extends to each new table-bearing surface the plugin adds** (e.g. v1.3.1's 9-field mirror table re-applies it to the row content, with surrounding prose keeping accents — see § "Mirror screen — template & reveal" for the extension).
 
 ASCII-box dimensions: 60 chars wide, 10 lines high. Fits inside 80-col terminal comfortably, preserves text-centering illusion.
 
@@ -278,11 +278,11 @@ The mirror displays 9 fields. Each field has an internal name, a bilingual label
 
 | Internal name | Label FR | Label EN | Semantic | Null class when missing |
 |---|---|---|---|---|
-| `idea_summary` | Idee | Idea | 1-line synopsis of the user's idea, in user's own words when possible. Always filled when any content is present — dropping the welcome path only happens with zero content. | N/A — always filled at this point. If somehow empty, `texte seul — a trouver ensemble`. |
+| `idea_summary` | Idee | Idea | 1-line synopsis of the user's idea, in user's own words when possible. Always filled when any content is present — mirror only fires when content is non-zero (zero-content branch re-prompts instead). | `a trouver ensemble` (class 1 degenerate fallback if content is zero-like after the guard). |
 | `pour_qui` | Pour qui | Who for | Target users / audience inferred from content. | `a trouver ensemble` (core) |
 | `type` | Type | Kind | Rough category: appli web, appli mobile, outil CLI, plugin, documentation, site, bibliotheque, … | `a trouver ensemble` (core) |
 | `nom` | Nom | Name | Project name if the user proposed one (explicit — not auto-slugged). | `a trouver ensemble` (core) |
-| `attaches` | Depose | Dropped | List of dropped items with brief descriptor (see truncation rule). `texte seul` if nothing attached. | N/A — always filled. |
+| `attaches` | Depose | Dropped | List of dropped items with brief descriptor (see truncation rule). `texte seul` if nothing attached. | `texte seul` when no attachment; otherwise always filled with item list. |
 | `langue_detectee` | Langue | Language | `FR` / `EN` / `mixte` — detected from the user's text. Extracted but does **not** switch mirror rendering in v1.3.1 (runtime locale deferred v1.3.2+). | N/A — always filled. |
 | `budget_ou_contrainte` | Budget | Budget | Explicit budget / deadline / resource constraint mentioned. | `non mentionne` (bonus) |
 | `prive_ou_public` | Visibilite | Visibility | Explicit private / public / team-only mention for the project. | `non mentionnee` (bonus — feminine agreement) |
@@ -409,7 +409,7 @@ External sources cited (resolved inside the R8 entry above):
 
 The scenarios below cover both ship gates. Scenarios #1-#6 were defined for v1.3.0 and remain valid as regression guards for v1.3.1 (the v1.3.0 welcome + context guard + trigger evaluation surface stays untouched). Scenarios #7-#12 are v1.3.1 additions targeting the mirror screen, schema extraction, and bridge update.
 
-### v1.3.0 regression set (unchanged)
+### v1.3.0 regression set (preserved — expected outcomes updated for v1.3.1 mirror + bridge)
 
 | # | Scenario | Expected |
 |---|---|---|
@@ -428,7 +428,7 @@ The scenarios below cover both ship gates. Scenarios #1-#6 were defined for v1.3
 | 8 | Fresh empty dir + text + PDF + photo (multimodal rich case). | Mirror renders 9 rows with `Depose` listing all 3 items (or truncated at 3 with `+ N autres` if more). `Idee`/`Pour qui`/`Type` extracted from combined content. |
 | 9 | Fresh empty dir + trigger phrase only, zero content attached or written. | No `◐` line, no mirror, no `✓` closure. Re-prompt `Je t'écoute — dépose ou écris ce que tu veux me partager.` printed (v1.3.0 branch preserved). When user responds, mirror flow fires normally. |
 | 10 | Fresh empty dir + EN content ("I want to build a small task tracker for my team"). | Mirror rendered in **FR** with `Langue` = `EN` row. Bridge bilingual covers locale gap. |
-| 11 | Very long idea text (e.g. 200-character paragraph) dropped. | `Idee` row truncated at 57 chars + `...`. Other rows render normally. Full content retained in Claude's context (not disposed — kept for v1.3.2+ handoff). |
+| 11 | Very long idea text (> 60 characters — e.g. a 200-character paragraph) dropped. | `Idee` row truncated at exactly 57 chars + `...` per the truncation rule in § "Mirror screen / Truncation rules". Other rows render normally. Full content retained in Claude's context (not disposed — kept for v1.3.2+ handoff). |
 | 12 | R9 audit — grep FR+EN mirror templates in `phase-0-welcome.md` after v1.3.1 additions; grep accents inside FR table block vs FR surrounding prose. | Both FR and EN mirror templates present. Zero accents inside FR table rows (ASCII-pure discipline). Accents present in `◐`/`✓` prose and in bridge (plain-prose, accent-stable). |
 
 ### Ship gates
