@@ -211,3 +211,30 @@ The verification runner is read-only. Running it multiple times has zero side ef
 - **Do not add checks beyond those listed here.** Each check is a specific file or git state that one of the seven phases promises to create. Adding a check without a corresponding phase commitment is Frankenstein creep
 - **Do not skip RED checks for speed** — the RED is the gate
 - **Do not emit per-file diffs in the card.** The card is a health summary; diffs belong to `git diff` or manual inspection. Keeping the card small keeps it readable
+
+---
+
+### Scenario — `drop_zone_intent.md` as Phase 0 seed (v1.3.2+)
+
+**Setup**: fresh empty folder containing a `drop_zone_intent.md` written by a prior `genesis-drop-zone` v1.3.2+ session with the standard 9-field frontmatter + body echo.
+
+**Invoke**: `/genesis-protocol` (or natural-language intent-match trigger) in the folder.
+
+**Expected**:
+
+- Step 0.1 detects `drop_zone_intent.md` and logs `Primary seed: drop_zone_intent.md`.
+- Step 0.2a parses the YAML frontmatter (validates `schema_version: 1`, reads the 9 semantic + 4 metadata keys).
+- Step 0.2a maps the 6 primary Layer A fields per the § "Field mapping (Layer A → Layer B)" table: `idea_summary` → Vision (verbatim), `nom` → Project name + derived Project slug, `type` → inferred Is-a-plugin, `hints_techniques` → Stack hints, `attaches` → Mixed media descriptor.
+- Step 0.2a preserves `pour_qui`, `langue_detectee`, `budget_ou_contrainte`, `prive_ou_public` for Step 0.4 + Step 0.5.
+- Step 0.4 card renders with origin tags `(from drop zone)` on Vision / Project name / Stack hints, `(inferred)` on Is-a-plugin, `(derived)` on Slug, `(default)` on License. `Additional context from drop zone` block renders with the 4 Layer-A-specific extras.
+- User confirms `yes` → Step 0.5 writes `memory/project/bootstrap_intent.md` containing populated fields + new `## Conversational context from drop zone` section + `## Raw config.txt` rendered as `n/a — seeded from drop_zone_intent.md`.
+- Phase 1 proceeds normally, reading the populated `bootstrap_intent.md` as its input.
+
+**Regression scenario — both-files-present precedence**: same setup but with `config.txt` also present in cwd alongside `drop_zone_intent.md`. Expected:
+
+- Step 0.1 logs the precedence note: `config.txt found but drop_zone_intent.md takes precedence — ignoring config.txt`.
+- Step 0.2a proceeds (Step 0.2 skipped entirely).
+- Step 0.4 / Step 0.5 output identical to the happy-path scenario.
+- `## Raw config.txt` section in Step 0.5 output renders as `n/a — seeded from drop_zone_intent.md` (config.txt content never parsed, never archived in Phase 0 output).
+
+**Ship gate**: artefact-level verification (synthetic fixture + Step 0.2a parsing logic traced against the fixture, Step 0.4 / 0.5 template rendering against the fixture's fields). Runtime replay of the full Phase 0 flow deferred to an externally-launched fresh Claude Code session per the same harness constraint that applies to `genesis-drop-zone` scenarios #1 / #13.

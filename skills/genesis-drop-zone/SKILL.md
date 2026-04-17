@@ -8,7 +8,9 @@ description: Layer A conversational front door for Genesis v2 project bootstrap 
 
 ## Purpose
 
-Genesis v1 is an engineer's protocol that speaks to engineers. The v2 vision adds a conversational Layer A where a non-technical user can open Claude Code, drop an idea in any form (text, PDF, photo, link, audio), and be met by a warm conversational surface instead of a config file. `genesis-drop-zone` is the first Layer A skill. v1.3.0 shipped the welcome + token-streamed acknowledgement + bridge vertical slice; **v1.3.1 upgrades the acknowledgement into a structured 9-field mirror screen** (in-context extraction of user intent, rendered as an aligned-column table revealed row by row, no API call, no disk write). The write of `bootstrap_intent.md` + handoff to `genesis-protocol` remain deferred to v1.3.2+.
+Genesis v1 is an engineer's protocol that speaks to engineers. The v2 vision adds a conversational Layer A where a non-technical user can open Claude Code, drop an idea in any form (text, PDF, photo, link, audio), and be met by a warm conversational surface instead of a config file. `genesis-drop-zone` is the first Layer A skill. v1.3.0 shipped the welcome + token-streamed acknowledgement + bridge vertical slice; v1.3.1 upgraded the acknowledgement into a structured 9-field mirror screen (in-context extraction of user intent, rendered as an aligned-column table revealed row by row, no API call, no disk write).
+
+**v1.3.2 adds the first Layer A concentrated privilege**: after the mirror renders, a bilingual consent card offers to save the extracted intent as `drop_zone_intent.md` at cwd root. On accept, the skill writes the file and the accept bridge instructs the user to type `/genesis-protocol` for the Layer B bootstrap. On decline, no write occurs and the decline bridge leaves the idea in-session. `genesis-protocol` Phase 0 is extended to detect, parse, and consume `drop_zone_intent.md` as the primary seed (precedence over legacy `config.txt`) — this is the first cross-layer wire in the Genesis plugin.
 
 **Canonical spec**: `.claude/docs/superpowers/specs/v2_etape_0_drop_zone.md` — a living spec that evolves across versions. This `SKILL.md` is a 1:1 mirror across all `Mirrored` rows of the spec's mirror map. When either file changes, the other follows — drift is a merge-blocker per cross-skill-pattern #1.
 
@@ -33,17 +35,27 @@ Genesis v1 is an engineer's protocol that speaks to engineers. The v2 vision add
 6. Truncation rules — row values ≤ 60 chars, `Depose` caps at 3 items + `+ N autres`.
 7. Concentrated privilege stays `none` (no API call, no disk write, no subprocess).
 
-### Out of scope (deferred to v1.3.2+)
+### In scope (v1.3.2)
 
-- API-powered Path A Citations extraction (audit-trail via `cited_text` + `document_index`).
-- Writing `bootstrap_intent.md` into any directory.
-- Handoff to `genesis-protocol` Phase 0.
-- Runtime locale detection (FR vs EN selection — `langue_detectee` extracted but mirror still renders FR in v1.3.1).
+1. **First Layer A concentrated privilege** — write `drop_zone_intent.md` to cwd after the user accepts the consent card. Narrow by design: one file, cwd root only (no `mkdir`, no path resolution), halt-on-existing (no overwrite).
+2. **Bilingual consent card** — minimal accept/cancel, absolute path with arrow marker, natural-language response routing (affirmative / negative / modification).
+3. **`drop_zone_intent.md` file format** — YAML frontmatter (9 semantic fields + 4 metadata keys: `schema_version`, `created_at`, `skill`, `skill_version`) + Markdown body with FR prose intro + mirror echo. UTF-8 no BOM, LF line endings.
+4. **Halt-on-existing protection** — bilingual halt message with absolute path + remediation; printed in place of the consent card; no overwrite, no timestamp-suffix, no second consent.
+5. **Two version-scoped bridges** — accept bridge (instructs `/genesis-protocol`) and decline bridge (non-pressurizing). Supersede the v1.3.1 bridge.
+6. **Layer B integration** — `genesis-protocol` Phase 0 Step 0.1 detects `drop_zone_intent.md`, new Step 0.2a parses and maps its 9 fields to Layer B schema (Vision, Project name, Slug, Is-a-plugin, Stack hints, Mixed media), Step 0.4 card extended with origin tags + `Additional context from drop zone` block, Step 0.5 `memory/project/bootstrap_intent.md` template extended with `## Conversational context from drop zone` section preserving the 4 Layer-A-specific extras (`pour_qui`, `langue_detectee`, `budget_ou_contrainte`, `prive_ou_public`).
+7. **Concentrated privilege map update** — `genesis-drop-zone` switches from `none` to the v1.3.2 declaration in `memory/master.md`'s privilege map.
+
+### Out of scope (deferred to v1.3.3+)
+
+- API-powered Path A Citations extraction (audit-trail via `cited_text` + `document_index`). First "external API call" privilege for `genesis-drop-zone`; now has downstream reader (Layer B Phase 0) so the ship is no longer speculative.
+- Runtime locale detection (FR vs EN rendering) — `langue_detectee` extracted and preserved end-to-end in v1.3.2 but mirror still renders FR regardless.
+- Programmatic handoff — auto-invoke `genesis-protocol` without user typing the slash command. Human-in-the-loop is the v1.3.2 pattern.
 - `GH_BROWSER` profile routing.
 - UX toolkit integration (@clack/prompts, Charm Gum, cli-spinners).
 - Completion chime (cross-platform).
+- Error handling refinements (permission-denied / disk-full / symlink edge cases).
 
-The slice stays surface-only so the first MINOR bump of the v1.3.x cycle demonstrates the surface without accruing plumbing to migrate.
+The v1.3.2 ship is the v1.3.x cycle's structural closer on the Layer A → Layer B wire; v1.3.3+ refines surface and polish.
 
 ## Trigger
 
@@ -122,26 +134,173 @@ The schema:
 
 ## Phase 0 — bridge
 
-After the mirror's `✓ Lu et compris.` line prints (or after the zero-content re-prompt receives a follow-up and the mirror has then rendered), print the bridge message from `phase-0-welcome.md § "Bridge message (v1.3.1 — both languages always printed)"`. Always both languages, because v1.3.1 still has no runtime locale detection.
+v1.3.1 shipped a single bridge printed after every successful mirror. **v1.3.2 supersedes the v1.3.1 bridge** with two version-scoped variants — an accept bridge after a successful write, and a decline bridge after user refusal. Runtime selection is driven by the response to the v1.3.2 consent card (see `## Phase 0 — consent card (v1.3.2)` below).
 
-After the bridge prints, the skill exits cleanly — control returns to the normal Claude Code conversation.
+See `phase-0-welcome.md § "Accept bridge (v1.3.2)"` and `phase-0-welcome.md § "Decline bridge (v1.3.2)"` for exact text. Both always print both languages (runtime locale detection deferred v1.3.3+).
+
+The v1.3.1 bridge at `phase-0-welcome.md § "Bridge message (v1.3.1 ...)"` is preserved as regression context but is not reached in a v1.3.2 session.
+
+## Phase 0 — consent card (v1.3.2)
+
+Printed between the mirror's `✓ Lu et compris.` closing line and the write. The absolute cwd path is resolved at prompt time — use `Bash` with `pwd` (POSIX) / `%CD%` (Windows PowerShell) / or read `$PWD` from the runtime environment. The path separator follows platform convention.
+
+See `phase-0-welcome.md § "Consent card (v1.3.2)"` for the exact template. Response routing is natural-language per three equivalence classes:
+
+- **Affirmative** (`oui`, `yes`, `y`, `ok`, `d'accord`, `go`, `garde`, `écris`, `save`, `keep`) → proceed to `## Phase 0 — write flow (v1.3.2)`.
+- **Negative** (`non`, `no`, `n`, `cancel`, `annule`, `abort`, `stop`, `nope`) → proceed to decline bridge, no write.
+- **Modification** (e.g. `garde Type en boulangerie`) → re-run the 9-field extraction with the correction applied, re-render the mirror with updated rows, re-print this consent card. Loop until convergence.
+
+No iteration cap on modifications — the card is the only gate. The consent card is the single point of user intent before a concentrated privilege fires.
+
+## Phase 0 — drop_zone_intent.md file (v1.3.2)
+
+The file written to cwd on consent. YAML frontmatter + Markdown body. UTF-8 without BOM, LF line endings.
+
+### Schema
+
+| Frontmatter key | Type | Purpose |
+|---|---|---|
+| `schema_version` | integer | `1` for v1.3.2. Increment if schema incompatibly changes. |
+| `created_at` | string | ISO-8601 UTC timestamp at write time. |
+| `skill` | string | Constant `genesis-drop-zone`. |
+| `skill_version` | string | Read from `.claude-plugin/plugin.json` at write time (`1.3.2` for this ship). |
+| `idea_summary` | string | 1-line synopsis of the user's idea. Null-class `"a trouver ensemble"` if content is zero (mirror guard ensures this only happens at degenerate fallback). |
+| `pour_qui` | string | Target users / audience. Null-class `"a trouver ensemble"` if missing. |
+| `type` | string | Kind of project (app, tool, site, plugin, etc.). Null-class `"a trouver ensemble"` if missing. |
+| `nom` | string | Proposed project name. Null-class `"a trouver ensemble"` if missing. |
+| `attaches` | string | Mirror `Depose` row verbatim — truncated display, may include `+ N autres`. `"texte seul"` if nothing attached. |
+| `langue_detectee` | string | `FR` / `EN` / `mixte`. Always filled. |
+| `budget_ou_contrainte` | string | Budget / constraint mention. Null-class `"non mentionne"` if missing (bonus). |
+| `prive_ou_public` | string | Private / public / team-only mention. Null-class `"non mentionnee"` if missing (bonus, feminine agreement). |
+| `hints_techniques` | string | Tech stack hints. Null-class `"non mentionne"` if missing (bonus). |
+
+Three null classes serialized verbatim as strings: `"a trouver ensemble"`, `"non mentionne"`, `"non mentionnee"`, `"a affiner — X ou Y"`. Never `null`, never `~`, never empty string.
+
+See the canonical spec `.claude/docs/superpowers/specs/v2_etape_0_drop_zone.md § "drop_zone_intent.md — schema + body format (v1.3.2)"` for the full template and the concrete illustrative example.
+
+## Phase 0 — write flow (v1.3.2)
+
+State machine from mirror close through skill exit.
+
+### Sequence
+
+1. Mirror closes with `✓ Lu et compris.` (v1.3.1 path).
+2. **Pre-write existence check** — use `Bash` with `test -e "$(pwd)/drop_zone_intent.md"`. If present → halt branch (see `## Phase 0 — halt branch (v1.3.2)`). If absent → proceed.
+3. **Consent card prints** (see `## Phase 0 — consent card (v1.3.2)`).
+4. **User response routes**:
+   - Affirmative → write flow.
+   - Negative → decline bridge, exit clean.
+   - Modification → re-extract + re-render mirror + re-print consent card, loop.
+5. **Write flow (on affirmative)**:
+   - Resolve absolute target path: `<cwd>/drop_zone_intent.md`.
+   - Compose full file content per `## Phase 0 — drop_zone_intent.md file (v1.3.2)`.
+   - Use the `Write` tool to create the file at the target path. The Write tool is harness-atomic for small files (< 10 KB typical); no temp+rename needed at runtime.
+   - **Post-write verification** — use `Bash` with `test -s <target>` to confirm the file exists and has non-zero size. If verification fails, print a bilingual failure message ("la sauvegarde a échoué, rien n'a été écrit / save failed, nothing written") and exit without printing the accept bridge. Let any `OSError`-class exceptions bubble up for harness visibility.
+   - Print the accept bridge (see `## Phase 0 — bridges (v1.3.2)`).
+   - Exit clean.
+
+### Error handling scope — what v1.3.2 does NOT custom-handle
+
+Per narrow-privilege anti-Frankenstein discipline:
+
+- Permission denied on cwd (user opened Claude Code in a read-only folder) — `OSError` propagates via the harness, no custom halt.
+- Disk full — same.
+- `drop_zone_intent.md` is a symlink or directory — the `test -e` check at step 2 catches both as "file exists" and routes to the halt branch (safe default).
+- Cwd deleted mid-flight — `OSError` at write time.
+
+Real pain in any of these is a v1.3.3+ refinement target.
+
+## Phase 0 — halt branch (v1.3.2)
+
+Fires when the pre-write existence check at step 2 of the write flow finds an existing `drop_zone_intent.md` in cwd. The mirror has already rendered at this point — Victor sees what was extracted from his content, then learns the write cannot proceed.
+
+See `phase-0-welcome.md § "Halt message (v1.3.2)"` for the exact template.
+
+Behaviour:
+
+- Printed **in place of** the consent card — the user never sees an accept/cancel prompt when the halt fires.
+- Exit clean immediately after. No stack trace, no error code, no retry loop.
+- No overwrite, no timestamp-suffix fallback, no second consent prompt for a destructive overwrite.
+
+The context guard has already asserted a fresh cwd at skill entry — an existing `drop_zone_intent.md` is unexpected state that the user should reconcile manually (delete the file or change cwd). Halt + remediation is the honest signal.
+
+## Phase 0 — bridges (v1.3.2)
+
+Two version-scoped bridges replace the v1.3.1 single bridge at runtime. Selection is determined by the consent card response.
+
+- **Accept bridge** — printed after a successful write. See `phase-0-welcome.md § "Accept bridge (v1.3.2)"` for exact text. Instructs the user to type `/genesis-protocol`. Path not repeated (consent card just showed it).
+- **Decline bridge** — printed after a negative response. See `phase-0-welcome.md § "Decline bridge (v1.3.2)"`. Warm, non-pressurizing — invites the user to return.
+
+Both always print both languages (runtime locale detection deferred v1.3.3+). Accent discipline: plain-prose, accents preserved, UTF-8-stable stream path.
+
+## Phase 0 — handoff to genesis-protocol (v1.3.2)
+
+The user-visible handoff is the accept bridge's instruction (`tape /genesis-protocol`). When the user subsequently invokes `genesis-protocol` in the same cwd, Phase 0 detects and consumes `drop_zone_intent.md` per the cross-layer contract below.
+
+### Precedence rule
+
+Phase 0 Step 0.1 checks for seeds in this order:
+
+1. `drop_zone_intent.md` present → **primary seed**. Parsed via YAML frontmatter in Step 0.2a.
+2. No `drop_zone_intent.md`, `config.txt` present → **legacy seed**. Parsed via free-form text (existing Step 0.2).
+3. Both present → **drop_zone_intent.md wins**. Phase 0 logs: `config.txt found but drop_zone_intent.md takes precedence — ignoring config.txt`. Never silent merge.
+4. Neither present → interactive seed card (existing Step 0.2 fallback).
+
+### Field mapping
+
+| Layer A frontmatter | Layer B field | Transform |
+|---|---|---|
+| `idea_summary` | Vision | Verbatim. User can expand at Step 0.4 edit. |
+| `nom` (source) | Project name | Direct; null-class → Step 0.4 prompts user. |
+| `nom` (same source, derived) | Project slug | Derive from resolved Project name per existing rule. |
+| `type` | Is-a-plugin | Inferred: contains "plugin" (case-insensitive) → `yes`; else `no`. |
+| `hints_techniques` | Stack hints | Direct; null-class → `[none]`. |
+| `attaches` | Mixed media | Informational; Step 0.3 still scans cwd via `Glob` for canonical list. |
+| `pour_qui`, `langue_detectee`, `budget_ou_contrainte`, `prive_ou_public` | (no Layer B field) | Archived in `## Conversational context from drop zone` section of `memory/project/bootstrap_intent.md` at Step 0.5. |
+| (absent) | License | Default MIT. |
+| (absent) | Plan tier | Step 0.4 prompts user. |
+| (absent) | Scope locks | Step 0.4 default `[none]`. |
+
+### Cross-layer pattern
+
+v1.3.2 is the first cross-layer wire in Genesis. The pattern (per master.md cross-skill-pattern #4):
+
+1. Layer A captures user intent in a dedicated file at cwd root with origin-tagged naming.
+2. Layer B's corresponding phase detects + parses + maps + archives the Layer A file.
+3. Precedence always favours the Layer A file over legacy seeds; never silent merge.
+4. Layer A field names in frontmatter are English snake_case; user-facing labels live only in `phase-X-*.md` runtime templates.
+5. Layer B card shows origin tags (`from drop zone`, `from config.txt`, `derived`, `default`, `inferred`) to make provenance explicit.
+
+Future Étape 1 → Phase 1, Étape 2 → Phase 2, Étape 3 → Phase 3 wires will follow the same shape.
 
 ## Concentrated privilege
 
-The concentrated privilege of `genesis-drop-zone` in **v1.3.0 and v1.3.1** is **`none`**.
+The concentrated privilege of `genesis-drop-zone` across versions:
 
-Precedent: `journal-system` declared `none` in `memory/master.md`'s concentrated-privilege map. The welcome + mirror + bridge slice writes nothing to disk, runs no subprocess, makes no network call, invokes no Anthropic API. Claude reads user-attached files via its native multimodal context — a harness-level capability, not a skill privilege. In-context extraction in v1.3.1 uses the same multimodal path; the schema lives in conversation memory only.
+- **v1.3.0**: `none` (welcome + bullet-list ack + bridge).
+- **v1.3.1**: `none` (extraction mirror, still in-context only).
+- **v1.3.2**: **writes `drop_zone_intent.md` to cwd after the user accepts a bilingual consent card, halt-on-existing, no `mkdir`, no path resolution beyond cwd.** First Layer A privilege.
 
-**Forward note (non-binding)**: v1.3.2+ will introduce the first concentrated privilege for this skill — writing `bootstrap_intent.md` into a user-designated project directory. That ship will carry a consent card, overwrite-protection, and a bilingual confirmation prompt, matching the Layer A discipline of `pepite-flagging`'s per-target consent floor. Declaring that privilege here (before the code that carries it ships) would violate the anti-Frankenstein gate.
+v1.3.2 breaks the `none` streak with the minimum viable concentrated privilege — one file, one path, one operation. Mitigations ship one-for-one with the privilege:
+
+- **Bilingual consent card** (single gate; absolute path with arrow marker; natural-language response; modifications route back through mirror re-render).
+- **Halt-on-existing** (pre-write check; no overwrite; no timestamp-suffix fallback; no second destructive-consent prompt; matches `session-post-processor` halt-on-leak precedent).
+- **Narrow path resolution** — cwd only. No `mkdir`, no subdir, no arbitrary path. Context guard already asserted cwd fresh on entry.
+- **Post-write verification** — `test -s` confirms the file exists and has non-zero size before the accept bridge prints.
+- **Per-target consent floor match with `pepite-flagging`** — the precedent for Layer A privileges.
+
+This declaration is the precedent that all future Étape 1 / Étape 2 / Étape 3 Layer A privileges will be measured against. Widening the privilege surface in a later ship (subdir writes, `mkdir`, multi-file writes, API calls) requires the same pattern: declare privilege for code that exists, never speculate, carry mitigations one-for-one.
+
+**Forward note (non-binding)**: v1.3.3+ may introduce a second privilege — external Anthropic API call for Path A Citations (audit-trail via `cited_text` + `document_index`). That would be a different privilege class (network vs disk); the map entry would extend to list both.
 
 ## Deferred scope
 
 Ordered by rough priority, non-binding, revisit at each session boundary:
 
-1. API-powered Path A Citations extraction — upgrade v1.3.1's in-context extraction with `citations: {enabled: true}` per `document` block. Surfaces `cited_text` + `document_index` for audit-trail on the mirror. First "external API call" privilege for `genesis-drop-zone`; sequenced alongside or after write + handoff.
-2. `bootstrap_intent.md` file write — consent prompt, target directory resolution, UTF-8 encoding, overwrite protection. **First concentrated privilege for the skill.**
-3. Handoff to `genesis-protocol` — invoke with `bootstrap_intent.md` available as the Layer B seed (replaces `config.txt` in v2).
-4. Runtime locale detection — detect user language from trigger match + message content; switch FR and EN variants dynamically for both welcome and mirror.
-5. `GH_BROWSER` profile routing wire-up.
-6. UX toolkit integration — `@clack/prompts`, Charm Gum, cli-spinners.
-7. Completion chime (cross-platform).
+1. API-powered Path A Citations extraction — audit-trail via `cited_text` + `document_index`. First "external API call" privilege; now has downstream reader in Layer B, so the ship is no longer speculative.
+2. Runtime locale detection — `langue_detectee` already extracted and preserved end-to-end in v1.3.2; v1.3.3+ closes the rendering loop for welcome + mirror + consent card + halt + bridges.
+3. Programmatic handoff — auto-invoke `genesis-protocol` without the user typing the slash command. Requires harness-level skill-to-skill invocation not 2026-04 ready.
+4. `GH_BROWSER` profile routing wire-up.
+5. UX toolkit integration — @clack/prompts, Charm Gum, cli-spinners.
+6. Completion chime (cross-platform).
+7. Error handling refinements — permission-denied / disk-full / symlink edge cases currently let `OSError` bubble up; v1.3.3+ adds halt + remediation if user pain emerges.

@@ -153,6 +153,8 @@ Same alignment, truncation, and branch rules as the FR variant.
 
 ## Bridge message (v1.3.1 — both languages always printed)
 
+> **v1.3.2 supersession**: the v1.3.1 bridge below is preserved as regression-set context. At runtime in v1.3.2, this bridge is replaced by the two version-scoped bridges in §"Accept bridge (v1.3.2)" and §"Decline bridge (v1.3.2)" further down. v1.3.1 installations still use the bridge below; v1.3.2 installations never reach it.
+
 v1.3.0's bridge claimed "Extraction et création… arrivent bientôt" — that became false as of v1.3.1 since extraction now runs. The v1.3.1 bridge reflects that extraction is done and only the project's actual creation (GitHub repo, files on disk, memory system) remains deferred:
 
 ```
@@ -168,3 +170,79 @@ For now, I've read and understood — go back to Claude Code normally.
 **Accent discipline**: bridge is plain-prose, non-table content routed through the UTF-8-stable stream path — **keeps its accents** (`é`, `ô`, `à`, `—`). ASCII-only rule applies only to table content (welcome box and mirror rows). Same asymmetry as v1.3.0.
 
 After the bridge prints, the skill exits cleanly. Control returns to the normal Claude Code conversation.
+
+## Consent card (v1.3.2 — both languages always printed)
+
+Printed between the mirror's `✓ Lu et compris.` line and the write. Gates the first Layer A concentrated privilege (writing `drop_zone_intent.md` to cwd). The `<absolute-cwd-path>` placeholder is resolved at prompt time via the runtime's current working directory — path separator follows platform convention (`\` on Windows, `/` elsewhere).
+
+```
+Je peux noter ton projet dans un fichier ici :
+  → <absolute-cwd-path>/drop_zone_intent.md
+
+Ce fichier sera le point de départ pour Claude Code la prochaine fois.
+On le garde comme ça ?  (oui pour l'écrire, non pour annuler)
+
+I can save your project here:
+  → <absolute-cwd-path>/drop_zone_intent.md
+
+This file becomes Claude Code's starting point next time.
+Keep it this way?  (yes to write, no to cancel)
+```
+
+### Response routing (natural-language)
+
+Three equivalence classes on the next user turn:
+
+1. **Affirmative** — `oui`, `yes`, `y`, `ok`, `d'accord`, `go`, `garde`, `écris`, `save`, `keep`. Proceed to write flow.
+2. **Negative** — `non`, `no`, `n`, `cancel`, `annule`, `abort`, `stop`, `nope`. Proceed to decline flow.
+3. **Modification** — the user asks to change a mirror field (`garde Type en boulangerie`, `le nom c'est VelyzyBake`). Re-run the 9-field extraction with the correction, re-render the mirror with updated rows, re-print this consent card. Loop until convergence to class 1 or 2. No iteration cap — the card is the only gate out.
+
+### Accent discipline
+
+Plain-prose bilingual — accents allowed (`é`, `à`, `ê`, `ô`). Same UTF-8-stable stream path as the v1.3.1 bridge. The arrow marker `→` is U+2192, UTF-8-stable on both terminals. Not inside a table/box fence.
+
+## Halt message (v1.3.2 — both languages always printed)
+
+Printed **in place of** the consent card when the pre-write existence check detects a `drop_zone_intent.md` already in cwd. The skill exits clean after printing this — no overwrite, no timestamp-suffix fallback, no second consent. Matches the halt-on-leak precedent of `session-post-processor`.
+
+```
+Un fichier `drop_zone_intent.md` existe déjà ici :
+  → <absolute-cwd-path>/drop_zone_intent.md
+
+Supprime-le d'abord, ou ouvre Claude Code dans un autre dossier et relance.
+
+A `drop_zone_intent.md` already exists here:
+  → <absolute-cwd-path>/drop_zone_intent.md
+
+Delete it first, or open Claude Code in a different folder and retry.
+```
+
+Plain-prose bilingual, same accent discipline as the consent card.
+
+## Accept bridge (v1.3.2 — both languages always printed)
+
+Printed after a successful `drop_zone_intent.md` write. Instructs the user on the next step (type `/genesis-protocol`). Path **not repeated** — the consent card rendered above already showed the absolute path.
+
+```
+C'est noté — tape `/genesis-protocol` quand tu es prêt pour créer
+le projet (GitHub, fichiers, mémoire) à partir de ce fichier.
+
+Saved — type `/genesis-protocol` when you're ready to create the
+project (GitHub, files, memory) from this file.
+```
+
+"C'est noté" / "Saved" — past-tense, signals the write has completed. `/genesis-protocol` in backticks signals the slash-command.
+
+## Decline bridge (v1.3.2 — both languages always printed)
+
+Printed after the user declines the consent card (class-2 response). No write occurred; skill exits clean.
+
+```
+OK, rien d'écrit. Ton idée reste dans notre échange pour l'instant.
+Relance-moi quand tu veux la poser sur disque.
+
+OK, nothing written. Your idea stays in our exchange for now.
+Come back whenever you want to save it to disk.
+```
+
+Warm, non-pressurizing — the idea isn't lost, it's simply not persisted.
