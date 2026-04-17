@@ -8,6 +8,39 @@ Every version bump includes a **5-axis self-rating block** per R10.3 discipline,
 
 ---
 
+## [1.2.3] — 2026-04-17 — "gh active-account pre-flight — F34"
+
+### Added
+
+- `skills/genesis-protocol/phase-6-commit-push.md` — new `### Step 6.0 — gh active-account pre-flight` inserted at the opening of Phase 6, before the pre-commit review. Runs `gh api user --jq .login`, compares the result against a target owner resolved from (1) the git remote URL if set, (2) `memory/project/bootstrap_intent.md` as a fallback for pre-Phase 3.5 bootstrap ordering, or (3) the Step 0 consent card. On mismatch, attempts `gh auth switch -h github.com -u <owner>`; if that succeeds, proceeds with a one-line note. If the switch fails (target owner not logged in on this machine), halts with a remediation pointing at `gh auth login --web` and surfaces the current `gh auth status` output. Fixes friction F34 (live-reproduced during v1.2.1's own PR creation — `gh pr create` failed with `GraphQL: must be a collaborator (createPullRequest)` because the active gh account was not the target repo owner).
+
+### Changed
+
+- `skills/genesis-protocol/SKILL.md` — `## Mode dispatch` Category A "Structural stops" examples row now lists `gh active-account mismatch at Phase 6 Step 6.0 when auto-switch fails (added v1.2.3 for F34)`. Keeps the Category A catalogue in sync with the new structural stop landed in the phase-6 runbook; SKILL.md remains the single source of truth for mode dispatch categories.
+- `.claude-plugin/plugin.json` — version bumped `1.2.2` → `1.2.3`.
+- `.claude/docs/superpowers/research/INDEX.md` — two expired stack entries moved to Archive: `claude-code-plugin-structure_2026-04-14.md` (TTL expired 2026-04-17) and `claude-code-session-jsonl-format_2026-04-15.md` (same). Both archived with a one-line note explaining the freshness-at-archival signal; neither refreshed because the v1.2.3 change is skill-internal and does not depend on Claude Code SDK drift or JSONL record shape.
+
+### Notes
+
+- **Three commits inside the feat branch**: one feat commit for Step 6.0 itself (63 insertions in `phase-6-commit-push.md`), one feat commit for the SKILL.md dispatch-table sync (1-line change), one chore commit for the R8 archive + version bump + CHANGELOG + session trace + resume prompt. Same "one root cause per commit, bundle into one PR" rhythm as v1.2.1 and v1.2.2.
+- **Category A structural stop, not a consent gate**: the `gh auth switch` attempt runs in every mode without blocking (it flips between already-authorized accounts, reversible), but the halt on switch-failure is mode-invariant because proceeding with the wrong active account produces an opaque `must be a collaborator` GraphQL error at a later step — strictly worse than halting with a clear remediation.
+- **Layer 0 additive-auth compliance**: `gh auth switch` mutates the machine-global gh active account but removes no credential (both accounts remain logged in), so the operation is within Layer 0's additive-auth discipline. Step 6.0 surfaces a one-line note when the switch happens so the user knows the global state changed. Recording the pre-switch login and offering to restore it at Phase 7.3 is explicitly flagged as a v1.3 candidate — out of scope for this surgical ship.
+- **What did not change in v1.2.3**: F24 Phase 0.1 git-aware inspection (P2 cosmetic), F25/F31 config.txt canonical examples (P2 doc work), F26 non-canonical fields audit UI (still half-fixed from v1.2.2 — convention documented, template write deferred), F28 `genesis-cleanup` sibling skill (P3), F32 Python driver (v1.3 target), F33 R8 scope disambiguation (P3).
+- **P1 queue closed**. After v1.2.3 the v1.2.0 friction log has no remaining P1 frictions — all three P0s (F23 + F27 + F29 + F30) landed in v1.2.1, the P1 cluster (F20 + F21 + F22) landed in v1.2.2, and the last P1 (F34) landed here. The next-severity band is P2 doc work (F25/F31 config examples) or the v2 Étape 0 drop-zone pivot (research cache `v2_promptor_fusion_landscape_2026-04-17.md` fresh, expires 2026-04-24).
+
+### Self-rating — v1.2.3
+
+| Axis | Rating | Notes |
+|---|---|---|
+| Pain-driven coverage | 9.5/10 | Step 6.0 implements the v1.2.0 friction-log fix sketch verbatim — `gh api user --jq .login`, compare vs resolved owner, auto-switch attempt, halt with `gh auth status` on switch-failure. Live reproducer from v1.2.1's own PR creation is directly addressed. Small deduction: a parallel rule in `v1_rules.md` covering v0.2.0+ post-bootstrap PR sessions would cover the same pain outside the bootstrap runbook, but is out of scope here. |
+| Prose cleanliness | 9.0/10 | Step 6.0 is self-contained, halt templates are copy-paste-ready, Mode dispatch callout explicit, note on global-state mutation surfaces the Layer 0 concern. Minor deduction: Step 6.0 is ~63 lines which sits on the heavy side for one step — justified by the branching halt cases but tight budget. |
+| Best-at-date alignment | 8.8/10 | `gh api user --jq .login` + `gh auth switch -h github.com -u <user>` are the established gh CLI primitives, behaviour stable across the last 12 months. Two expired stack entries archived as bookkeeping without a fresh snapshot, because the v1.2.3 change does not depend on plugin SDK drift or JSONL record shape — same stance as v1.2.2 applied to the same entries. |
+| Self-contained | 9.2/10 | One structural stop landed in one runbook + a 1-line sync in SKILL.md's canonical dispatch table. Owner resolution uses three existing-artefact sources (git remote, bootstrap_intent.md, consent card) without introducing a new owner-resolution contract. R8 archive is pure bookkeeping. No new runtime, no new file, no new config. |
+| Anti-Frankenstein | 9.4/10 | Three commits: feat (F34), feat (SKILL.md sync), chore (archive + version + prose). Surgical per v1.2.1–v1.2.2 discipline. No driver, no retry loop, no hook wiring. Explicit deferral of pre-switch restore to v1.3 stated in prose. F34 was the last P1 — this ship closes the P1 queue cleanly without scope creep. |
+| **Average** | **9.18/10** | Running average v0.2 → v1.2.3 ≈ **8.71/10** (up from 8.68). Three consecutive ships ≥ 9.0 (v1.2.1 9.26, v1.2.2 9.14, v1.2.3 9.18) — the surgical one-root-cause-per-commit / bundle-in-one-PR discipline continues to hold. |
+
+---
+
 ## [1.2.2] — 2026-04-17 — "Mode is a first-class argument — F21 + F20 + F22"
 
 ### Added
