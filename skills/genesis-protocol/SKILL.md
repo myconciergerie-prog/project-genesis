@@ -24,7 +24,53 @@ The orchestrator does **not** reimplement any of the five shipped Genesis skills
   - "genesis bootstrap"
 - The user is sitting inside an **empty or near-empty project folder** that contains a `config.txt` seed (or is about to create one).
 
-**Do not auto-run.** The orchestrator touches git, creates SSH keys, creates PATs, creates a GitHub repo, and writes files into a new project directory. Every single one of those is a concentrated privilege. The first action is always a top-level consent card showing the full plan before any phase starts. **Two paradox guards run before the card** (target-inside-orchestrator-tree and self-collision-slug) — structural stops added in v1.2.1 after the v1.2.0 strange-loop self-dogfood proved a user could create a nested repo or a colliding GitHub name by accident.
+**Do not auto-run without explicit consent.** The orchestrator touches git, creates SSH keys, creates PATs, creates a GitHub repo, and writes files into a new project directory. Every single one of those is a concentrated privilege. The first action is always a top-level consent card showing the full plan before any phase starts. **Two paradox guards run before the card** (target-inside-orchestrator-tree and self-collision-slug) — structural stops added in v1.2.1 after the v1.2.0 strange-loop self-dogfood proved a user could create a nested repo or a colliding GitHub name by accident.
+
+The shape of the consent interaction is driven by the `mode` argument (see `## Arguments` below): in `detailed` mode the card blocks until the user confirms; in `semi-auto` the card blocks only for concentrated-privilege operations; in `auto` the card is informational and the orchestrator proceeds unless the user interjects. Paradox guards fire in every mode — they are structural stops, not consent gates.
+
+## Arguments
+
+The orchestrator accepts three semantic arguments as `key=value` pairs on the skill invocation (e.g. `/genesis-protocol mode=auto target=/abs/path seed=config.txt`). Any extra `key=value` pair is accepted as **passthrough** — recorded in `memory/project/bootstrap_intent.md` under `## Non-canonical fields (passed through)` but with no runtime effect. Added in v1.2.2 after friction F21 (argument schema was undocumented and invocations guessed at names).
+
+| Argument | Values | Default | Purpose |
+|---|---|---|---|
+| `mode` | `detailed` \| `semi-auto` \| `auto` | `detailed` | Consent dispatch across Step 0, Phase 0.4, Phase 3 SSH paste-back, Phase 6 pre-commit review, Phase 7 halt-on-leak. Propagates into `phase-minus-one` as its own 3-mode ladder input. See `## Mode dispatch` below. |
+| `target` | Absolute path to a folder | Current working directory of the session | Destination folder for the bootstrap. Paradox Guard A checks this path against the orchestrator plugin root. |
+| `seed` | Filename inside the target folder | `config.txt` | File read at Phase 0.2 for the free-form project intent. If missing, Phase 0.1 offers the interactive seed card. |
+
+Passthrough examples observed in real invocations: `context=...`, `strange-loop=...`, `friction-log=...`. They are accepted, captured in the Phase 0 parsed-intent card as `Extras: [field names]`, and written verbatim to `bootstrap_intent.md`. The orchestrator does not interpret them.
+
+**Mode is sticky through the run.** If the user picks `semi-auto` at invocation, every phase receives `semi-auto` dispatch. Mode cannot be changed mid-run except by aborting and re-invoking — there is no mid-flight escalation path in v1.2.2 (a v2 candidate).
+
+**Mode never overrides structural stops.** Paradox Guards A and B, nested-repo halts (Phase 3.1), halt-on-leak gates (Phase 7.2), any failed probe at Phase 5.5.4, and any `frankenstein` / `pause` / `abort` keyword from the user stop the orchestrator regardless of mode. The security floor defined in `## Mode dispatch` is also mode-invariant.
+
+## Mode dispatch — which gates block under which mode
+
+Every consent-adjacent interaction in the protocol falls into one of three categories. Mode only changes the behaviour of category C gates.
+
+| Category | Behaviour | Examples |
+|---|---|---|
+| **A — Structural stops** | Always halt, never dispatch by mode | Paradox Guards A/B at Step 0; nested `git init` at Phase 3.1; halt-on-leak RED at Phase 7.2; any failed probe at Phase 5.5.4 |
+| **B — Security floor** | Always pause for unavoidable manual OS/browser action, never automated | OAuth browser click at Phase 3.4 / 5.5; fine-grained PAT creation UI at Phase 5.5.1; admin password prompts during Phase -1 installs; 2FA challenges; GitHub device code flows |
+| **C — Consent gates** | Dispatch per `mode` | Top-level consent card at Step 0; parsed-intent confirmation at Phase 0.4; pre-commit review card at Phase 6.1; pre-push / pre-merge confirmations |
+
+Category C dispatch table:
+
+| Gate | `detailed` | `semi-auto` | `auto` |
+|---|---|---|---|
+| Step 0 top-level card | block on `yes` | block on `yes` | render as informational log, proceed |
+| Phase 0.4 parsed-intent card | block on `yes`/`edit`/`abort` | block on `yes`/`edit`/`abort` | render, proceed (user may still interject `pause` / `abort`) |
+| Phase 3 SSH keygen paste-back | block on paste confirmation | block (concentrated privilege) | block (security floor — GitHub web UI) |
+| Phase 3.5 remote add confirmation | block on `yes` | summary, proceed | summary, proceed |
+| Phase 6.1 pre-commit review | block on `yes`/`inspect`/`abort` | block (concentrated privilege: first push) | summary, proceed |
+| Phase 6.5 tag confirmation | block on `yes` | summary, proceed | summary, proceed |
+| Phase 7 session-archive preview | block on `yes` | summary, proceed | summary, proceed |
+
+**`semi-auto` is the intended default for repeat users**: it keeps blocking gates at the concentrated-privilege steps (SSH, PAT, first push, repo create) where silent failures are unrecoverable, while letting the rest of the protocol flow without typing. `detailed` is for first-time users who want to read and confirm every step. `auto` is for experienced users who understand the paradox guards and security floor still apply.
+
+**Interjection is always accepted.** In any mode, the user can type `pause`, `abort`, or `frankenstein` and the orchestrator responds per Layer 0's working-style rule. Auto mode does not mean the user has surrendered control — it means the orchestrator does not ask before each non-privileged step.
+
+**Phase -1 mode propagation.** When `phase-minus-one` is invoked at Phase -1, the orchestrator passes the same `mode` value through. The sibling skill's own 3-mode ladder (detailed / semi-auto / auto) accepts the same vocabulary by design — the two ladders stay aligned. If the user picks `auto` at the orchestrator and Phase -1 hits a security floor it cannot automate, the sibling pauses and resumes the same way the orchestrator does.
 
 ## Prerequisites
 
@@ -161,7 +207,12 @@ The orchestrator is a strict sequence. It never runs phases in parallel. It neve
      stamp, or rename the project. Edit config.txt and re-invoke.
      ```
 
-   If both guards pass, render the top-level consent card (the full plan, every field listed in the "concentrated privilege" section). Wait for explicit yes. If no, exit cleanly.
+   If both guards pass, render the top-level consent card (the full plan, every field listed in the "concentrated privilege" section). Dispatch per `mode` — see `## Mode dispatch` for the full table:
+
+   - `mode=detailed` (default) or `mode=semi-auto` → block until the user answers `yes`; on `no` or silence-then-`abort`, exit cleanly.
+   - `mode=auto` → render the card as an informational log and proceed to Phase -1. The user can still interject with `pause`, `abort`, or `frankenstein` at any time and the orchestrator responds per Layer 0's working-style rule.
+
+   Guards A and B always fire regardless of mode — mode only changes the consent card dispatch.
 2. **Phase -1** — invoke `phase-minus-one` unless skipped.
 3. **Phase 0** — run `phase-0-seed-loading.md`.
 4. **Phase 1** + **Phase 2** — run `phase-1-rules-memory.md`. Phase 1 lands the memory scaffold; Phase 2 lands the research cache INDEX and seed entries.
@@ -179,7 +230,7 @@ Any step that fails stops the orchestrator immediately. The orchestrator does no
 - **Do not add automation beyond Option A pure Markdown in v0.8.0.** A Python driver is a v1.1 candidate at earliest, and only after the Markdown orchestrator has been dogfooded against at least one real downstream project.
 - **Do not wire any hooks.** `SessionEnd` / `SessionStart` hooks stay deferred until after the manual-mode dogfood milestones from `session-post-processor`.
 - **Do not create a "genesis-protocol runtime" folder outside the skill.** Everything the orchestrator needs lives in this one directory under `skills/`. No shared-state folder, no temp scratch, no `.genesis/` sidecar.
-- **Do not skip the top-level consent card**. Even on a re-run from a partial bootstrap, the card is re-rendered with the fields already filled in and the user confirms again. Silent resume is a Frankenstein trap.
+- **Do not skip the top-level consent card rendering.** The card is *rendered* in every mode — in `detailed` and `semi-auto` it blocks for confirmation, in `auto` it is printed as an informational log the user can interrupt. Silent bootstraps (no card at all, in any mode) are a Frankenstein trap. On a re-run from a partial bootstrap, the card is re-rendered with the fields already filled in and the mode-appropriate dispatch re-applied.
 - **Do not call `phase-minus-one` from inside any other phase.** Phase -1 is the first phase, once per run. If a later phase discovers a missing dependency, it surfaces the gap and asks the user to re-run `phase-minus-one` — never re-invokes silently.
 - **Do not let any phase write to the Genesis repo itself.** The orchestrator targets the downstream project folder. Writes to the Genesis repo would mean the orchestrator is accidentally dogfooding on itself inside a bootstrap run — a recursive loop with no base case. The worktree pattern from R2.1 is the safety net: the orchestrator runs on a folder that is NOT the Genesis repo.
 - **If the user says `frankenstein`**, back out of the last proposal.
