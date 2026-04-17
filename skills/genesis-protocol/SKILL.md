@@ -50,7 +50,7 @@ Every consent-adjacent interaction in the protocol falls into one of three categ
 
 | Category | Behaviour | Examples |
 |---|---|---|
-| **A — Structural stops** | Always halt, never dispatch by mode | Paradox Guards A/B at Step 0; nested `git init` at Phase 3.1; halt-on-leak RED at Phase 7.2; any failed probe at Phase 5.5.4 |
+| **A — Structural stops** | Always halt, never dispatch by mode | Paradox Guards A/B at Step 0; nested `git init` at Phase 3.1; halt-on-leak RED at Phase 7.2; any failed probe at Phase 5.5.4; `gh` active-account mismatch at Phase 6 Step 6.0 when auto-switch fails (added v1.2.3 for F34) |
 | **B — Security floor** | Always pause for unavoidable manual OS/browser action, never automated | OAuth browser click at Phase 3.4 / 5.5; fine-grained PAT creation UI at Phase 5.5.1; admin password prompts during Phase -1 installs; 2FA challenges; GitHub device code flows |
 | **C — Consent gates** | Dispatch per `mode` | Top-level consent card at Step 0; parsed-intent confirmation at Phase 0.4; pre-commit review card at Phase 6.1; pre-push / pre-merge confirmations |
 

@@ -24,6 +24,69 @@ Phase 6 is the last concentrated-privilege phase (writes to the GitHub remote). 
 
 ## Phase 6 — The flow
 
+### Step 6.0 — `gh` active-account pre-flight
+
+Before any Phase 6 action that touches the GitHub remote (Step 6.3 push, Step 6.5 tag push, Step 6.6 optional verification — and the `gh pr create` pattern that kicks in from v0.2.0 onwards), verify that the active `gh` CLI account matches the target repo owner. On multi-account machines (per Layer 0's Chrome profile map + accounts-orgs-projects reference), `gh auth status` can list several logged-in accounts with one marked active — and the active one may NOT be the target owner. Without this pre-flight, the Step 6.6 verification or a later `gh pr create` fails with `pull request create failed: GraphQL: must be a collaborator (createPullRequest)` or a 404 from `gh api repos/<owner>/<repo>` — an opaque error message that hides the real cause. Added in v1.2.3 after friction F34 was live-reproduced during v1.2.1's own PR creation on this repo.
+
+**Resolve the target owner** (first-match wins):
+
+1. `git -C <target_folder> remote get-url origin 2>/dev/null` — if a remote is already set, parse the owner segment from the SSH form `git@github.com-<alias>:<owner>/<repo>.git` or the HTTPS form `https://github.com/<owner>/<repo>.git`.
+2. `memory/project/bootstrap_intent.md` — if the remote is not yet configured (pre-Phase 3.5 bootstrap ordering), read the `github_owner` field captured at Phase 0.5.
+3. Fall back to the GitHub owner field from the Step 0 top-level consent card.
+
+**Compare and dispatch**:
+
+```bash
+current_login="$(gh api user --jq .login 2>/dev/null || echo '')"
+target_owner="<resolved from above>"
+```
+
+- **Equal** → GREEN. Proceed to Step 6.1.
+- **`current_login` empty** (gh not authenticated on this machine at all) → halt with:
+
+  ```
+  ❌ Step 6.0 — gh is not authenticated on this machine
+
+  Target owner : <target_owner>
+
+  Remediation:
+    gh auth login --web
+    # authenticate as <target_owner>, then re-invoke the orchestrator.
+  ```
+
+- **Mismatch** → attempt the switch, then re-verify:
+
+  ```bash
+  gh auth switch -h github.com -u "$target_owner"
+  current_login="$(gh api user --jq .login 2>/dev/null || echo '')"
+  ```
+
+  - If the re-verification returns `$target_owner` → GREEN. Surface a one-line note `gh active account switched to <target_owner> for this Phase 6 run` (so the user knows the global state changed) and proceed to Step 6.1.
+  - If the switch failed (the target account is not logged in on this machine, so `gh auth switch` errored) → halt with:
+
+    ```
+    ❌ Step 6.0 — gh active account does not match target owner
+
+    Active account : <current_login>
+    Target owner   : <target_owner>
+
+    Automatic switch failed — account '<target_owner>' is not
+    currently logged in to gh on this machine.
+
+    Remediation:
+      gh auth login --web
+      # authenticate as <target_owner>, then re-invoke the
+      # orchestrator. Phase 6 will resume from Step 6.0 once the
+      # active account matches.
+
+    Current gh auth status:
+    <two-space-indented output of `gh auth status`>
+    ```
+
+**Mode dispatch** (see `SKILL.md § Mode dispatch`): Step 6.0 is a **category A structural stop**. A mismatch that cannot be auto-switched halts the orchestrator in every mode — `detailed`, `semi-auto`, and `auto` all halt, because the alternative (proceeding with the wrong active account) produces a `must be a collaborator` GraphQL error at Step 6.6 or downstream, which is strictly worse than halting with a clear remediation. The automatic `gh auth switch` attempt runs in every mode without a consent gate — it only flips between accounts the user already authorized, which is reversible.
+
+**Note on global state**: `gh auth switch` mutates the machine-global gh active account for every subsequent session until the next switch. Per Layer 0's additive-auth discipline, this is acceptable (no credential is removed; both accounts remain logged in), but the user may want to run `gh auth switch -u <previous>` manually after Phase 7 if the pre-switch account was in use by another project. A v1.3 candidate is to record the pre-switch login at Step 6.0 and offer to restore it at Phase 7.3; out of scope for v1.2.3.
+
 ### Step 6.1 — Pre-commit review
 
 Run `git status` and list every staged file. Render a short summary card:
