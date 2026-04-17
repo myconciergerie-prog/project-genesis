@@ -8,6 +8,39 @@ Every version bump includes a **5-axis self-rating block** per R10.3 discipline,
 
 ---
 
+## [1.3.1] - 2026-04-17
+
+### Changed — genesis-drop-zone Phase 0 mirror (replaces v1.3.0 ack)
+- `skills/genesis-drop-zone/phase-0-welcome.md` — new section `Mirror template — FR (v1.3.1, printed by default)` replaces `Token-streamed acknowledgement template`. Adds `Mirror template — EN (v1.3.1, mirror-ready)`. Updates `Bridge message` to the v1.3.1 text ("Création du projet (GitHub, fichiers, mémoire) arrive bientôt. Pour l'instant, j'ai lu et compris — reviens à Claude Code normalement.") and its EN mirror.
+- `skills/genesis-drop-zone/SKILL.md` — `Purpose` extended. `Scope` gets `In scope (v1.3.1)` sub-block; `Out of scope` moves to v1.3.2+. `Phase 0 — acknowledgement` renamed → `Phase 0 — mirror` with schema table, reveal rules, failure modes, truncation rules. `Concentrated privilege` forward note points to v1.3.2 as the first Layer A privilege ship. `Deferred scope` lists Path A Citations upgrade as new #1.
+
+### Added — extraction schema (9 fields)
+- `idea_summary`, `pour_qui`, `type`, `nom`, `attaches`, `langue_detectee`, `budget_ou_contrainte`, `prive_ou_public`, `hints_techniques` — extracted in-context (no API call) and rendered as an aligned-column table revealed row-by-row.
+- Null-visible convention: `a trouver ensemble` (core missing), `non mentionne(e)` (bonus missing), `a affiner — X ou Y` (ambiguity). Three classes, exhaustive.
+- Truncation: row values ≤ 60 chars (truncate at 57 + `...`), `Depose` caps at 3 items + `+ N autres`.
+
+### Changed — living spec + 1:1 mirror map
+- `.claude/docs/superpowers/specs/v2_etape_0_drop_zone.md` — adds `Scope — v1.3.1 extraction`, `Extraction schema — 9 fields`, renames `Token-streamed acknowledgement template` → `Mirror screen — template & reveal`, bridge content updated, `Deferred to v1.3.1+` → `Deferred to v1.3.2+` with item #1 removed (extraction in-scope), concentrated privilege declaration extended to cover both versions, verification scenarios extended with rows #7–#12 (v1.3.1 additions) with per-version ship gates.
+
+### Bumped
+- `.claude-plugin/plugin.json` version `1.3.0` → `1.3.1`.
+- `memory/master.md` concentrated-privilege map entry for `genesis-drop-zone`: `(none — welcome + mirror + bridge, v1.3.0 surface + v1.3.1 structured extraction)`.
+
+### Self-rating — v1.3.1
+
+| Axis | Score | Reasoning |
+|---|---|---|
+| Pain-driven | 9.3 | Closes the "Extraction arrivent bientôt" promise v1.3.0 could not yet keep — direct delivery of a promised capability. Null-visible discipline (3 classes) was driven by "what does Victor see when the schema is thin?" Schema 9 fields picked at brainstorming (user-chosen), every field user-legible. |
+| Prose cleanliness | 9.2 | Living-spec pattern avoided spec proliferation. Mirror template is one table, not 9 bullets. Truncation rules + ambiguity branch explicit. Spec polish + plan polish both done after reviewer passes. Commit message detailed but readable. |
+| Best-at-date | 9.2 | Inline R8 citation of `v2_promptor_fusion_landscape_2026-04-17.md` Stage 2 (token-streaming pattern, Ably SSE). Same SOTA anchor as v1.3.0; entry remains fresh (expires 2026-04-24). Declined API Path A Citations upgrade for v1.3.1 — anti-speculation discipline, not ceiling. |
+| Self-contained | 9.4 | Skill extends itself — no new file in the skill package, no new dep. Spec evolves in place. 1:1 mirror discipline extended cleanly. PATCH bump, master.md one-line freshness. 4 files changed for feat. |
+| Anti-Frankenstein | 9.4 | API call deferred (no consumer yet). Concentrated privilege stays `none`. Three null classes, not four. Schema 9 fields (user-picked, orthogonal, Victor-legible). Declined API Citations upgrade even with R8 entry fresh — saves for v1.3.2 alongside bootstrap_intent.md write. No speculative plumbing. |
+| **Average** | **9.30** | Target ≥9.3/axis met on average; floor ≥9.0/axis respected on every axis. |
+
+Sixth consecutive ship ≥9.0 (v1.2.1 9.26, v1.2.2 9.14, v1.2.3 9.18, v1.2.4 9.16, v1.3.0 9.34, v1.3.1 9.30).
+
+Running average post-v1.3.1 = **8.81/10** (v0.2 → v1.3.0 was 8.78 across 16 ships; adding v1.3.1 with equal weight: (8.78 × 16 + 9.30) / 17 = 8.81).
+
 ## [1.3.0] — 2026-04-17 — "genesis-drop-zone welcome vertical slice — Étape 0 Layer A"
 
 First MINOR bump since v1.2.0. Opens the v1.3.x conversational-layer line of Genesis v2. Closes the v1.2.x PATCH cluster on v1.2.0 self-dogfood.
