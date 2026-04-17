@@ -8,6 +8,58 @@ Every version bump includes a **5-axis self-rating block** per R10.3 discipline,
 
 ---
 
+## [1.3.2] — 2026-04-18 — "genesis-drop-zone write + Layer B handoff (first Layer A privilege + first cross-layer wire live)"
+
+First cross-layer wire in the Genesis plugin. `genesis-drop-zone` switches from `none` privilege to the v1.3.2 write declaration, and `genesis-protocol` Phase 0 is extended to detect + parse + consume the written file.
+
+### Added — genesis-drop-zone v1.3.2 Layer A privilege
+
+- **First Layer A concentrated privilege** — `genesis-drop-zone` writes `drop_zone_intent.md` to cwd after a bilingual consent card. Narrow privilege: one file, cwd only, no `mkdir`, halt-on-existing (no overwrite / no timestamp-suffix / no second consent). Matches the halt-on-leak precedent of `session-post-processor`.
+- **Bilingual consent card** — minimal accept/cancel, absolute path with arrow marker, natural-language response routing across three equivalence classes (affirmative / negative / modification loop with no iteration cap).
+- **`drop_zone_intent.md` file format** — YAML frontmatter (9 semantic fields + 4 metadata keys: `schema_version`, `created_at`, `skill`, `skill_version`) + Markdown body with FR prose intro + mirror echo. UTF-8 no BOM, LF line endings. Atomic Write-tool creation.
+- **Halt-on-existing protection** — bilingual halt message with absolute path + remediation; printed in place of the consent card when `test -e` detects an existing file; no overwrite, no fallback.
+- **Two version-scoped bridges** — accept bridge instructs `tape /genesis-protocol`; decline bridge is warm + non-pressurizing. Supersede the v1.3.1 single bridge at runtime.
+
+### Added — genesis-protocol v1.3.2 Layer B integration
+
+- **First cross-layer wire live** — `genesis-protocol` Phase 0 Step 0.1 gains `drop_zone_intent.md` detection row + new **Precedence rule** (drop_zone_intent.md > config.txt > empty folder interactive seed, never silent merge).
+- **New Step 0.2a — Parse drop_zone_intent.md (when present)** — validates `schema_version`, reads the 9 semantic + 4 metadata keys, maps 6 primary Layer A fields (`idea_summary` → Vision, `nom` → Project name + derived Slug, `type` → inferred Is-a-plugin, `hints_techniques` → Stack hints, `attaches` → Mixed media), preserves 4 Layer-A-specific extras (`pour_qui`, `langue_detectee`, `budget_ou_contrainte`, `prive_ou_public`) for Step 0.4 display + Step 0.5 write.
+- **Step 0.4 intent card extended** with origin tags per field (`(from drop zone)`, `(from config.txt)`, `(derived)`, `(default)`, `(inferred)`) + new `Additional context from drop zone` block rendered only when seed was the drop zone.
+- **Step 0.5 template extended** with `## Conversational context from drop zone` section preserving the 4 Layer-A-specific extras + `## Raw config.txt` rendered as `n/a — seeded from drop_zone_intent.md` when applicable.
+- **`skills/genesis-protocol/SKILL.md`** — files table entry for `phase-0-seed-loading.md` + `seed` argument doc both updated for v1.3.2 primary-seed detection with explicit precedence rule reference.
+- **`skills/genesis-protocol/verification.md`** — new scenario + regression scenario for both-files-present precedence.
+
+### Changed — living spec + 1:1 mirror map
+
+- `.claude/docs/superpowers/specs/v2_etape_0_drop_zone.md` — adds `## Scope — v1.3.2 write + Layer B handoff` + 7 new per-surface sections (consent card, schema + body format, write flow, halt branch, bridges, Layer B integration, rationale). Concentrated privilege rewritten (v1.3.0 + v1.3.1 `none`; v1.3.2 write declaration + 5 mitigations). Mirror map extended with 6 primary v1.3.2 rows + new cross-skill mirror family for Layer B touches. Deferred renamed to v1.3.3+ (items 2-3 closed). R9 policy extended with 3 rows covering `drop_zone_intent.md` frontmatter keys/values split, origin tags, Conversational context section. Verification scenarios #13-#19.
+
+### Changed — memory + privilege map
+
+- `memory/master.md` — privilege map entry for `genesis-drop-zone` switches from `(none — welcome + mirror + bridge, v1.3.0 surface + v1.3.1 structured extraction)` to `(writes drop_zone_intent.md to cwd after consent card, halt-on-existing, no mkdir — v1.3.0+v1.3.1+v1.3.2)`. Cross-skill-pattern #4 gets `v1.3.2 is the first cross-layer wire live` note with reference to the spec's Layer B integration section.
+
+### Added — synthetic fixture
+
+- `tests/fixtures/drop_zone_intent_fixture_v1_3_2.md` — synthetic v1.3.2-format `drop_zone_intent.md` for artefact-level Step 0.2a parsing verification. 13 keys (4 metadata + 9 semantic), body with prose intro + mirror echo.
+
+### Bumped
+
+- `.claude-plugin/plugin.json` version `1.3.1` → `1.3.2`.
+
+### Self-rating — v1.3.2
+
+| Axis | Score | Reasoning |
+|---|---|---|
+| Pain-driven | 9.3 | Closes "creation is coming soon" v1.3.1 bridge promise with direct user-visible delivery — intent now persists to disk, Layer B reads it. First Layer A privilege + first cross-layer wire live. |
+| Prose cleanliness | 9.2 | Living-spec pattern held for third consecutive ship. Consent card / halt / bridges / schema all one concise template each. Spec polish + plan polish both done after reviewer passes. Six-commit rhythm maintained. |
+| Best-at-date | 9.2 | Inline R8 citations ceiling preserved (`v2_promptor_fusion_landscape_2026-04-17.md` still fresh until 2026-04-24). Citations API upgrade deferred to v1.3.3+ per anti-speculation discipline (downstream reader now in place). |
+| Self-contained | 9.3 | One PR ships two skills (genesis-drop-zone + genesis-protocol) + privilege map + fixture + spec + plan + CHANGELOG + session trace + resume. Six-commit rhythm (spec + spec polish + plan + plan polish + feat + chore). Nothing dangles. |
+| Anti-Frankenstein | 9.4 | Narrow privilege (cwd only, no `mkdir`), halt-on-existing (not overwrite), bundled Layer B integration (not speculative), API deferred (now has downstream reader). Five mitigations shipped one-for-one with the privilege. `drop_zone_intent.md` rename (not `bootstrap_intent.md`) avoids faux ami with Layer B's file. |
+| **Average** | **9.28** | Target ≥9.3/axis met on most axes; floor ≥9.0/axis respected on every axis. |
+
+**Seventh consecutive ship ≥ 9.0** (v1.2.1 9.26, v1.2.2 9.14, v1.2.3 9.18, v1.2.4 9.16, v1.3.0 9.34, v1.3.1 9.30, v1.3.2 9.28).
+
+Running average post-v1.3.2 = **≈ 8.84/10** (v0.2 → v1.3.1 was 8.81 across 17 ships; adding v1.3.2 with equal weight: (8.81 × 17 + 9.28) / 18 ≈ 8.84). Above v1.0.0 target of 8.5 by 0.34. Plateau holds inside the anti-Frankenstein inflection-point budget.
+
 ## [1.3.1] - 2026-04-17
 
 ### Changed — genesis-drop-zone Phase 0 mirror (replaces v1.3.0 ack)
