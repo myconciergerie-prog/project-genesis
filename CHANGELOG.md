@@ -8,6 +8,41 @@ Every version bump includes a **5-axis self-rating block** per R10.3 discipline,
 
 ---
 
+## [1.3.0] — 2026-04-17 — "genesis-drop-zone welcome vertical slice — Étape 0 Layer A"
+
+First MINOR bump since v1.2.0. Opens the v1.3.x conversational-layer line of Genesis v2. Closes the v1.2.x PATCH cluster on v1.2.0 self-dogfood.
+
+### Added
+
+- `skills/genesis-drop-zone/` — new sibling skill package. First Layer A (conversational) skill of Genesis v2. Ships welcome + token-streamed acknowledgement + bilingual bridge as a vertical slice. Two files: `SKILL.md` (124 lines, 9 sections mirroring 8 rows of the spec's 1:1 mirror map) and `phase-0-welcome.md` (97 lines, FR + EN welcome boxes, ack template, bilingual bridge).
+- `.claude/docs/superpowers/specs/v2_etape_0_drop_zone.md` — new implementation-grade spec (268 lines). Inline R8 citations of `v2_promptor_fusion_landscape_2026-04-17.md` anchoring each UX choice in 2026 SOTA (IBM Docling accept-anything, v0/Bolt/Lovable intent-first, Ably SSE token-streamed ack, MIT Tech Review 2026-04 privacy-relationship language, Filestack dual-path rule). Hybrid-C strategy with the vision doc: `v2_vision_promptor_fusion.md` stays intact, receives one pointer line in § Étape 0 for navigation.
+- `.claude/docs/superpowers/plans/2026-04-17-v1.3.0-drop-zone-welcome.md` — 17-task implementation plan, reviewer-approved.
+- Cross-skill-pattern #4 in `memory/master.md`: Layer A / Layer B stratification. Named as a composition pattern (not a rule) emerging with the first Layer A skill. The four patterns now compose as the discipline surface for v2-onwards skills.
+
+### Changed
+
+- `memory/master.md` — concentrated-privilege map extended to 7 entries (genesis-drop-zone: none, journal-system precedent); skill count six → seven; cross-skill-patterns section now declares four patterns.
+- `skills/README.md` — 7th skill entry added below pepite-flagging.
+- `.claude/docs/superpowers/specs/v2_vision_promptor_fusion.md` — single pointer line added near § Étape 0 directing to the new implementation spec.
+- `.claude-plugin/plugin.json` — version 1.2.4 → 1.3.0.
+
+### Not changed intentionally
+
+- `skills/genesis-protocol/` — zero modifications. The Layer B engine stays strictly untouched. Extraction, `bootstrap_intent.md` write, and handoff to `genesis-protocol` are deferred to v1.3.1+.
+
+### Self-rating — v1.3.0
+
+| Axis | Score | Justification |
+|---|---|---|
+| Pain-driven coverage | 9.2/10 | Ship addresses the vision-doc-target gap ("Victor cannot use Genesis v1") with a demonstrable surface (welcome + ack + bridge). Deferred scope is crystal-clear. Small deduction: the spec declared Scenarios #1 and #3 as mandatory ship-gate replays; #6 (R9 audit) was run scripted and passes cleanly, and #3 was verified at the context-guard-logic level inside the active worktree (all 3 AND-conjoined conditions observed as non-fresh), but #1 (fresh-dir runtime welcome) requires a fresh Claude Code invocation outside this session and is deferred to the first post-merge session. That's an artefact-level gate, not a runtime-level one. |
+| Prose cleanliness | 9.3/10 | Caps respected: spec 268/400, SKILL.md 124/200, phase-0-welcome.md 97/100. Single-paragraph Purpose, no verbosity drift, mirror map gains a Mirrored/Spec-only column from the spec review. The one honest concession: the plan file is 624 lines vs a 400 target — the plan reviewer itself flagged this as load-bearing (per-step bash blocks, full commit/PR bodies inline for buildability) and recommended against trimming at that cost. Flagged here rather than pretending the cap held. |
+| Best-at-date alignment | 9.4/10 | First ship since v1.2.0 to consume fresh R8 research. The spec cites `v2_promptor_fusion_landscape_2026-04-17.md` inline at every UX choice (intent-first unified box, dual-path rule, token-streamed ack, privacy relationship language, accept-anything norm), with external anchors (IBM Docling, v0/Bolt/Lovable, Ably, MIT TR 2026-04, Filestack) resolvable through the R8 entry. This is the lever the running-avg analysis predicted would break the 8.6–8.8 ceiling structural to PATCH-fix cycles. |
+| Self-contained | 9.3/10 | Clean sibling skill: own directory, own SKILL.md, own 1:1 mirror target. Zero modifications to existing skills. Cross-skill-pattern #4 declared in master.md before the first usage. Concentrated-privilege map extended correctly (7th row). Vision doc pointer is a one-liner. |
+| Anti-Frankenstein | 9.5/10 | Welcome-only vertical slice. Zero plumbing (no file writes, no subprocess, no network). Privilege `none`. No test harness, no Python driver, no hook wiring. Deferred list is explicit and ordered. Two-commit pattern (feat + chore) continues the v1.2.1→v1.2.4 discipline. 1:1 mirror discipline extended to a third kind of pair (skill ↔ dedicated implementation spec), formalising what v1.2.4 did informally between runbook pairs. |
+| **Average** | **9.34/10** | Target ≥9.3 met; floor ≥9.0 respected on every axis. Running average v0.2 → v1.3.0 ≈ **8.78/10** (up from 8.74, +0.04 delta consistent with the v1.2.1→v1.2.4 cadence of +0.03 per ship). **Five consecutive ships ≥9.0** (v1.2.1 9.26, v1.2.2 9.14, v1.2.3 9.18, v1.2.4 9.16, v1.3.0 9.34). First ship of the v1.3.x cycle clears the per-axis 9.0 floor cleanly. |
+
+---
+
 ## [1.2.4] — 2026-04-17 — "R2.3.1 gh active-account pre-flight — F34 rule-level mirror"
 
 ### Added

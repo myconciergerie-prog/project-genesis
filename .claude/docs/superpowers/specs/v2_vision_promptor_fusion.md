@@ -25,6 +25,8 @@ powered by the same 7-phase engine, with a v0/Bolt-grade surface **and a drop zo
 
 ## Étape 0 — Le Dépôt (NEW, v1.2.0 addition)
 
+> **Implementation spec**: see [v2_etape_0_drop_zone.md](./v2_etape_0_drop_zone.md) for the v1.3.0+ skill implementation (genesis-drop-zone, welcome body, trigger gate, bilingual structure).
+
 Before the Étincelle (Étape 1), Genesis v2 presents a unified drop zone — the new front door.
 
 ```
