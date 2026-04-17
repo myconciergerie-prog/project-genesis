@@ -36,7 +36,7 @@ The orchestrator accepts three semantic arguments as `key=value` pairs on the sk
 |---|---|---|---|
 | `mode` | `detailed` \| `semi-auto` \| `auto` | `detailed` | Consent dispatch across Step 0, Phase 0.4, Phase 3 SSH paste-back, Phase 6 pre-commit review, Phase 7 halt-on-leak. Propagates into `phase-minus-one` as its own 3-mode ladder input. See `## Mode dispatch` below. |
 | `target` | Absolute path to a folder | Current working directory of the session | Destination folder for the bootstrap. Paradox Guard A checks this path against the orchestrator plugin root. |
-| `seed` | Filename inside the target folder | `config.txt` | File read at Phase 0.2 for the free-form project intent. If missing, Phase 0.1 offers the interactive seed card. |
+| `seed` | Filename inside the target folder | `config.txt` | File read at Phase 0.2 for the free-form project intent. **v1.3.2+**: if `drop_zone_intent.md` is present in the target folder (written by `genesis-drop-zone`), Phase 0.1 detects it as the **primary seed** and Phase 0.2a parses it via YAML frontmatter, taking precedence over the legacy `seed` filename. Silent merge never occurs — precedence is logged. If neither file is present, Phase 0.1 offers the interactive seed card. |
 
 Passthrough examples observed in real invocations: `context=...`, `strange-loop=...`, `friction-log=...`. They are accepted, captured in the Phase 0 parsed-intent card as `Extras: [field names]`, and written verbatim to `bootstrap_intent.md`. The orchestrator does not interpret them.
 
@@ -149,7 +149,7 @@ The user must confirm the full card before Phase 0 starts. No silent bootstraps.
 | File | Purpose |
 |---|---|
 | `SKILL.md` | This entry point — trigger phrases, 7-phase master table, skill pointers for -1 and 5.5, concentrated-privilege map |
-| `phase-0-seed-loading.md` | Phase 0 runbook — `config.txt` parsing, mixed media handling, input folder convention |
+| `phase-0-seed-loading.md` | Phase 0 runbook — reads the seed material in the target folder, either `drop_zone_intent.md` (written by `genesis-drop-zone` v1.3.2+ at the user's consent) or `config.txt` (legacy / engineer-written path). When both are present, `drop_zone_intent.md` takes precedence (Step 0.1 logs the precedence note). Parses the seed into a structured intent, surfaces it to the user for confirmation (Step 0.4 card with origin tags when seeded from the drop zone), and writes `memory/project/bootstrap_intent.md` as the contract for all downstream phases. |
 | `phase-1-rules-memory.md` | Phase 1 + Phase 2 runbook — rules copy, `memory/` scaffold, 4 sibling-skill install-manifests, research cache INDEX + seed entries |
 | `phase-3-git-init.md` | Phase 3 + Phase 4 runbook — `git init`, per-project SSH identity, project-specific seeds (master vision, specs, stubs) |
 | `phase-5-5-auth.md` | Thin pointer to the `phase-5-5-auth-preflight` skill — slug passing contract, Chrome profile, Layer 0 refs |

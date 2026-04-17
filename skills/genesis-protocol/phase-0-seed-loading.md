@@ -24,6 +24,7 @@ List every non-hidden file in the target folder (the one Claude Code was opened 
 
 | Shape | What it means |
 |---|---|
+| `drop_zone_intent.md` present | **Primary seed** — written by `genesis-drop-zone` v1.3.2+ at the user's drop-zone consent. Parse via YAML frontmatter in Step 0.2a. Overrides `config.txt` if also present (see precedence rule below). |
 | Empty folder | User wants to start from zero — Phase 0.2 will offer to scaffold a `config.txt` interactively |
 | `config.txt` only | Minimal seed — the standard happy path |
 | `config.txt` + PDFs / images | Rich seed — extract text and OCR-able content via `Read` tool (supports PDF + image) |
@@ -32,6 +33,51 @@ List every non-hidden file in the target folder (the one Claude Code was opened 
 | Folder with existing code (`package.json`, `pyproject.toml`, `Cargo.toml`, `.git/`) | **Stop**. This is not a greenfield bootstrap. Surface the situation and ask whether the user meant `/phase-5-5-auth-preflight` or `/journal-system` instead |
 
 Use `Glob` with `*` in the target folder to list top-level entries. Use `Read` on each text or PDF file, one by one, bounded by the security floor rules (never log full contents of files that look like they contain secrets — the same redaction rules from `session-post-processor` apply).
+
+### Precedence rule (v1.3.2)
+
+When Phase 0 Step 0.1 inspects the target folder, it checks for seeds in this order:
+
+1. `drop_zone_intent.md` present → **primary seed**. Parse via YAML frontmatter in Step 0.2a.
+2. No `drop_zone_intent.md`, `config.txt` present → **legacy seed**. Parse via free-form text in Step 0.2 (existing behaviour).
+3. **Both present → `drop_zone_intent.md` wins.** Log a precedence note: `config.txt found but drop_zone_intent.md takes precedence — ignoring config.txt`. Never merge silently.
+4. Neither present → interactive seed card offered (existing Step 0.2 fallback behaviour).
+
+The rule exists because `drop_zone_intent.md` (written by Layer A after user consent) is the v2 canonical seed for bootstraps that begin in the conversational surface. `config.txt` remains supported for engineer-written or legacy bootstraps. Silently merging the two would create source-of-truth ambiguity — explicit precedence + log keeps provenance clear.
+
+### Step 0.2a — Parse `drop_zone_intent.md` (when present)
+
+**Added in v1.3.2.** Only fires when Step 0.1 detected a `drop_zone_intent.md` in the target folder.
+
+Read the YAML frontmatter via `Read` on the file. Extract the 9 semantic keys + 4 metadata keys. Validate that `schema_version` equals `1` (the v1.3.2 format); if not, log a mismatch warning and fall through to Step 0.2 (`config.txt` parsing) with `drop_zone_intent.md` contents used as supplementary context only.
+
+#### Field mapping (Layer A → Layer B)
+
+| Layer A frontmatter | Layer B Phase 0 field | Transform |
+|---|---|---|
+| `idea_summary` | Vision (one-paragraph) | Verbatim. User can expand at Step 0.4 edit. If the 1-line synopsis is too short to serve as a paragraph Vision, the gap surfaces as an edit opportunity — Phase 0 does not synthesize a paragraph from Layer A atoms. |
+| `nom` (source) | Project name | Direct if `nom` is a real value. If `nom` is null-class (`a trouver ensemble`), Step 0.4 card prompts the user for the name. |
+| `nom` (same source, derived) | Project slug | Derive from the resolved Project name per the existing rule (lowercase, spaces → `-`, strip accents, alphanumeric + `-` only, < 50 chars). Slug is null until the name is set. |
+| `type` | Is-a-plugin | Inferred: if the `type` value contains the substring `plugin` (case-insensitive), map to `yes`; otherwise `no`. User can edit at Step 0.4. |
+| `hints_techniques` | Stack hints | Direct. If null-class, render as `[none]` on the card. |
+| `attaches` | Mixed media | Descriptor. Step 0.3 still scans cwd via `Glob` for the source of truth; `attaches` describes what the user saw in their mirror. |
+
+#### Layer-A-specific extras (preserved, not consumed by Phase 0 logic)
+
+The following 4 fields are not consumed by Phase 0 mapping but are **preserved** for Step 0.4 card display (in the `Additional context from drop zone` block) and Step 0.5 write (in the `## Conversational context from drop zone` section):
+
+- `pour_qui` — target audience.
+- `langue_detectee` — detected user language (`FR` / `EN` / `mixte`).
+- `budget_ou_contrainte` — budget / deadline / constraint mention.
+- `prive_ou_public` — private / public / team visibility.
+
+#### Null-class handling
+
+Null-class strings (`a trouver ensemble`, `non mentionne`, `non mentionnee`, `a affiner — X ou Y`) are preserved verbatim. They signal "user hasn't said yet", not a valid value. Step 0.4 card will prompt for any null-class field that is mandatory downstream (name, vision).
+
+#### Origin tracking
+
+Step 0.4 card tags each field with its origin: `(from drop zone)`, `(from config.txt)`, `(derived)`, `(default)`, `(inferred)`. Tag the 6 mapped fields with `(from drop zone)` or `(inferred)` (Is-a-plugin) as appropriate.
 
 ### Step 0.2 — Parse `config.txt` into a structured intent
 
@@ -70,15 +116,21 @@ Render a structured card showing everything Phase 0 parsed. Use the following te
 📋 Parsed intent — Phase 0
 
 Target folder          : <absolute path>
-Project name           : <parsed or [missing]>
-Project slug           : <parsed or derived-from-name or [missing]>
-Vision                 : <parsed paragraph or [missing]>
-Stack hints            : <parsed list or [missing]>
-License                : <parsed or MIT (default)>
-Is-a-plugin            : <yes | no | [missing]>
+Project name           : <value or [missing]> (<origin>)
+Project slug           : <derived or [pending name]>
+Vision                 : <value or [missing]> (<origin>)
+Stack hints            : <value or [none]> (<origin>)
+License                : <value or MIT (default)>
+Is-a-plugin            : <yes | no | [missing]> (<origin>)
 Plan tier              : <Max | Pro | Team | Free | [missing]>
-Scope locks            : <parsed list or [none]>
+Scope locks            : <list or [none]>
 Mixed media            : <file list or [none]>
+
+Additional context from drop zone:
+  Target audience      : <pour_qui value>
+  Language detected    : <FR | EN | mixte>
+  Budget / constraint  : <value or non mentionne>
+  Visibility           : <value or non mentionnee>
 
 Gaps to fill before Phase 1:
   - <gap 1>
@@ -87,6 +139,8 @@ Gaps to fill before Phase 1:
 
 Proceed with these values?  (yes / edit / abort)
 ```
+
+The `Additional context from drop zone` block renders **only when `drop_zone_intent.md` was the Phase 0 seed source** (v1.3.2+). For legacy `config.txt` bootstraps the block is omitted entirely (no blank section). Origin tags on each field: `(from drop zone)`, `(from config.txt)`, `(derived)`, `(default)`, `(inferred)`.
 
 The user responds with:
 
@@ -133,12 +187,27 @@ phase: 0
 
 ## Raw config.txt
 
-<verbatim contents — trimmed if > 5 KB>
+<verbatim contents — trimmed if > 5 KB; rendered as `n/a — seeded from drop_zone_intent.md` when the source was Layer A>
+
+## Conversational context from drop zone
+
+(Rendered only when `drop_zone_intent.md` was the Phase 0 seed source.)
+
+| Field | Value |
+|---|---|
+| Target audience (pour qui) | <value or "a trouver ensemble"> |
+| Language detected | <FR / EN / mixte> |
+| Budget or constraint | <value or "non mentionne"> |
+| Visibility (private / public) | <value or "non mentionnee"> |
+
+Source: `drop_zone_intent.md` written by `genesis-drop-zone` v<version> at <ISO timestamp>.
 
 ## Gaps noted at Phase 0
 
 <list of gaps the user acknowledged — each either resolved by a user-provided value or marked "deferred to <phase>">
 ```
+
+When the seed source was `drop_zone_intent.md`, the `## Raw config.txt` section is retained in the template but rendered as `n/a — seeded from drop_zone_intent.md`. This preserves the file's section structure across both seed paths and makes the seed source explicit to any future reader.
 
 After the file is written, Phase 0 is complete. Control returns to the orchestrator which advances to Phase 1.
 
