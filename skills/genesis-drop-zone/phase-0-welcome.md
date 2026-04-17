@@ -40,24 +40,62 @@ Plain-ASCII FR text inside the box by design: Unicode box-drawing combines unsta
 └────────────────────────────────────────────────────────────┘
 ```
 
-## Token-streamed acknowledgement template
+## Mirror template — FR (v1.3.1, printed by default)
 
-Reformulates what the user provided in progressive bullets, one per item. Pattern, not verbatim — bullets are filled with the user's own words when possible.
+Reformulates what the user dropped as a 9-row aligned-column table. Each field in the extraction schema renders as one row, revealed progressively per the Ably 2026 token-streaming pattern. FR is the default rendering in v1.3.1 (runtime locale detection deferred v1.3.2+).
 
 ```
- ◐ Je regarde ce que tu m'as donne...
-   . <one short phrase per item, using user's own words>
- ✓ J'ai tout lu.
+ ◐ Je regarde et je comprends...
+
+   Idee          <idea_summary — user's own words, 1 line>
+   Pour qui      <target users — 1 line>
+   Type          <kind of project — 1 line>
+   Nom           <proposed project name or "a trouver ensemble">
+   Depose        <list of dropped items, see truncation rule>
+   Langue        <FR / EN / mixte — detected from text>
+   Budget        <budget / constraint mention or "non mentionne">
+   Visibilite    <private / public mention or "non mentionnee">
+   Tech          <tech hints or "non mentionne">
+
+ ✓ Lu et compris.
 ```
 
-Per-item bullet rules:
+### Alignment and rendering rules
 
-| Input kind | Bullet template |
-|---|---|
-| PDF | `. un brief "<user's title>" (PDF, <N pages>)` |
-| Image | `. une photo de <what the image shows>` |
-| URL | `. un lien vers <domain or content summary>` |
-| Free text | `. une idée "<first 8 words verbatim>..."` |
+- Labels padded to 14 characters (left-aligned), 2-space separator, value flows right.
+- **ASCII pure inside the table block** — no accents in label or value rows (v1.3.0 rule preserved for Windows code-page stability). Accents are allowed in the `◐ Je regarde...` opening line, the `✓ Lu et compris.` closing line, and prose values only when genuinely needed (rare — the mirror is factual, not prose). All three routes through the UTF-8-stable stream path.
+- Row reveal is **token-streamed** one-by-one. `◐` stays visible until the 9th row renders, then `✓` closes.
+- No blocking spinner, no blank screen. Welcome box's rendering is the only moment with no partial output.
+
+### Per-field rules
+
+| Field | Label FR | Null-class when missing |
+|---|---|---|
+| `idea_summary` | Idee | class 1 degenerate: `a trouver ensemble` (mirror only fires when content non-zero) |
+| `pour_qui` | Pour qui | `a trouver ensemble` (core) |
+| `type` | Type | `a trouver ensemble` (core) |
+| `nom` | Nom | `a trouver ensemble` (core) |
+| `attaches` | Depose | `texte seul` if no attachment; else list 3 items + `+ N autres` beyond |
+| `langue_detectee` | Langue | always filled: `FR` / `EN` / `mixte` |
+| `budget_ou_contrainte` | Budget | `non mentionne` (bonus) |
+| `prive_ou_public` | Visibilite | `non mentionnee` (bonus) |
+| `hints_techniques` | Tech | `non mentionne` (bonus) |
+
+### Truncation rules
+
+- Each row value ≤ 60 chars after label; truncate at 57 + `...`.
+- `Depose` lists at most 3 items; beyond 3, append `+ N autres`.
+- `Idee` value: user's own words when possible; condense paragraph to ≤ 60 chars. Full content kept in Claude's context (v1.3.2+ handoff).
+
+### Ambiguity branch
+
+If the content supports multiple interpretations on a field:
+
+```
+   Type          a affiner — boulangerie ou restaurant
+```
+
+`a affiner` is the third null-class label alongside `a trouver ensemble` and `non mentionne(e)`.
 
 ### Zero-content branch
 
@@ -67,31 +105,66 @@ If the user's response contains only the trigger phrase with no content to echo:
  Je t'écoute — dépose ou écris ce que tu veux me partager.
 ```
 
-No `◐ Je regarde...` line, no `✓` closure. The skill then waits for the user's next conversational turn and re-runs the acknowledgement flow.
+No `◐`, no mirror, no `✓`. Skill waits for user's next turn and re-runs the mirror flow when content arrives. (v1.3.0 branch preserved unchanged.)
 
 ### Unreadable-attachment branch
 
-If Claude cannot read a file (exotic binary, oversize PDF past the Files API 32 MB × 600 pages limits):
+If Claude cannot read an attached file (exotic binary, oversize PDF > 32 MB × 600 pages), the `Depose` row lists the file alongside readable items:
 
 ```
-   . un fichier que je n'arrive pas a lire : <filename>
-     Dis-moi ce qu'il contient en mots ?
+   Depose        1 brief "X" + 1 fichier illisible : <filename>
 ```
 
-Graceful, no error code. Surrounding bullets (readable items) print normally; the unreadable-file bullet sits among them.
+Extraction of the other 8 fields continues from readable content. Graceful, no error code.
 
-## Bridge message (bilingual, always both printed)
-
-After the acknowledgement (or after the zero-content re-prompt has received a follow-up and been acknowledged), print this bridge exactly — both languages, always:
+## Mirror template — EN (v1.3.1, mirror-ready, not printed in v1.3.1)
 
 ```
-Extraction et création du projet arrivent bientôt.
-Pour l'instant, j'ai bien vu — reviens à Claude Code normalement.
+ ◐ I read and I understand...
 
-Extraction and project creation are coming soon.
-For now, I've seen it — go back to Claude Code normally.
+   Idea          <idea_summary>
+   Who for       <target users>
+   Kind          <kind of project>
+   Name          <proposed name or "to be found together">
+   Dropped       <list of dropped items>
+   Language      <FR / EN / mixed>
+   Budget        <budget or "not mentioned">
+   Visibility    <visibility or "not mentioned">
+   Tech          <tech or "not mentioned">
+
+ ✓ Read and understood.
 ```
 
-The word "bientôt" / "soon" is deliberately time-free. Do not insert a version number or a date — the bridge must stay accurate whether v1.3.1 ships next week or next month.
+Per-field labels EN (matching FR row-for-row):
+
+| Field | Label EN | Null-class when missing |
+|---|---|---|
+| `idea_summary` | Idea | `to be found together` |
+| `pour_qui` | Who for | `to be found together` |
+| `type` | Kind | `to be found together` |
+| `nom` | Name | `to be found together` |
+| `attaches` | Dropped | `text only` if no attachment |
+| `langue_detectee` | Language | always filled |
+| `budget_ou_contrainte` | Budget | `not mentioned` |
+| `prive_ou_public` | Visibility | `not mentioned` |
+| `hints_techniques` | Tech | `not mentioned` |
+
+Same alignment, truncation, and branch rules as the FR variant.
+
+## Bridge message (v1.3.1 — both languages always printed)
+
+v1.3.0's bridge claimed "Extraction et création… arrivent bientôt" — that became false as of v1.3.1 since extraction now runs. The v1.3.1 bridge reflects that extraction is done and only the project's actual creation (GitHub repo, files on disk, memory system) remains deferred:
+
+```
+Création du projet (GitHub, fichiers, mémoire) arrive bientôt.
+Pour l'instant, j'ai lu et compris — reviens à Claude Code normalement.
+
+Project creation (GitHub, files, memory) is coming soon.
+For now, I've read and understood — go back to Claude Code normally.
+```
+
+"Creation du projet" enumerates its three concrete deliverables (GitHub repo / files / memory) — promise is tangible, not abstract. "J'ai lu et compris" replaces v1.3.0's "j'ai bien vu" — catalogue becomes comprehension. "Bientôt" / "soon" stays time-free.
+
+**Accent discipline**: bridge is plain-prose, non-table content routed through the UTF-8-stable stream path — **keeps its accents** (`é`, `ô`, `à`, `—`). ASCII-only rule applies only to table content (welcome box and mirror rows). Same asymmetry as v1.3.0.
 
 After the bridge prints, the skill exits cleanly. Control returns to the normal Claude Code conversation.

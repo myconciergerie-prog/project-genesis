@@ -8,9 +8,9 @@ description: Layer A conversational front door for Genesis v2 project bootstrap 
 
 ## Purpose
 
-Genesis v1 is an engineer's protocol that speaks to engineers. The v2 vision adds a conversational Layer A where a non-technical user can open Claude Code, drop an idea in any form (text, PDF, photo, link, audio), and be met by a warm conversational surface instead of a config file. `genesis-drop-zone` is the first Layer A skill. In v1.3.0 it ships a vertical slice — welcome, acknowledgement, bridge — that demonstrates the surface without yet wiring the downstream bootstrap engine. Extraction into `bootstrap_intent.md` and handoff to `genesis-protocol` are deferred to v1.3.1+.
+Genesis v1 is an engineer's protocol that speaks to engineers. The v2 vision adds a conversational Layer A where a non-technical user can open Claude Code, drop an idea in any form (text, PDF, photo, link, audio), and be met by a warm conversational surface instead of a config file. `genesis-drop-zone` is the first Layer A skill. v1.3.0 shipped the welcome + token-streamed acknowledgement + bridge vertical slice; **v1.3.1 upgrades the acknowledgement into a structured 9-field mirror screen** (in-context extraction of user intent, rendered as an aligned-column table revealed row by row, no API call, no disk write). The write of `bootstrap_intent.md` + handoff to `genesis-protocol` remain deferred to v1.3.2+.
 
-**Canonical spec**: `.claude/docs/superpowers/specs/v2_etape_0_drop_zone.md`. This `SKILL.md` is a 1:1 mirror of that spec for the eight sections tagged `Mirrored`. Spec-only sections (problem statement, UX canon backing, R9 tier map, R8 citations, verification scenarios, relation to the vision doc) live in the spec alone. When either file changes, the other follows — drift is a merge-blocker per cross-skill-pattern #1.
+**Canonical spec**: `.claude/docs/superpowers/specs/v2_etape_0_drop_zone.md` — a living spec that evolves across versions. This `SKILL.md` is a 1:1 mirror across all `Mirrored` rows of the spec's mirror map. When either file changes, the other follows — drift is a merge-blocker per cross-skill-pattern #1.
 
 ## Scope
 
@@ -23,12 +23,22 @@ Genesis v1 is an engineer's protocol that speaks to engineers. The v2 vision add
 5. Trigger evaluation gate — slash + bilingual natural-language triggers + context guard.
 6. Concentrated privilege declaration: `none`.
 
-### Out of scope (deferred to v1.3.1+)
+### In scope (v1.3.1)
 
-- Structured extraction of user intent into a target schema.
+1. In-context extraction of user intent into a 9-field schema (see `phase-0-welcome.md § Mirror template — FR` for the labels).
+2. Mirror screen replaces v1.3.0's `◐ ... ✓` bullet-list acknowledgement. Aligned-column table, token-streamed row reveal.
+3. Null-visible convention — every row always renders. Missing core fields → `a trouver ensemble`; missing bonus fields → `non mentionne(e)`; ambiguity → `a affiner — X ou Y`.
+4. Bridge update — "Création du projet (GitHub, fichiers, mémoire) arrive bientôt" replaces v1.3.0's extraction-is-coming claim.
+5. Failure-mode extensions — zero-content re-prompt preserved; unreadable-attachment row inside `Depose`; very-thin-content mirror with mostly null labels.
+6. Truncation rules — row values ≤ 60 chars, `Depose` caps at 3 items + `+ N autres`.
+7. Concentrated privilege stays `none` (no API call, no disk write, no subprocess).
+
+### Out of scope (deferred to v1.3.2+)
+
+- API-powered Path A Citations extraction (audit-trail via `cited_text` + `document_index`).
 - Writing `bootstrap_intent.md` into any directory.
 - Handoff to `genesis-protocol` Phase 0.
-- Runtime locale detection (FR vs EN selection).
+- Runtime locale detection (FR vs EN selection — `langue_detectee` extracted but mirror still renders FR in v1.3.1).
 - `GH_BROWSER` profile routing.
 - UX toolkit integration (@clack/prompts, Charm Gum, cli-spinners).
 - Completion chime (cross-platform).
@@ -78,47 +88,60 @@ Print the welcome ASCII box from `phase-0-welcome.md` § "FR welcome box (printe
 
 After printing the box, wait for the user's next conversational turn. Do not prompt, do not block, do not spin a loading indicator — the welcome box is itself the invitation. The user's next message (text, text + attached files, text + URL, or any combination) feeds the acknowledgement step below.
 
-## Phase 0 — acknowledgement
+## Phase 0 — mirror
 
-When the user's response arrives, reformulate what they gave as a progressive list of short bullets, one per item. Follow the token-streamed pattern declared in `phase-0-welcome.md` § "Token-streamed acknowledgement template". The pattern is:
+When the user's response arrives, extract the 9-field intent schema from the dropped content (text, PDFs, images, URLs — all read via multimodal) and render the mirror template from `phase-0-welcome.md § "Mirror template — FR (v1.3.1, printed by default)"`. Reveal rows progressively (Ably token-streaming pattern).
 
-```
- ◐ Je regarde ce que tu m'as donne...
-   . <one bullet per item, in the user's own words when possible>
- ✓ J'ai tout lu.
-```
+The schema:
 
-- PDFs → `. un brief "<title>" (PDF, <N pages>)` (use the user's title words, not the filename).
-- Images → `. une photo de <what the image shows>`.
-- URLs → `. un lien vers <domain or summary>`.
-- Free text → `. une idée "<first 8 words verbatim>..."`.
+| Field | Label FR | Label EN | Semantic |
+|---|---|---|---|
+| `idea_summary` | Idee | Idea | 1-line synopsis in user's words |
+| `pour_qui` | Pour qui | Who for | Target users / audience |
+| `type` | Type | Kind | Category (app / tool / site / plugin / doc / …) |
+| `nom` | Nom | Name | Proposed project name (explicit, not auto-slugged) |
+| `attaches` | Depose | Dropped | Dropped items with brief descriptor |
+| `langue_detectee` | Langue | Language | FR / EN / mixte detected from text |
+| `budget_ou_contrainte` | Budget | Budget | Budget / deadline / constraint mention |
+| `prive_ou_public` | Visibilite | Visibility | Private / public / team-only mention |
+| `hints_techniques` | Tech | Tech | Tech stack hints mentioned or inferred |
 
-**Zero-content branch**: if the user's response contains only the trigger phrase with no follow-up content, do not print the `◐` line. Instead re-prompt: `Je t'écoute — dépose ou écris ce que tu veux me partager.` No `✓` closure in that branch.
+**Null-visible convention** — every row always prints. Three null classes:
 
-**Unreadable-attachment branch**: if Claude cannot read a file (exotic binary, oversize PDF past the 32 MB × 600 pages Files API limits), the bullet becomes `. un fichier que je n'arrive pas a lire : <filename> / Dis-moi ce qu'il contient en mots ?` — graceful, no error code.
+- `a trouver ensemble` — core field missing (signals Étape 1 Q&A to come). Used for `pour_qui`, `type`, `nom`.
+- `non mentionne(e)` — bonus field missing (not-blocking). Used for `budget_ou_contrainte`, `prive_ou_public`, `hints_techniques`.
+- `a affiner — <two or more hypotheses>` — ambiguity needing user arbitrage.
+
+**Zero-content branch**: if the user's response contains only the trigger phrase with no content, do NOT print the `◐` line or the table. Instead re-prompt `Je t'écoute — dépose ou écris ce que tu veux me partager.` and wait for the user's next turn. No `✓` closure in that branch.
+
+**Unreadable-attachment branch**: if Claude cannot read an attached file (exotic binary, oversize PDF past the 32 MB × 600 pages Files API limits), the `Depose` / `Dropped` row lists it alongside readable items: `Depose        1 brief "X" + 1 fichier illisible : <filename>`. Extraction of the other 8 fields continues from readable content.
+
+**Truncation**: each row value ≤ 60 chars after the label. Longer → truncate at 57 + `...`. `Depose` lists at most 3 items; beyond 3, append `+ N autres`.
+
+**Schema persistence**: v1.3.1 holds the schema in Claude's conversational context only — no disk write, no JSON serialization, no external consumer. v1.3.2+ persists to `bootstrap_intent.md` for handoff to `genesis-protocol`.
 
 ## Phase 0 — bridge
 
-After `✓ J'ai tout lu.` (or the re-prompt in the zero-content branch, once the user replies), print the bridge message from `phase-0-welcome.md` § "Bridge message". Always both languages, because v1.3.0 has no locale detection and will not silently strand non-French-native users.
+After the mirror's `✓ Lu et compris.` line prints (or after the zero-content re-prompt receives a follow-up and the mirror has then rendered), print the bridge message from `phase-0-welcome.md § "Bridge message (v1.3.1 — both languages always printed)"`. Always both languages, because v1.3.1 still has no runtime locale detection.
 
-After the bridge prints, exit cleanly — control returns to the normal Claude Code conversation.
+After the bridge prints, the skill exits cleanly — control returns to the normal Claude Code conversation.
 
 ## Concentrated privilege
 
-The concentrated privilege of `genesis-drop-zone` in v1.3.0 is **`none`**.
+The concentrated privilege of `genesis-drop-zone` in **v1.3.0 and v1.3.1** is **`none`**.
 
-Precedent: `journal-system` declared `none` in `memory/master.md`'s concentrated-privilege map. The welcome + acknowledgement + bridge slice writes nothing to disk, runs no subprocess, makes no network call. Claude reads user-attached files via its native multimodal context — a harness-level capability, not a skill privilege.
+Precedent: `journal-system` declared `none` in `memory/master.md`'s concentrated-privilege map. The welcome + mirror + bridge slice writes nothing to disk, runs no subprocess, makes no network call, invokes no Anthropic API. Claude reads user-attached files via its native multimodal context — a harness-level capability, not a skill privilege. In-context extraction in v1.3.1 uses the same multimodal path; the schema lives in conversation memory only.
 
-Forward note (non-binding): the v1.3.1+ extraction + `bootstrap_intent.md` write step will introduce one concentrated privilege (writing into a user-designated project directory). That privilege is declared when that code ships, not now. Anticipating it here would violate the "declare privileges for code that exists" anti-Frankenstein gate.
+**Forward note (non-binding)**: v1.3.2+ will introduce the first concentrated privilege for this skill — writing `bootstrap_intent.md` into a user-designated project directory. That ship will carry a consent card, overwrite-protection, and a bilingual confirmation prompt, matching the Layer A discipline of `pepite-flagging`'s per-target consent floor. Declaring that privilege here (before the code that carries it ships) would violate the anti-Frankenstein gate.
 
 ## Deferred scope
 
 Ordered by rough priority, non-binding, revisit at each session boundary:
 
-1. Structured extraction of user intent — Path A (Citations) per `v2_vision_promptor_fusion.md` § "Extraction choice". Writes extracted fields into `bootstrap_intent.md`.
-2. `bootstrap_intent.md` file write — consent prompt, target directory resolution, UTF-8 encoding, overwrite protection.
-3. Handoff to `genesis-protocol` — invoke `genesis-protocol` with `bootstrap_intent.md` available as the Layer B seed (replaces `config.txt` in v2).
-4. Runtime locale detection — detect user language from trigger match + message content; switch between FR and EN variants dynamically.
+1. API-powered Path A Citations extraction — upgrade v1.3.1's in-context extraction with `citations: {enabled: true}` per `document` block. Surfaces `cited_text` + `document_index` for audit-trail on the mirror. First "external API call" privilege for `genesis-drop-zone`; sequenced alongside or after write + handoff.
+2. `bootstrap_intent.md` file write — consent prompt, target directory resolution, UTF-8 encoding, overwrite protection. **First concentrated privilege for the skill.**
+3. Handoff to `genesis-protocol` — invoke with `bootstrap_intent.md` available as the Layer B seed (replaces `config.txt` in v2).
+4. Runtime locale detection — detect user language from trigger match + message content; switch FR and EN variants dynamically for both welcome and mirror.
 5. `GH_BROWSER` profile routing wire-up.
 6. UX toolkit integration — `@clack/prompts`, Charm Gum, cli-spinners.
-7. Completion chime (cross-platform — macOS `afplay`, Windows `[console]::beep`, Linux `paplay`).
+7. Completion chime (cross-platform).
