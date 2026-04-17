@@ -643,13 +643,13 @@ When Phase 0 Step 0.1 inspects the target folder, it checks for seeds in this or
 
 ### Field mapping (Step 0.2a)
 
-Drop-zone frontmatter fields → Layer B Phase 0 intent fields:
+Drop-zone frontmatter fields → Layer B Phase 0 intent fields. The `nom` source field maps to two Layer B fields (Project name, Project slug) — the table lists both rows for clarity; the second row's "Transform" column makes the derivation step explicit.
 
 | Layer A frontmatter | Layer B field | Transform |
 |---|---|---|
 | `idea_summary` | Vision (one-paragraph) | Verbatim. User can expand at Step 0.4 edit. If the 1-line synopsis is too short to serve as a paragraph Vision, the gap surfaces as an edit opportunity — Phase 0 does not synthesize a paragraph from Layer A atoms. |
-| `nom` | Project name | Direct if `nom` is a real value. If `nom` is null-class (`a trouver ensemble`), Step 0.4 card prompts the user for the name. |
-| `nom` (derived) | Project slug | Derive from the project name per the existing rule (lowercase, spaces → `-`, strip accents, alphanumeric + `-` only, < 50 chars). Slug is null until the name is set. |
+| `nom` (source field) | Project name | Direct if `nom` is a real value. If `nom` is null-class (`a trouver ensemble`), Step 0.4 card prompts the user for the name. |
+| `nom` (same source, derived) | Project slug | Derive from the resolved Project name per the existing rule (lowercase, spaces → `-`, strip accents, alphanumeric + `-` only, < 50 chars). Slug is null until the name is set. |
 | `type` | Is-a-plugin | Inferred: if the `type` value contains the substring `plugin` (case-insensitive), map to `yes`; otherwise `no`. User can edit at Step 0.4. |
 | `hints_techniques` | Stack hints | Direct. If null-class, render as `[none]` on the card. |
 | `attaches` | Mixed media | Informational only. Phase 0 Step 0.3 still scans cwd via `Glob` for the canonical list; `attaches` describes what the user saw in their mirror. |
@@ -893,7 +893,7 @@ All v1.3.0 regression guarantees preserved. Mirror template, extraction schema, 
 - **v1.3.1 (original)**: #7, #9, #12 mandatory. Regression on v1.3.0 #3 + #6 mandatory. #8 strongly recommended. #10, #11 documented non-blocking.
 - **v1.3.2 (this ship)**: **#13, #14, #15, #18 mandatory** — write happy path + decline path + halt-on-existing (pre-consent, safety-critical) + Layer B happy path (first cross-layer wire). **Strongly recommended**: #16 (modification-in-flight), #19 (Layer B precedence on double-file). **Regression on v1.3.1 mandatory**: #3 (context guard), #6 (R9 audit SKILL.md — extended for v1.3.2 additions), #9 (zero-content branch — verify v1.3.2 does not plumb consent / write when this branch fires), #12 (R9 audit `phase-0-welcome.md` — extended for consent card + halt + bridges). **Documented non-blocking**: #17 (R9 audit on the written file).
 
-**Scenario #1 / #13 runtime replay note**: runtime replay of both #1 and #13 requires a fresh Claude Code process in an empty directory, not executable from inside a running session. Artefact-level verification remains the ship gate (template parseability, dispatch coherence, context-guard logic verified against real filesystem, YAML frontmatter validation against a synthetic `drop_zone_intent.md` fixture, Step 0.2a parsing exercised against the same fixture). Runtime replay of #13 deferred to an externally-launched fresh session — same harness constraint as v1.3.1's #1 roll-forward. A consistent −0.2 Pain-driven deduction applies and rolls forward until runtime replay happens.
+**Scenario #1 / #13 / #18 runtime replay note**: runtime replay of #1 (mirror dispatch), #13 (write happy path), and #18 (Layer B happy path) all require a fresh Claude Code process in an empty directory, not executable from inside a running session. Artefact-level verification remains the ship gate for each — specifically: template parseability, dispatch coherence, context-guard logic verified against real filesystem, YAML frontmatter validation against a synthetic `drop_zone_intent.md` fixture, Step 0.2a parsing exercised against the same fixture, and Step 0.4 card rendering traced against the fixture's parsed fields. Runtime replay of #13 and #18 deferred to an externally-launched fresh session — same harness constraint as v1.3.1's #1 roll-forward. A consistent −0.2 Pain-driven deduction applies for each replay-deferred scenario and rolls forward until runtime replay happens. The ship gate treats all three scenarios symmetrically: artefact-level green = ship gate passed; runtime replay is a separate observability track, not a merge-blocker.
 
 ## Rationale for v1.3.2 route
 
