@@ -90,9 +90,68 @@ git remote set-url origin git@github.com-genesis:myconciergerie-prog/project-gen
 
 ### R2.3 PR & merge
 
-- PR via `GH_TOKEN="$GH_TOKEN" gh pr create` (env override — never `gh auth login`)
-- Merge via `GH_TOKEN="$GH_TOKEN" gh pr merge --squash` **without** `--delete-branch`
+- PR via `GH_TOKEN="$GH_TOKEN" gh pr create` (env override — never `gh auth login`; precede with R2.3.1 pre-flight)
+- Merge via `GH_TOKEN="$GH_TOKEN" gh pr merge --squash` **without** `--delete-branch` (precede with R2.3.1 pre-flight)
 - **Forbidden**: direct push to `main`, `--no-verify`, `--no-gpg-sign`, force-push on any protected branch
+
+### R2.3.1 `gh` active-account pre-flight (before any `gh` write — added v1.2.4)
+
+On multi-account machines (per Layer 0's `reference_accounts_orgs_and_projects.md` — the norm, not the edge case), the currently-active `gh` CLI account may not match the target repo owner. Without a pre-flight, `gh pr create` / `gh pr merge` / `gh release create` fails with `GraphQL: must be a collaborator (createPullRequest)` or a 404 from `gh api repos/<owner>/<repo>` — opaque errors that hide the real cause. F34 was live-reproduced on this very repo during the v1.2.1 PR creation — which was a **v0.2.0+ post-bootstrap session**, not a bootstrap run. R2.3.1 mirrors the bootstrap-level fix shipped in v1.2.3 (`skills/genesis-protocol/phase-6-commit-push.md` Step 6.0) so every v0.2.0+ PR session in every Genesis-bootstrapped project inherits the same discipline.
+
+**Resolve the target owner** from the git remote (single source — v0.2.0+ sessions always have a remote configured, which is what distinguishes them from pre-Phase-3.5 bootstrap):
+
+```bash
+target_owner="$(git remote get-url origin | sed -E 's#.*[:/]([^/]+)/[^/]+\.git$#\1#')"
+current_login="$(gh api user --jq .login 2>/dev/null || echo '')"
+```
+
+**Compare and dispatch**:
+
+- **Equal** → proceed with the intended `gh` write op.
+- **`current_login` empty** (gh not authenticated on this machine at all) → halt with:
+
+  ```
+  ❌ R2.3.1 — gh is not authenticated on this machine
+
+  Target owner : <target_owner>
+
+  Remediation:
+    gh auth login --web
+    # authenticate as <target_owner>, then re-run the `gh` command.
+  ```
+
+- **Mismatch** → attempt the switch, then re-verify:
+
+  ```bash
+  gh auth switch -h github.com -u "$target_owner"
+  current_login="$(gh api user --jq .login 2>/dev/null || echo '')"
+  ```
+
+  - Re-verification returns `$target_owner` → surface a one-line note `gh active account switched to <target_owner> for this op` (so the user knows the machine-global state changed — Layer 0 additive-auth still holds: both accounts remain logged in, no credential removed) and proceed.
+  - Switch failed (target owner not logged in on this machine, so `gh auth switch` errored) → halt with:
+
+    ```
+    ❌ R2.3.1 — gh active account does not match target owner
+
+    Active account : <current_login>
+    Target owner   : <target_owner>
+
+    Automatic switch failed — account '<target_owner>' is not
+    currently logged in to gh on this machine.
+
+    Remediation:
+      gh auth login --web
+      # authenticate as <target_owner>, then re-run the `gh` command.
+
+    Current gh auth status:
+    <two-space-indented output of `gh auth status`>
+    ```
+
+**Scope**: applies to every `gh` write op — `gh pr create`, `gh pr merge`, `gh release create`, `gh repo <write-verb>`, and any future `gh` command that mutates remote state. Read-only calls (`gh api user`, `gh auth status`, `gh repo view`) are exempt because they do not surface the `must be a collaborator` error.
+
+**Relation to bootstrap Step 6.0**: R2.3.1 is the rule-level mirror of `genesis-protocol` Phase 6 Step 6.0. Owner resolution is simpler here (single source: the git remote, because v0.2.0+ sessions always have one configured) where Step 6.0 resolves through three fallbacks to handle the pre-Phase-3.5 bootstrap ordering. The halt / auto-switch / re-verification logic is identical to Step 6.0 so the two stay 1:1 consistent — a change to either one prompts a review of the other.
+
+**Mode dispatch**: R2.3.1 is a **structural stop** in every execution mode (`detailed`, `semi-auto`, `auto`). Proceeding with a wrong active account produces an opaque downstream failure at `gh` write time, strictly worse than halting now with a clear remediation. The automatic `gh auth switch` attempt runs without a consent gate in every mode because it only flips between accounts the user already authorized — reversible, additive, Layer-0-compliant.
 
 ### R2.4 PR granularity
 
