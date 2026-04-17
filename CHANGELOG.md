@@ -8,6 +8,38 @@ Every version bump includes a **5-axis self-rating block** per R10.3 discipline,
 
 ---
 
+## [1.2.4] — 2026-04-17 — "R2.3.1 gh active-account pre-flight — F34 rule-level mirror"
+
+### Added
+
+- `skills/genesis-protocol/rules/v1_rules.md` — new `### R2.3.1 gh active-account pre-flight (before any gh write — added v1.2.4)` sub-rule inserted under `### R2.3 PR & merge`. Rule-level mirror of `genesis-protocol` Phase 6 Step 6.0 (shipped in v1.2.3). Resolves target owner from `git remote get-url origin` (single source — v0.2.0+ sessions always have a remote configured, unlike pre-Phase-3.5 bootstrap which needs three fallbacks), runs `gh api user --jq .login`, compares, and on mismatch attempts `gh auth switch -h github.com -u <owner>` with re-verification. Halt templates are byte-for-byte identical to Step 6.0's (differing only in the `❌ R2.3.1 …` / `❌ Step 6.0 …` heading). Applies to every `gh` write op (`gh pr create`, `gh pr merge`, `gh release create`, `gh repo <write-verb>`); read-only calls (`gh api user`, `gh auth status`, `gh repo view`) explicitly exempt. Declared a structural stop in every execution mode. Closes the v0.2.0+ downstream coverage gap flagged in the v1.2.3 session trace and in v1.2.3's own self-rating prose — F34 was live-reproduced during v1.2.1's own PR creation, which was a v0.2.0+ session, not a bootstrap run.
+
+### Changed
+
+- `skills/genesis-protocol/rules/v1_rules.md` — two cross-ref parentheticals added to the R2.3 PR & merge bullets: "(precede with R2.3.1 pre-flight)" on both the `gh pr create` bullet and the `gh pr merge --squash` bullet. Keeps the R2.3 bullet list the entry point that R2.3.1 expands on.
+- `.claude-plugin/plugin.json` — version bumped `1.2.3` → `1.2.4`.
+
+### Notes
+
+- **Two commits inside the feat branch, one PR**: `c4464d5` (feat — R2.3.1 + R2.3 cross-refs on one file: +61 / −2) and the pending chore commit (version + CHANGELOG + session trace + MEMORY.md pointer + resume prompt). Same "one root cause per commit, bundle into one PR" rhythm as v1.2.1, v1.2.2, v1.2.3. No SKILL.md sync commit here because R2.3.1 is a project-level rule governing downstream-bootstrapped sessions, not a structural stop of the `genesis-protocol` orchestrator skill itself — SKILL.md's Mode dispatch Category A catalogue stays scoped to orchestrator-internal stops.
+- **1:1 mirror discipline extended from spec pairs to rule/runbook pairs**: the three existing 1:1 mirror precedents (journal-system ↔ Layer 0 journal section, pepite-flagging ↔ spec file, genesis-protocol SKILL.md ↔ master.md 7-phase table) all mirror a `SKILL.md` against a source spec. R2.3.1 ↔ Step 6.0 is the first rule/runbook 1:1 mirror, and the "Relation to bootstrap Step 6.0" paragraph inside R2.3.1 is the anti-drift hook that commits future maintainers to reviewing both when either is touched. The cross-skill-patterns section of `master.md` will likely evolve to name this new mirror type as the pattern ossifies — flagged for the next naming-convention pass.
+- **Layer 0 additive-auth compliance preserved**: R2.3.1's `gh auth switch` mutates the machine-global gh active account but removes no credential (both accounts remain logged in), so the operation is within Layer 0's additive-auth discipline. R2.3.1 surfaces a one-line note when the switch happens so the user knows the global state changed. Recording the pre-switch login and offering to restore it after the `gh` write op is explicitly flagged as a v1.3 candidate — same deferral as v1.2.3 carried Step 6.0's pre-switch restore over to v1.3. Whichever rule or runbook gets the pre-switch restore first should teach the other via the 1:1 mirror discipline.
+- **What did not change in v1.2.4**: F24 Phase 0.1 git-aware inspection (P2 cosmetic), F25/F31 config.txt canonical examples (P2 doc work), F26 non-canonical fields audit UI (still half-fixed from v1.2.2), F28 `genesis-cleanup` sibling skill (P3), F32 Python driver (v1.3 target), F33 R8 scope disambiguation (P3).
+- **P1 queue — second closure**. v1.2.3 closed the P1 queue at the bootstrap level with Step 6.0 for F34. v1.2.4 closes the same P1 at the v0.2.0+ rule level with R2.3.1 as Step 6.0's rule-level mirror. The P1 pain surface is now covered at both levels — bootstrap runbook AND downstream-project rules. Any future F34-type recurrence would need a new pain point, not a missing coverage. The next-severity band remains P2 doc work or the **v2 Étape 0 drop-zone pivot** (cache `v2_promptor_fusion_landscape_2026-04-17.md` fresh, expires 2026-04-24 — 6 days of runway after v1.2.4 ship).
+
+### Self-rating — v1.2.4
+
+| Axis | Rating | Notes |
+|---|---|---|
+| Pain-driven coverage | 9.4/10 | R2.3.1 closes the exact downstream gap flagged in v1.2.3's self-rating prose ("a parallel rule in `v1_rules.md` covering v0.2.0+ post-bootstrap PR sessions would cover the same pain outside the bootstrap runbook"). F34 live-reproducer was a v0.2.0+ session — the bootstrap fix only covered a sibling surface. Small deduction because this ship is downstream prevention rather than a fix for an active live reproducer — less acute than v1.2.3 which addressed the bootstrap's own surface. |
+| Prose cleanliness | 9.0/10 | R2.3.1 is ~60 lines, structurally identical branches to Step 6.0's 63 lines. Halt templates are copy-paste-ready. Mode dispatch paragraph explicit. The "Relation to bootstrap Step 6.0" paragraph is the self-documenting anti-drift hook. Minor deduction: R2.3.1 is on the heavy side for a sub-rule, but the branches are proportionate to Step 6.0 which is the reference point. |
+| Best-at-date alignment | 8.8/10 | `gh api user --jq .login` + `gh auth switch -h github.com -u <user>` are the established gh CLI primitives, behaviour stable across the last 12 months. No research refresh needed — primitives already validated in v1.2.3. Cache entry `gh-cli-single-click-auth_2026-04-16.md` (fresh, expires 2026-04-23) remains the broader prior-art reference. Same stance as v1.2.3 applied at a different layer. |
+| Self-contained | 9.3/10 | R2.3.1 fits under R2.3 as a proper sub-rule; owner resolution is a single `sed` pipe over `git remote get-url origin`. The 1:1 mirror declaration with Step 6.0 is explicit in the rule body itself, not hidden in a CHANGELOG note — so the rule self-documents its invariant. R8 archive already done in v1.2.3, no bookkeeping overhead here. No new runtime, no new file outside `v1_rules.md`, no new config. |
+| Anti-Frankenstein | 9.4/10 | Two commits: feat (R2.3.1 + 2 cross-refs on one file) + chore (version + CHANGELOG + session trace + MEMORY.md pointer + resume prompt). Same surgical discipline as v1.2.3. No driver, no retry loop, no hook wiring. The 1:1 mirror with Step 6.0 is anti-Frankenstein applied recursively (reuse the proven semantic, do not invent a parallel one). Pre-switch restore deliberately deferred to v1.3. |
+| **Average** | **9.16/10** | Running average v0.2 → v1.2.4 ≈ **8.74/10** (up from 8.71). **Four consecutive ships ≥ 9.0** (v1.2.1 9.26, v1.2.2 9.14, v1.2.3 9.18, v1.2.4 9.16) — surgical commit discipline holding, and the 1:1 mirror discipline extended cleanly from spec pairs to rule/runbook pairs without changing rhythm or cadence. |
+
+---
+
 ## [1.2.3] — 2026-04-17 — "gh active-account pre-flight — F34"
 
 ### Added
