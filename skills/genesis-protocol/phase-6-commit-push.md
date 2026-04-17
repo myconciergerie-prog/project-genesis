@@ -60,6 +60,8 @@ Proceed with first commit?  (yes / inspect / abort)
 - **inspect** → render a `git diff --cached --stat` output and ask again
 - **abort** → exit cleanly, leave the staged state in place for the user to resolve manually
 
+**Mode dispatch** (see `SKILL.md § Mode dispatch`): the pre-commit review is a category C consent gate but sits adjacent to the first-push concentrated privilege. In `detailed` mode it blocks on `yes` / `inspect` / `abort`. In `semi-auto` mode it still blocks — the first commit and first push to a brand-new remote are unrecoverable without manual intervention, so semi-auto keeps the human-in-the-loop guarantee here. In `auto` mode the card is rendered as an informational log and Step 6.2 proceeds; the user can still interject `pause` / `abort` before Step 6.3 attempts the push. Step 6.5 tag confirmation is category C and follows the generic dispatch (block in detailed, proceed in semi-auto and auto).
+
 ### Step 6.2 — First commit
 
 The commit message is multi-line and structured so `git log` on the downstream project shows an auditable trail of the bootstrap phases. Use a HEREDOC so the embedded newlines survive across shells — a `-m "..."` string with literal newlines works in bash but breaks in Windows `cmd` and requires backtick-escaping in PowerShell. HEREDOC works in bash, zsh, and git-bash on Windows; a file-backed fallback using `-F` works in every shell including `cmd` and PowerShell.

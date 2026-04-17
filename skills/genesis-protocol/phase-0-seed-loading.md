@@ -94,6 +94,8 @@ The user responds with:
 - **edit** → enter a targeted edit flow: the user picks a field, corrects the value, and the card is re-rendered. Loop until the user says yes or abort.
 - **abort** → exit the orchestrator cleanly. No write happens outside the target folder. `config.txt` may have been written at Step 0.2 if it was missing — leave it in place as audit trail, do not delete.
 
+**Mode dispatch** (see `SKILL.md § Mode dispatch`): this is a category C consent gate. In `detailed` and `semi-auto` modes the card blocks until the user responds. In `auto` mode the card is rendered as an informational log and the orchestrator proceeds to persist the intent and advance to Phase 1 — the user can still interject `pause` / `abort` / `edit` at any time. If `bootstrap_intent.md` is about to be written without a blocking confirmation (auto mode), the orchestrator logs the full card content immediately before the write so the action is fully auditable after the fact.
+
 ### Step 0.5 — Persist the intent as `bootstrap_intent.md`
 
 Once the user confirms, write `memory/project/bootstrap_intent.md` inside the target folder. This file is the **contract** between Phase 0 and every downstream phase. Later phases read it instead of re-parsing `config.txt`, which keeps the orchestrator flow deterministic.

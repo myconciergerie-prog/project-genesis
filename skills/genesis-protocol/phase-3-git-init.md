@@ -114,6 +114,8 @@ The `IdentityFile` line keeps the `~` form — this block is OpenSSH's own confi
 
 The `IdentitiesOnly yes` is non-negotiable — without it, SSH tries every loaded key before reaching the project-specific one, and GitHub refuses the second attempt from the same source IP as a protection against enumeration.
 
+**Mode dispatch** (see `SKILL.md § Mode dispatch`): key generation at Step 3.2 and host-alias registration at Step 3.3 are category B security floor — they always involve writing to `~/.ssh/` and always require the user to see and paste the public key. No mode skips these. Step 3.5 remote add is a category C consent gate — `detailed` blocks on `yes`; `semi-auto` and `auto` show a one-line summary (`origin → git@github.com-<slug>:<owner>/<repo>.git`) and proceed.
+
 ### Step 3.4 — Add the public key to GitHub (paste-back or Playwright)
 
 The user pastes the public key into the GitHub web UI at `https://github.com/settings/keys` — or, if Phase -1 installed Playwright MCP and the user opted in at the top-level consent card, the orchestrator drives the form programmatically.
