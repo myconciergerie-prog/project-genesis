@@ -8,6 +8,41 @@ Every version bump includes a **5-axis self-rating block** per R10.3 discipline,
 
 ---
 
+## [1.2.2] — 2026-04-17 — "Mode is a first-class argument — F21 + F20 + F22"
+
+### Added
+
+- `skills/genesis-protocol/SKILL.md` — new `## Arguments` section declaring the three semantic arguments (`mode`, `target`, `seed`) with types, defaults, and purpose. Documents the passthrough convention for non-semantic `key=value` pairs (`context=...`, `strange-loop=...`, `friction-log=...` observed in real v1.2.0 invocations): accepted, captured under "Non-canonical fields (passed through)" in `bootstrap_intent.md`, no runtime effect. Fixes friction F21 (argument schema was undocumented — invocations up to v1.2.1 had to guess at names).
+- `skills/genesis-protocol/SKILL.md` — new `## Mode dispatch` section naming the three gate categories (A structural stops, B security floor, C consent gates) and a per-gate dispatch table showing which gates block under each of the three modes. `semi-auto` is named as the intended default for repeat users; `auto` is for experienced users who understand that paradox guards and security floor still apply.
+- `memory/project/session_v1_2_2_mode_auto_args.md` — session trace with the two-commit narrative (SKILL.md canonical spec, then per-phase pointers), the mode dispatch rationale, and the explicit deferral list for v1.2.3+ (F34 gh active-account pre-flight is the named next target).
+
+### Changed
+
+- **F20 + F22 — Step 0 consent card is now mode-aware** (`skills/genesis-protocol/SKILL.md`): the paragraph after the paradox guards dispatches per `mode` — `detailed` and `semi-auto` block on `yes`, `auto` renders the card as an informational log and proceeds. Paradox Guards A and B always fire regardless of mode; they are structural stops, not consent gates. The anti-Frankenstein clause is reworded from "do not skip the top-level consent card" to "do not skip the top-level consent card rendering" — the card is rendered in every mode, only the dispatch changes.
+- **Per-phase consent gates reference the canonical dispatch** (`phase-0-seed-loading.md`, `phase-3-git-init.md`, `phase-6-commit-push.md`): each phase runbook gets a short mode-dispatch paragraph at its consent-gate location pointing back to `SKILL.md § Mode dispatch`. Two phase-specific callouts: Phase 3.2/3.3 SSH keygen + host alias are category B security floor (always block); Phase 6.1 pre-commit review stays blocking even in `semi-auto` because first commit + first push are unrecoverable.
+- `.claude-plugin/plugin.json` — version bumped `1.2.1` → `1.2.2`.
+
+### Notes
+
+- **Two commits inside the feat branch**: `72ef17a` (F21 + F20 + F22 in SKILL.md — the canonical spec) and `a086749` (F20 + F22 per-phase pointers — 6 lines across 3 files). The one-fix-per-PR rhythm from v1.2.1 is preserved via one root cause per commit; the PR bundles them because F21 and F20/F22 share the same `mode` argument plumbing and shipping them separately would mean the per-phase pointers in the second PR would reference an argument defined in the first.
+- **Phase -1 mode propagation**: when the orchestrator invokes `phase-minus-one` at Phase -1, it passes its own `mode` value through. The sibling's 3-mode ladder already uses the same vocabulary (`detailed` / `semi-auto` / `auto`) so the two ladders align by design — no re-mapping, no translation layer.
+- **What did not change in v1.2.2**: F24 Phase 0.1 git-aware inspection (P2, F30 already covers the Phase 3 blocker case), F25/F31 config.txt canonical examples (P2), F26 non-canonical fields audit UI (P2 — the passthrough CONVENTION is now documented in SKILL.md, but the `bootstrap_intent.md` `## Non-canonical fields` section itself is not yet wired in `phase-0-seed-loading.md`'s write template), F28 `genesis-cleanup` sibling skill (P3), F32 Python driver (v1.3), F33 R8 scope disambiguation (P3), **F34 gh active-account pre-flight (P1 — v1.2.3 target)**.
+- **Strictly: F26 is half-fixed.** The passthrough convention now has a canonical home in SKILL.md § Arguments. The actual write of `## Non-canonical fields (passed through)` into `bootstrap_intent.md` at Phase 0.5 is still not explicitly in the template. A v1.2.3 or v1.3 touch-up can complete it — deliberately deferred to keep v1.2.2 surgical.
+- **Research cache**: stack entries (`claude-code-plugin-structure`, `claude-code-session-jsonl-format`) expired 2026-04-17 (today) but the v1.2.2 change is skill-internal (no Claude Code SDK dependency), so they were not refreshed. Same stance as v1.2.1 session.
+
+### Self-rating — v1.2.2
+
+| Axis | Rating | Notes |
+|---|---|---|
+| Pain-driven coverage | 9.4/10 | Every change maps to a v1.2.0 friction (F21 Arguments section, F20/F22 mode-aware dispatch). The `## Mode dispatch` table is the single missing canonical reference v1.2.0 asked for. Small deduction: F26 passthrough convention is now documented but the `bootstrap_intent.md` template write is half-done. |
+| Prose cleanliness | 9.0/10 | Canonical mode dispatch table in SKILL.md; per-phase pointers 2 lines each. Commit bodies are 3 paragraphs with root cause + mechanism + scope boundary. Minor deduction: the SKILL.md `## Arguments` + `## Mode dispatch` sections add ~40 lines to a file that was already long. |
+| Best-at-date alignment | 8.6/10 | The `mode` argument pattern mirrors what `phase-minus-one` already ships (vocabulary-aligned). No external research refresh needed — the change is about orchestrator-internal semantics. Small deduction: no verification run against a real downstream target yet. |
+| Self-contained | 9.2/10 | SKILL.md is the single source of truth for mode dispatch. Phase runbooks reference the table rather than restate the rules, preventing drift. No new runtime, no new config file, no new dependency. |
+| Anti-Frankenstein | 9.5/10 | No Python driver (F32 deferred to v1.3 as flagged in v1.2.1). No hook wiring. No test harness. Two surgical commits totalling 60 insertions + 3 deletions across 4 files. F26 deliberately half-fixed to avoid scope creep. |
+| **Average** | **9.14/10** | Running average v0.2 → v1.2.2 now **8.68/10** (up from 8.65). Three consecutive ≥ 9.0 versions (v1.2.0 8.88, v1.2.1 9.26, v1.2.2 9.14) — the surgical-commit discipline is holding. |
+
+---
+
 ## [1.2.1] — 2026-04-17 — "Paradox guards — F29 + F30 + F23/F27"
 
 ### Added
