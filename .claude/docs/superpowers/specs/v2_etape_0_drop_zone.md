@@ -1,11 +1,11 @@
 <!-- SPDX-License-Identifier: MIT -->
 ---
 name: v2 Étape 0 — drop zone welcome + mirror + write + Layer B handoff (genesis-drop-zone skill)
-description: Implementation-grade spec for the LAYER A conversational front door of Genesis v2. Living spec across versions. v1.3.0 shipped welcome + token-streamed acknowledgement + bridge; v1.3.1 upgrades the acknowledgement into a 9-field structured mirror screen (in-context extraction, zero disk write, no API call); v1.3.2 adds first Layer A write privilege (drop_zone_intent.md to cwd after consent) + Layer B handoff wire into genesis-protocol Phase 0. Runtime locale detection, Citations API upgrade, and programmatic handoff deferred to v1.3.3+.
+description: Implementation-grade spec for the LAYER A conversational front door of Genesis v2. Living spec across versions. v1.3.0 shipped welcome + token-streamed acknowledgement + bridge; v1.3.1 upgraded the acknowledgement into a 9-field structured mirror screen (in-context extraction, zero disk write, no API call); v1.3.2 added first Layer A write privilege (drop_zone_intent.md to cwd after consent) + Layer B handoff wire into genesis-protocol Phase 0; v1.3.3 wires runtime locale detection (welcome + mirror + consent card + halt + bridges + body echo switch between FR and EN via welcome_locale / content_locale variables). Citations API upgrade, programmatic handoff, and UX toolkit polish deferred to v1.3.4+.
 type: spec
-target_version: v1.3.0 (welcome vertical slice) + v1.3.1 (extraction mirror) + v1.3.2 (write + Layer B handoff) → v1.4.0+ (full Étape 0 polish)
+target_version: v1.3.0 (welcome vertical slice) + v1.3.1 (extraction mirror) + v1.3.2 (write + Layer B handoff) + v1.3.3 (runtime locale rendering) → v1.4.0+ (full Étape 0 polish)
 created_at: 2026-04-17
-updated_at: 2026-04-17 (v1.3.2 brainstorming)
+updated_at: 2026-04-18 (v1.3.3 brainstorming)
 originSessionId: project-genesis v1.3.0 brainstorming
 status: active
 mirrors: skills/genesis-drop-zone/SKILL.md (1:1 section-for-section across versions)
@@ -428,7 +428,7 @@ The mirror displays 9 fields. Each field has an internal name, a bilingual label
 | `type` | Type | Kind | Rough category: appli web, appli mobile, outil CLI, plugin, documentation, site, bibliotheque, … | `a trouver ensemble` (core) |
 | `nom` | Nom | Name | Project name if the user proposed one (explicit — not auto-slugged). | `a trouver ensemble` (core) |
 | `attaches` | Depose | Dropped | List of dropped items with brief descriptor (see truncation rule). `texte seul` if nothing attached. | `texte seul` when no attachment; otherwise always filled with item list. |
-| `langue_detectee` | Langue | Language | `FR` / `EN` / `mixte` — detected from the user's text. Extracted but does **not** switch mirror rendering in v1.3.1 (runtime locale deferred v1.3.2+). | N/A — always filled. |
+| `langue_detectee` | Langue | Language | `FR` / `EN` / `mixte` — detected from the user's text. Extracted in v1.3.1; starting **v1.3.3** this field is the signal source for `content_locale`, which switches mirror / consent card / halt / bridge / body-echo rendering between FR and EN variants (see § "Runtime locale — signal + dispatch (v1.3.3)"). `mixte` → FR tiebreaker. | N/A — always filled. |
 | `budget_ou_contrainte` | Budget | Budget | Explicit budget / deadline / resource constraint mentioned. | `non mentionne` (bonus) |
 | `prive_ou_public` | Visibilite | Visibility | Explicit private / public / team-only mention for the project. | `non mentionnee` (bonus — feminine agreement) |
 | `hints_techniques` | Tech | Tech | Tech hints (stack, framework, platform) mentioned or inferred. | `non mentionne` (bonus) |
@@ -1038,7 +1038,7 @@ The scenarios below cover both ship gates. Scenarios #1-#6 were defined for v1.3
 | 2 | Fresh empty dir, user types "je veux créer un projet pour gérer mes dépenses". | Claude auto-invokes the skill via intent match; same as #1. |
 | 3 | Open Claude Code inside `C:/Dev/Claude_cowork/project-genesis/` (active repo), type `/genesis-drop-zone`. | Context guard fires; bilingual redirect prints; skill does not welcome. |
 | 4 | Fresh empty dir, user types trigger + attaches `@tests/fixtures/sample-brief.pdf` (fixture lives in the worktree, honours the "no deliverables in C:\tmp" auto-memory rule). | Mirror names the PDF in the `Depose` row and extracts schema fields from the PDF content (Idee + Pour qui + Type derived from content). |
-| 5 | Fresh empty dir, user types "I want to create a project to track my expenses". | Intent matches (EN trigger), welcome box still FR, mirror still FR, `Langue` row reads `EN`. Bridge bilingual covers the gap. |
+| 5 | Fresh empty dir, user types "I want to create a project to track my expenses". | **v1.3.3 supersession**: Intent matches (EN trigger) → `welcome_locale = EN` → EN welcome box prints; content yields `langue_detectee = EN` → `content_locale = EN` → EN mirror + EN consent card + EN halt / bridges / body. (Historical v1.3.1 expectation: welcome FR + mirror FR + `Langue = EN` row + bilingual bridge.) |
 | 6 | R9 audit — grep SKILL.md + this spec for French strings outside trigger list. | Zero matches. Grep `phase-0-welcome.md` for both FR and EN mirror markers. Both present. |
 
 ### v1.3.1 new scenarios
@@ -1047,8 +1047,8 @@ The scenarios below cover both ship gates. Scenarios #1-#6 were defined for v1.3
 |---|---|---|
 | 7 | Fresh empty dir + text-only drop ("j'ai une idee de boulangerie"). | Mirror renders 9 rows: `Idee` filled verbatim, `Pour qui`/`Type`/`Nom` = `a trouver ensemble`, `Depose` = `texte seul`, `Langue` = `FR`, `Budget`/`Visibilite`/`Tech` = `non mentionne(e)`. Bridge v1.3.1 text prints after. |
 | 8 | Fresh empty dir + text + PDF + photo (multimodal rich case). | Mirror renders 9 rows with `Depose` listing all 3 items (or truncated at 3 with `+ N autres` if more). `Idee`/`Pour qui`/`Type` extracted from combined content. |
-| 9 | Fresh empty dir + trigger phrase only, zero content attached or written. | No `◐` line, no mirror, no `✓` closure. Re-prompt `Je t'écoute — dépose ou écris ce que tu veux me partager.` printed (v1.3.0 branch preserved). When user responds, mirror flow fires normally. |
-| 10 | Fresh empty dir + EN content ("I want to build a small task tracker for my team"). | Mirror rendered in **FR** with `Langue` = `EN` row. Bridge bilingual covers locale gap. |
+| 9 | Fresh empty dir + trigger phrase only, zero content attached or written. | No `◐` line, no mirror, no `✓` closure. Re-prompt printed in `welcome_locale` — v1.3.3 supersession: FR re-prompt `Je t'écoute — dépose ou écris ce que tu veux me partager.` if `welcome_locale = FR` (slash / FR intent); EN re-prompt `I'm listening — drop or write whatever you want to share.` if `welcome_locale = EN` (EN intent). When user responds, mirror flow fires normally in `content_locale`. (Historical v1.3.1 expectation: FR re-prompt only.) |
+| 10 | Fresh empty dir + EN content ("I want to build a small task tracker for my team"). | **v1.3.3 supersession**: welcome box in `welcome_locale` (EN if auto-triggered by EN intent; FR if slash), mirror rendered in **EN** (`content_locale = EN` from `langue_detectee = EN`), `Language` row reads `EN`, consent card / halt / bridges / body echo all render EN variants. (Historical v1.3.1 expectation: Mirror rendered in FR with `Langue = EN` row + bilingual bridge covering the gap.) |
 | 11 | Very long idea text (> 60 characters — e.g. a 200-character paragraph) dropped. | `Idee` row truncated at exactly 57 chars + `...` per the truncation rule in § "Mirror screen / Truncation rules". Other rows render normally. Full content retained in Claude's context (not disposed — kept for v1.3.2+ handoff). |
 | 12 | R9 audit — grep FR+EN mirror templates in `phase-0-welcome.md` after v1.3.1 additions; grep accents inside FR table block vs FR surrounding prose. | Both FR and EN mirror templates present. Zero accents inside FR table rows (ASCII-pure discipline). Accents present in `◐`/`✓` prose and in bridge (plain-prose, accent-stable). |
 
