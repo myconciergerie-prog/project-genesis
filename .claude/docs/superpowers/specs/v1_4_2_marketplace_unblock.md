@@ -89,8 +89,8 @@ Structure:
 skills/genesis-protocol/research-templates/
 ├── README.md                                              ← purpose + refresh policy
 ├── sota/
-│   ├── open-source-license-for-dev-tooling.md
 │   ├── claude-code-plugin-distribution.md
+│   ├── claude-ecosystem-cross-os.md
 │   └── spdx-headers.md
 └── stack/
     ├── claude-code-plugin-structure.md                    ← refreshed from archive 2026-04-18
@@ -179,14 +179,14 @@ version: 1.4.2
       seeded into the downstream project. Reinstall the skill.
 
   - check: file_exists
-    path: skills/genesis-protocol/research-templates/sota/open-source-license-for-dev-tooling.md
-    on_fail: |
-      Expected template sota/open-source-license-for-dev-tooling.md is missing.
-
-  - check: file_exists
     path: skills/genesis-protocol/research-templates/sota/claude-code-plugin-distribution.md
     on_fail: |
       Expected template sota/claude-code-plugin-distribution.md is missing.
+
+  - check: file_exists
+    path: skills/genesis-protocol/research-templates/sota/claude-ecosystem-cross-os.md
+    on_fail: |
+      Expected template sota/claude-ecosystem-cross-os.md is missing.
 
   - check: file_exists
     path: skills/genesis-protocol/research-templates/sota/spdx-headers.md
