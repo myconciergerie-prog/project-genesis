@@ -8,6 +8,76 @@ Every version bump includes a **5-axis self-rating block** per R10.3 discipline,
 
 ---
 
+## [1.4.2] — 2026-04-19 — "marketplace unblock (PATCH — `genesis-protocol` install-path resolution + skill-local R8 bundle)"
+
+Focused PATCH closing two dogfood-observed BLOCKERS from the 2026-04-18 v1.4.1 stress test. Makes `genesis-protocol` self-sufficient for Phase 1 rules seed + Phase 2 R8 cache seed across all install modes (dogfood / `--plugin-dir` / personal-scope / marketplace). **Zero Layer A ripple** — `skills/genesis-drop-zone/**` byte-identical across v1.4.1 → v1.4.2. **Zero schema bump, zero new privilege, zero new bilingual pair, zero cross-skill-pattern change.** Pure plumbing fix + distribution bundle completion.
+
+### Added — skill-local R8 cache templates bundle
+
+- **New directory `skills/genesis-protocol/research-templates/`** carrying the 5 canonical R8 entries Phase 2 seeds into downstream (identical membership to existing Phase 2 Step 2.3 "Entries to copy" table):
+  - `sota/claude-code-plugin-distribution.md` (copy-renamed from active R8, frontmatter refreshed 2026-04-19 / expires 2026-04-26)
+  - `sota/claude-ecosystem-cross-os.md` (copy-renamed + refreshed)
+  - `sota/spdx-headers.md` (copy-renamed + refreshed)
+  - `stack/claude-code-plugin-structure.md` (R8-refreshed via WebSearch; **additive findings**: 17 new hook events, new optional dirs `output-styles/`/`monitors/`/`bin/`, new plugin.json optional fields, new hook type `agent`, Plugin caching + Installation scopes sections; **no structural changes**)
+  - `stack/claude-code-session-jsonl-format.md` (R8-refreshed; additive: `result` record type, sub-agent `agent-<id>.jsonl` naming, issue #36583 messageId collision note; on-disk-verified 2026-04-15 baseline preserved)
+- **`README.md`** documenting purpose + filename convention (no date suffix in-skill) + copy-and-rename discipline + refresh policy + escape clause
+
+### Added — install-manifest.yaml verification checks (10 new)
+
+1 rules file + 4 templates dir/subdirs/README + 5 individual template file checks. Total 17 existing + 10 new = **27 checks**. Version bumped `0.8.0` → `1.4.2` (recovering stale lock-step).
+
+### Added — verification.md scenarios S1-S3
+
+- **S1** — Personal-scope install runtime: Phase 1 Step 1.3 resolves `<skill_dir>/rules/v1_rules.md` via single skill-local path. Zero three-levels-up probe.
+- **S2** — Phase 2 R8 cache seed from skill-local templates: all 5 entries copied to downstream with seed-date suffix.
+- **S3** — Install-manifest verification failure-loudness: missing rules/ file triggers specific-path error message, no silent fallback.
+
+Ship gate: **S1 + S2 + S3 all mandatory**. Regression on v1.4.1 #40, #41 + v1.3.2 #18, #19 mandatory.
+
+### Added — R8 active-entries returns (2 post-refresh)
+
+- `.claude/docs/superpowers/research/stack/claude-code-plugin-structure_2026-04-19.md` (supersedes archive/2026-04-14 entry)
+- `.claude/docs/superpowers/research/stack/claude-code-session-jsonl-format_2026-04-19.md` (supersedes archive/2026-04-15 entry)
+
+### Changed — phase-1-rules-memory.md Step 1.3 + Step 2.3
+
+- **Step 1.3** — legacy "Fallback (legacy) / three levels above SKILL.md" paragraph **deleted**. Single canonical path `<skill_dir>/rules/v1_rules.md`. If missing, halt with single-path error + reinstall remediation. Preserved verbatim: "Why skill-local" (F29 forensics), "Adaptation", "Do not rewrite the rules".
+- **Step 2.3 opening paragraph rewritten** — resolver points to `<skill_dir>/research-templates/`. New halt message for missing templates dir. Follow-on rationale paragraph + expiration discipline preserved verbatim.
+- **Step 2.3 "Entries to copy" 5-row table** — Source column paths patched (`<plugin-root>/...*_*.md` → `<skill_dir>/research-templates/<topic>.md`). Destination + rationale columns unchanged. Row membership unchanged.
+- **New "Copy-and-rename discipline (v1.4.2)" paragraph** appended — documents skill-local (no date suffix) vs downstream-cache (with seed-date suffix) convention.
+
+### Changed — version bumps
+
+- `.claude-plugin/plugin.json` — `1.4.1` → `1.4.2`.
+- `install-manifest.yaml` — `0.8.0` → `1.4.2` (recovering from v0.8 stale lock-step).
+
+### Removed — legacy three-levels-up fallback
+
+Deleted from `phase-1-rules-memory.md` Step 1.3. v1.2.1 F29 belt-and-suspenders retired after three versions of zero-hit dead code. Anti-Frankenstein retroactive.
+
+### Self-rating — v1.4.2
+
+| Axis | Score | Reasoning |
+|---|---|---|
+| Pain-driven | 9.3 | Friction #4 + #5 dogfood-observed BLOCKERS; strongest pain-driven ship on BLOCKER-severity axis since v1.2.3 F34 (v1.2.3 retains the distinct live-on-ship-reproduction distinction; v1.4.2's pain was observed in a prior-session dogfood). −0.2 replay-deferred for S1/S2/S3. Net 9.3. |
+| Prose cleanliness | 9.2 | Six-commit rhythm 7th consecutive application (chore-dogfood-archive precedes the count). Spec 3-iteration review loop + plan 2-iteration review loop, all advisories landed. Living-spec `v2_etape_0_drop_zone.md` undiluted (topic-scoped standalone spec). |
+| Best-at-date | 9.2 | R8 refresh grounded in 2026-04-19 WebSearch. Escape clause pre-verified no structural drift. 3 sota frontmatter-refreshed to ship date. 2 additive-evolution findings flagged for v1.5.x+ consideration. |
+| Self-contained | 9.4 | Narrow surface: 2 runbook edits + 1 new dir (6 files) + 1 config bump + 1 scenario block + 1 version bump + 1 INDEX update. Zero Layer A ripple verified empirically via `git diff main --stat -- skills/genesis-drop-zone/` returning empty. |
+| Anti-Frankenstein | 9.4 | Legacy fallback dropped as retroactive cleanup. Bundle membership preserved identically (no narrowing, no speculation). Content-currency-only refresh discipline. Halt-with-remediation discipline traveling from v1.5.0 parallel-branch spec to v1.4.2. No speculative additions. |
+| **Average** | **9.30** | |
+
+**11th consecutive ship ≥ 9.0** (v1.2.1 9.26, v1.2.2 9.14, v1.2.3 9.18, v1.2.4 9.16, v1.3.0 9.34, v1.3.1 9.30, v1.3.2 9.28, v1.3.3 9.30, v1.4.0 9.10, v1.4.1 9.14, **v1.4.2 9.30**). Running average post-v1.4.2 ≈ **8.92/10** (+0.03 vs v1.4.1 running avg 8.89).
+
+### Relation to v1.5.0
+
+v1.4.2 is **prerequisite** for v1.5.0's value delivery. v1.5.0 spec (already APPROVED on parallel branch `feat/v1.5.0-living-memory` commit `59a7640`) introduces living drop zone memory with arbitration + archive — features that only benefit users who can install Genesis in the first place. Post-v1.4.2 ship, v1.5.0 plan + feat + chore remain.
+
+### Next session entry point
+
+`.claude/docs/superpowers/resume/2026-04-19_v1_4_2_to_v1_4_3_or_v1_5_0.md`. Candidates: v1.5.0 MINOR (living memory — plan + feat + chore), v1.4.3 PATCH (Friction #1/#2/#3 multi-file seed if dogfood pain resurfaces), or other direction.
+
+---
+
 ## [1.4.1] — 2026-04-18 — "genesis-protocol Layer B citation surfacing (PATCH — end-to-end audit-trail loop closed, zero Layer A ripple)"
 
 First PATCH on the v1.4.x audit-trail line. **Closes the end-to-end audit-trail loop opened by v1.4.0**: the `<field>_source_citation` nested keys that v1.4.0 persists in `drop_zone_intent.md` frontmatter now render inline as `[page N]` / `[pages N-M]` / `[lines X-Y]` suffix on `genesis-protocol`'s Phase 0 Step 0.4 intent card and Step 0.5 `bootstrap_intent.md` template. **Zero Layer A ripple** — `skills/genesis-drop-zone/**` is byte-identical across v1.4.0 → v1.4.1. **Zero fixture churn** — reuses v1.4.0 fixtures. **Zero privilege change, zero dependency, zero subprocess, zero network, zero schema bump.** Read-only rendering of existing data on two existing Layer B surfaces.
