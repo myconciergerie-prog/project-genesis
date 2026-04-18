@@ -120,6 +120,47 @@ The slice was intentionally surface-only so the first MINOR bump of the v1.3.x c
 - **Preserve the 4 Layer-A-specific extras at Layer B** — `pour_qui`, `langue_detectee`, `budget_ou_contrainte`, `prive_ou_public` are extracted at the cost of Victor's conversation turn. Dropping them at Layer B would be silent information loss. Archiving them in a `## Conversational context from drop zone` section of `memory/project/bootstrap_intent.md` keeps the end-to-end Layer A → Layer B flow informationally complete for Phases 1-7 that may want to consume them (e.g. Phase 1 R9 locale, Phase 4 memory scaffolding, Phase 5.5 auth scope).
 - **Single spec, version-scoped sections** — extending the living spec with a `## Scope — v1.3.2 write + Layer B handoff` section (and the per-surface sections below) keeps one canonical vein of truth. The 1:1 mirror discipline extends naturally into `genesis-drop-zone/SKILL.md`. The Layer B changes are bundled in the same ship and documented in the same spec since the cross-layer wire is one coherent unit.
 
+## Scope — v1.3.3 runtime locale rendering
+
+### In scope
+
+1. **Runtime locale detection + dispatch** across the Layer A user-facing surfaces. Two locale variables with distinct lifecycles:
+   - `welcome_locale` — resolved at skill invocation. From the trigger phrase language on intent-match (`je veux créer un projet` → `FR`; `I want to create a project` → `EN`); defaults to `FR` on slash invocation `/genesis-drop-zone` (no language signal).
+   - `content_locale` — resolved from the extracted `langue_detectee` field after the first user turn with content. Mapping: `FR` → FR variant; `EN` → EN variant; `mixte` → FR (tiebreaker = primary project language).
+2. **Locale-switched rendering** on the following surfaces (previously hardcoded FR + bilingual-always mixtures):
+   - Welcome box — uses `welcome_locale` (FR or EN variant printed, not both).
+   - Zero-content re-prompt — uses `welcome_locale`. Newly-authored EN mirror `I'm listening — drop or write whatever you want to share.` pairs the v1.3.0 FR re-prompt `Je t'écoute — dépose ou écris ce que tu veux me partager.`.
+   - Mirror template + 9-field labels — uses `content_locale`.
+   - Consent card (v1.3.2) — uses `content_locale` (FR or EN variant printed, not both — v1.3.2 shipped as always-bilingual).
+   - Halt message (v1.3.2) — uses `content_locale`.
+   - Accept + decline bridges (v1.3.2) — uses `content_locale`.
+   - `drop_zone_intent.md` body prose intro + mirror echo — uses `content_locale`.
+3. **Frontmatter data contract preserved** — `drop_zone_intent.md` frontmatter null-class tokens stay FR canonical (`"a trouver ensemble"`, `"non mentionne"`, `"non mentionnee"`, `"a affiner — ..."`) regardless of `content_locale`. Layer B Step 0.2a parser reads FR canonical — unchanged. Intentional Layer A / Layer B asymmetry: **body = locale-detected human echo; frontmatter = FR canonical data contract.** Bilingual Layer B null-class parsing deferred to v1.4+ if a real pain point emerges.
+4. **No new runtime string content beyond one pair** — v1.3.3 ships **one new bilingual pair** (the EN zero-content re-prompt). All other EN variants already exist: EN welcome (v1.3.0), EN mirror + 9-field labels (v1.3.1), EN consent card + EN halt + EN accept bridge + EN decline bridge (v1.3.2). v1.3.3 wires the dispatch variable; it does not author templates from scratch.
+5. **Concentrated privilege map unchanged** — v1.3.3 introduces no new privilege class. `genesis-drop-zone` declaration stays at "writes `drop_zone_intent.md` to cwd after consent card, halt-on-existing, no `mkdir`, no path resolution beyond cwd". The privilege map entry in `memory/master.md` gains only a v1.3.3 qualifier noting that rendering is now locale-detected; mitigations list unchanged.
+6. **Single new fixture** — `tests/fixtures/drop_zone_intent_fixture_v1_3_3_en.md` is the EN-content counterpart to v1.3.2's fixture. Frontmatter `langue_detectee: EN`, body echoes the EN mirror. Used at artefact-level for body-rendering inspection and as a Layer B regression probe (parser unchanged — the same FR canonical null tokens appear regardless of body locale).
+
+### Out of scope (deferred to v1.3.4+)
+
+- API-powered Path A Citations extraction (audit-trail via `cited_text` + `document_index`). First "external API call" privilege; downstream reader already in place as of v1.3.2.
+- Programmatic handoff — auto-invoke `genesis-protocol` without the user typing the slash command.
+- `GH_BROWSER` profile routing wire-up.
+- UX toolkit integration (`@clack/prompts`, Charm Gum, cli-spinners).
+- Completion chime (cross-platform).
+- Error handling refinements for permission-denied / disk-full / symlink edge cases.
+- **Bilingual Layer B null-class parsing** — if `drop_zone_intent.md` frontmatter null-class tokens ever carry EN canonical variants (`"to be found together"`, `"not mentioned"`), Layer B's Step 0.2a parser grows a bilingual branch. v1.4+ target, not v1.3.x.
+- **Three-locale-or-more expansion** — if Genesis ships beyond FR + EN (e.g. ES, DE), `welcome_locale` and `content_locale` become enums. Minor, deferred until a real non-FR/EN user emerges.
+
+### Rationale for v1.3.3 route
+
+- **R9 tier-3 closure end-to-end** — v1.3.0 authored both FR and EN welcome. v1.3.1 authored both FR and EN mirror + 9-field labels. v1.3.2 authored both FR and EN consent card + halt + bridges. Every runtime string was bilingual-from-day-1 per R9 tier 3 — but rendering hardcoded FR across welcome and always-bilingual across v1.3.2 surfaces. v1.3.3 closes the loop with a single dispatch variable per stage. No template retrofit: all EN variants exist; the ship wires the variable.
+- **Two variables, not one** — `welcome_locale` and `content_locale` are distinct signals with non-overlapping lifecycles. Welcome precedes any content; content-driven extraction cannot inform the welcome render. Using one variable forces either (a) always-FR welcome (wastes the easy signal of an EN trigger phrase) or (b) blocking the welcome behind content (bad UX, loses the "welcome box IS the invitation" principle of v1.3.0). Two variables with clear lifecycles is the minimum viable wiring.
+- **Frontmatter FR canonical preserved** — Layer B's Step 0.2a parser detects null classes by exact string match on `"a trouver ensemble"` / `"non mentionne"` / `"non mentionnee"` / `"a affiner — ..."`. Changing the canonical ripples into a Layer B parser branch. v1.3.3 is a pure Layer-A-rendering-layer change; Layer B contract untouched. The asymmetry (body = locale-detected human echo; frontmatter = FR canonical data contract) is intentional and spec-documented. Bilingual Layer B parser is a v1.4+ target if real pain emerges — v1.3.3 does not speculate.
+- **`mixte` → FR tiebreaker** — `langue_detectee` admits three values: `FR`, `EN`, `mixte`. Display needs a tiebreaker. FR is the primary project language (French-speaking machine, Layer 0 user profile, trigger lists start with FR phrases). Picking FR keeps the default stable and readable. Picking "always bilingual for mixte" would re-fragment the surface — the whole point of v1.3.3 is to stop printing both variants. Victor can re-state the idea more clearly to shift `langue_detectee`; no hidden UI.
+- **Slash command → FR default** — `/genesis-drop-zone` carries no language signal. Two options: (a) FR default (primary project language), (b) read terminal locale via `$LANG` / `$LC_ALL`. Option (b) is heavier and error-prone (terminal locale can be `C`, unset, or misconfigured on Windows). Option (a) is deterministic and aligns with the intent-trigger list's FR-first ordering. An EN-locale user who types `/genesis-drop-zone` sees FR welcome, drops EN content, `langue_detectee = EN`, mirror-onwards switches to EN — graceful degradation at the cost of one FR welcome box. The intent-phrase path is the locale-native path; slash is the engineer path where FR is a defensible default.
+- **No Layer B ripple** — confirms narrow-scope discipline. v1.3.3 touches zero Layer B files. The only spec-level acknowledgement of Layer B lives in § "R9 language policy applied" (the `drop_zone_intent.md` body-rendering row changes from "FR hardcoded v1.3.2" to "locale-detected v1.3.3"; the frontmatter row stays "FR canonical, Layer B contract").
+- **Living spec, version-scoped sections (third application)** — extending `v2_etape_0_drop_zone.md` with a `## Scope — v1.3.3 runtime locale rendering` section preserves the canonical vein-of-truth pattern established at v1.3.1 and reinforced at v1.3.2. Readers walk the version-scoped sections top-to-bottom to see what each ship layered on.
+
 ## Trigger evaluation gate
 
 The skill is invoked in two ways:
@@ -151,13 +192,73 @@ You're already in a project — the drop zone is reserved for new projects.
 To start another one, open Claude Code in an empty folder.
 ```
 
-No halt / no error — just a graceful, bilingual redirect.
+No halt / no error — just a graceful, bilingual redirect. The redirect itself stays always-bilingual by design: it fires before any trigger-phrase evaluation has had a chance to set `welcome_locale` reliably (the context guard fires even on ambiguous in-repo invocations), so printing both languages covers any user who reaches it.
+
+## Runtime locale — signal + dispatch (v1.3.3)
+
+Two locale variables govern the Layer A rendering surfaces. Each has a distinct lifecycle, a distinct signal source, and a distinct set of dependent render targets.
+
+### `welcome_locale` — resolved at skill invocation
+
+**Signal sources** (evaluated in order, first match wins):
+
+1. **Intent-match trigger phrase**: if the skill was auto-invoked by a natural-language intent phrase, the phrase's language sets `welcome_locale`. The trigger list in `SKILL.md` frontmatter is partitioned by language — `je veux créer un projet`, `nouveau projet`, `démarre un projet`, `dis-moi comment commencer` → `FR`; `I want to create a project`, `start a new project`, `new project` → `EN`.
+2. **Slash command**: if the skill was invoked by `/genesis-drop-zone`, no language signal is available at invocation time. `welcome_locale` defaults to `FR` (primary project language, matches trigger-list ordering).
+
+**Render targets**:
+
+- Welcome ASCII box (FR variant from `phase-0-welcome.md § "FR welcome box"` or EN variant from `phase-0-welcome.md § "EN welcome box"`).
+- Zero-content re-prompt (`Je t'écoute...` or `I'm listening...`).
+
+Welcome and zero-content re-prompt are the only pre-content rendering surfaces; everything downstream uses `content_locale`.
+
+### `content_locale` — resolved after first content turn
+
+**Signal source**: the `langue_detectee` field extracted from the user's first content turn, via the existing v1.3.1 9-field extraction mechanism. Three-value mapping:
+
+| `langue_detectee` | `content_locale` |
+|---|---|
+| `FR` | `FR` |
+| `EN` | `EN` |
+| `mixte` | `FR` (tiebreaker) |
+
+**Render targets**:
+
+- Mirror template + 9-field labels (`phase-0-welcome.md § "Mirror template — FR"` or `§ "Mirror template — EN"`).
+- Consent card (v1.3.2) — either FR or EN variant, not both.
+- Halt message (v1.3.2) — either FR or EN variant, not both.
+- Accept bridge (v1.3.2).
+- Decline bridge (v1.3.2).
+- `drop_zone_intent.md` body — prose intro + mirror echo.
+
+### Divergence between `welcome_locale` and `content_locale`
+
+The two variables are deliberately independent. A user who auto-triggers with `je veux créer un projet` (FR welcome) and then drops an EN brief (`langue_detectee = EN`, `content_locale = EN`) sees an FR welcome, then mirror-onwards in EN. The inverse is equally possible: EN-triggered welcome followed by FR content. No forced consistency — each surface honours the best signal available when it renders.
+
+### Frontmatter data contract unchanged
+
+`drop_zone_intent.md` frontmatter null-class tokens stay **FR canonical** regardless of `content_locale`:
+
+- `"a trouver ensemble"` (core missing)
+- `"non mentionne"` (bonus missing, masculine)
+- `"non mentionnee"` (bonus missing, feminine)
+- `"a affiner — X ou Y"` (ambiguity)
+
+Layer B's `phase-0-seed-loading.md` Step 0.2a parses these verbatim. Changing the canonical ripples into a Layer B branch; v1.3.3 explicitly does not touch Layer B. The asymmetry is intentional: frontmatter is a data contract, body is a human echo.
+
+### What happens in the zero-content branch
+
+If the user's first response to the welcome box contains only the trigger phrase (no content), `content_locale` cannot be resolved. The skill stays in `welcome_locale` for the re-prompt and continues to wait. When content eventually arrives, the mirror flow fires and `content_locale` is resolved at that moment.
+
+### What happens in the modification-loop branch (v1.3.2 consent card)
+
+When the user replies to the consent card with a modification (`garde Type en boulangerie`), the skill re-runs the 9-field extraction with the correction, re-renders the mirror, and re-prints the consent card. `content_locale` is re-evaluated on each extraction; if the correction shifts `langue_detectee`, subsequent surfaces switch locale. Convergence is on the next affirmative or negative response.
 
 ## Welcome body — FR primary + EN mirror
 
-Both variants are authored in `phase-0-welcome.md` from day 1 per R9. FR is printed by default in v1.3.0. Runtime locale selection is deferred; the EN variant is mirror-ready so v1.3.1+ can wire it in without retrofit.
+Both variants are authored in `phase-0-welcome.md` from day 1 per R9. FR is printed by default in v1.3.0. v1.3.3 wires `welcome_locale` so the variant printed reflects the invocation signal (FR on slash or FR intent-match; EN on EN intent-match).
 
-### FR variant (printed in v1.3.0)
+### FR variant (rendered when `welcome_locale = FR`)
 
 ```
 ┌────────────────────────────────────────────────────────────┐
@@ -174,7 +275,7 @@ Both variants are authored in `phase-0-welcome.md` from day 1 per R9. FR is prin
 └────────────────────────────────────────────────────────────┘
 ```
 
-### EN variant (mirror-ready, not printed in v1.3.0)
+### EN variant (rendered when `welcome_locale = EN`)
 
 ```
 ┌────────────────────────────────────────────────────────────┐
@@ -203,11 +304,11 @@ ASCII-box dimensions: 60 chars wide, 10 lines high. Fits inside 80-col terminal 
 
 ## Mirror screen — template & reveal
 
-**v1.3.1 supersedes** v1.3.0's bullet-list acknowledgement. Git history preserves the prior bullet form (`◐ Je regarde... . un brief "X" (PDF, N pages) ... ✓ J'ai tout lu.`); v1.3.1 forward, the mirror is a structured 9-field aligned-column table revealed row-by-row.
+**v1.3.1 supersedes** v1.3.0's bullet-list acknowledgement. Git history preserves the prior bullet form (`◐ Je regarde... . un brief "X" (PDF, N pages) ... ✓ J'ai tout lu.`); v1.3.1 forward, the mirror is a structured 9-field aligned-column table revealed row-by-row. **v1.3.3** wires `content_locale` so the mirror renders as the FR variant or EN variant depending on `langue_detectee` (see § "Runtime locale — signal + dispatch (v1.3.3)"). Both templates were already authored in v1.3.1 per R9 tier 3; v1.3.3 flips the dispatch switch.
 
 Between the welcome and the bridge, the skill reformulates what the user provided by extracting a 9-field intent schema (see § "Extraction schema — 9 fields" below) and rendering it as an aligned-column table. Underlying UX pattern is Ably's 2026 SSE token-streaming approach [Ably AI UX, "Token streaming for AI UX", 2026] — loading state *transforms into* the final result rather than a spinner that blocks then replaces. Each of the 9 rows appears one at a time.
 
-### Template structure (FR — rendered by default in v1.3.1)
+### Template structure (FR — rendered when `content_locale = FR`)
 
 ```
  ◐ Je regarde et je comprends...
@@ -225,7 +326,7 @@ Between the welcome and the bridge, the skill reformulates what the user provide
  ✓ Lu et compris.
 ```
 
-### Template structure (EN — mirror-ready, not rendered in v1.3.1)
+### Template structure (EN — rendered when `content_locale = EN`)
 
 ```
  ◐ I read and I understand...
@@ -250,15 +351,23 @@ Between the welcome and the bridge, the skill reformulates what the user provide
 - Row reveal is **token-streamed** one-by-one; `◐` stays visible until the 9th row renders, then `✓` closes.
 - No blocking spinner, no blank screen. Welcome box's own rendering is the only moment with no partial output.
 
-### Zero-content branch (v1.3.0 preserved)
+### Zero-content branch (v1.3.0 preserved, v1.3.3 locale-switched)
 
-If the user's response contains only the trigger phrase with no content to echo:
+If the user's response contains only the trigger phrase with no content to echo, the skill prints the zero-content re-prompt. v1.3.3 dispatches on `welcome_locale` — no `content_locale` exists yet because no content has been extracted.
+
+FR variant (rendered when `welcome_locale = FR`):
 
 ```
  Je t'écoute — dépose ou écris ce que tu veux me partager.
 ```
 
-No `◐`, no mirror, no `✓`. The skill waits for the user's next turn and re-runs the mirror flow when content arrives.
+EN variant (rendered when `welcome_locale = EN`, **newly-authored in v1.3.3** — the one new bilingual pair v1.3.3 ships):
+
+```
+ I'm listening — drop or write whatever you want to share.
+```
+
+No `◐`, no mirror, no `✓`. The skill waits for the user's next turn and re-runs the mirror flow when content arrives. When content arrives, `content_locale` is resolved from `langue_detectee` and subsequent surfaces (mirror, consent card, halt, bridges, body echo) render in that locale — independent of `welcome_locale` (see § "Runtime locale — signal + dispatch (v1.3.3) / Divergence").
 
 ### Unreadable-attachment branch
 
@@ -363,11 +472,11 @@ For now, I've read and understood — go back to Claude Code normally.
 
 **v1.3.2 supersession note**: the v1.3.1 bridge above is retained as regression-set context but is **superseded at runtime** in v1.3.2 by two version-scoped bridges — an accept-bridge printed after a successful write, and a decline-bridge printed when the user declines the consent card. See § "Bridge messages — accept and decline (v1.3.2)" below for the exact text. A v1.3.2 session never prints the v1.3.1 bridge above; the v1.3.1 bridge only fires for installations still pinned to v1.3.1.
 
-## Consent card — template + flow (v1.3.2)
+## Consent card — template + flow (v1.3.2, v1.3.3 locale-switched)
 
-v1.3.2 introduces a bilingual accept/cancel consent card between the mirror's `✓ Lu et compris.` line and the bridge. The card is the user's gate into the first Layer A concentrated privilege (writing `drop_zone_intent.md` to cwd). Minimal by design — one warm sentence per language, absolute target path rendered with an arrow marker, natural-language response.
+v1.3.2 introduced a bilingual accept/cancel consent card between the mirror's `✓ Lu et compris.` (or `✓ Read and understood.`) line and the bridge. The card is the user's gate into the first Layer A concentrated privilege (writing `drop_zone_intent.md` to cwd). Minimal by design — one warm sentence, absolute target path rendered with an arrow marker, natural-language response. **v1.3.3** dispatches on `content_locale`: the FR variant or EN variant is printed (not both). Both variants were already authored in v1.3.2 per R9 tier 3; v1.3.3 flips the dispatch switch.
 
-### Template
+### Template — FR variant (rendered when `content_locale = FR`)
 
 ```
 Je peux noter ton projet dans un fichier ici :
@@ -375,7 +484,11 @@ Je peux noter ton projet dans un fichier ici :
 
 Ce fichier sera le point de départ pour Claude Code la prochaine fois.
 On le garde comme ça ?  (oui pour l'écrire, non pour annuler)
+```
 
+### Template — EN variant (rendered when `content_locale = EN`)
+
+```
 I can save your project here:
   → <absolute-cwd-path>/drop_zone_intent.md
 
@@ -385,7 +498,7 @@ Keep it this way?  (yes to write, no to cancel)
 
 ### Rendering rules
 
-- **Plain-prose bilingual** — both blocks always printed, same stability discipline as the v1.3.1 bridge. Accents allowed (`é`, `à`, `ê`, `ô`).
+- **Plain-prose, one variant at a time** — v1.3.2 printed both; v1.3.3 prints only the `content_locale` variant. Same stability discipline as the v1.3.1 bridge. Accents allowed (`é`, `à`, `ê`, `ô`).
 - **Absolute path resolution** — resolve the target directory at prompt time via the terminal's current working directory (`os.getcwd()` equivalent for the runtime, `pwd` on POSIX, `%CD%` on Windows). Path separator follows platform convention (`\` on Windows, `/` elsewhere). Arrow marker `→` is U+2192, UTF-8-stable on both terminals.
 - **Path uniqueness** — one path per session, resolved once at entry. Changes in cwd mid-session are not re-computed (cwd is frozen at skill dispatch). If the user somehow changes cwd between mirror and consent card, the skill still resolves to the entry-time cwd for coherence.
 - **No timeout** — the skill idles until the next user turn. Victor can walk away, come back, inspect the file system, and then respond. The context guard has already verified `is_fresh_context` at skill entry, so the session's premise is stable.
@@ -400,9 +513,9 @@ Three equivalence classes on the next user turn:
 
 Modifications that clear ambiguity (e.g. "boulangerie ou restaurant → boulangerie") collapse the corresponding `a affiner — ...` null-class value into the concrete chosen value.
 
-## `drop_zone_intent.md` — schema + body format (v1.3.2)
+## `drop_zone_intent.md` — schema + body format (v1.3.2, v1.3.3 body locale-switched)
 
-The file written to cwd after consent. Format chosen to match the house style for Genesis artefacts (YAML frontmatter + Markdown body), parseable downstream, readable to a human reader, and archive-fidelity on the mirror Victor saw.
+The file written to cwd after consent. Format chosen to match the house style for Genesis artefacts (YAML frontmatter + Markdown body), parseable downstream, readable to a human reader, and archive-fidelity on the mirror Victor saw. **v1.3.3** dispatches the body prose intro + mirror echo on `content_locale`: a file written after an EN drop carries an EN body (see § "Example concrete file (EN variant, v1.3.3)" below). **Frontmatter is unchanged** — keys stay snake_case English; null-class token values stay FR canonical regardless of `content_locale` (Layer A / Layer B contract preserved — see § "Runtime locale — signal + dispatch (v1.3.3) / Frontmatter data contract unchanged").
 
 ### Full template
 
@@ -451,7 +564,7 @@ Lisible comme seed par `genesis-protocol` Phase 0 (Step 0.1 détection + Step 0.
 - **4 metadata keys** provide forward-compat and debuggability: `schema_version` (integer, starting at `1`), `created_at` (ISO-8601 UTC per Python / Node `datetime.now(UTC).isoformat()` convention), `skill` (constant `genesis-drop-zone`), `skill_version` (read from `plugin.json` at write time).
 - **Null-class strings serialized verbatim** — `"a trouver ensemble"`, `"non mentionne"`, `"non mentionnee"`, `"a affiner — X ou Y"`. Never `null`, never `~`, never `""`, never an empty YAML value. The null-visible discipline Victor sees in the mirror propagates into the file so downstream readers (Phase 0 Step 0.2a) can distinguish "user didn't say" from "field present but empty".
 - **`attaches` field** — free-form descriptive string matching the mirror's `Depose` row verbatim (truncated display, `+ N autres` suffix when applicable). Not a canonical attachment list — Layer B scans cwd via `Glob` in Step 0.3 for the source of truth. `attaches` exists so the file is self-documenting without referencing the filesystem.
-- **Body** — contains a short prose intro in FR (the default locale as of v1.3.2) plus an echo of the FR mirror table. Echo format is ASCII-pure inside the code fence (same accent discipline as the mirror — see v1.3.0 rule). The body is archive fidelity for the user's benefit if they ever open the file; the frontmatter is the parseable contract.
+- **Body** — contains a short prose intro + echo of the mirror table. **v1.3.2** hardcoded FR. **v1.3.3** dispatches on `content_locale`: FR body when `content_locale = FR`, EN body when `content_locale = EN`. Echo format stays ASCII-pure inside the code fence regardless of locale (same accent discipline as the mirror). The body is archive fidelity for the user's benefit if they ever open the file; the frontmatter is the parseable contract.
 
 ### File metadata
 
@@ -459,7 +572,7 @@ Lisible comme seed par `genesis-protocol` Phase 0 (Step 0.1 détection + Step 0.
 - **Line endings**: LF. Git-friendly. Future `.gitattributes` on the target project can enable `eol=crlf` checkout if a Windows user's downstream toolchain needs it; the written file does not bake CRLF in.
 - **Permissions**: OS default. Windows inherits from the parent directory; POSIX applies umask (`0644` typical). No explicit `chmod` — the file is data, not executable.
 
-### Example concrete file (illustrative)
+### Example concrete file — FR body variant (illustrative, `content_locale = FR`)
 
 ````markdown
 <!-- SPDX-License-Identifier: MIT -->
@@ -467,7 +580,7 @@ Lisible comme seed par `genesis-protocol` Phase 0 (Step 0.1 détection + Step 0.
 schema_version: 1
 created_at: 2026-04-17T14:32:05Z
 skill: genesis-drop-zone
-skill_version: 1.3.2
+skill_version: 1.3.3
 
 idea_summary: "boulangerie artisanale pour livraison matin"
 pour_qui: "habitants du quartier qui veulent du pain frais"
@@ -482,7 +595,7 @@ hints_techniques: "React ou Next.js"
 
 # Intent capturé à la drop zone le 2026-04-17
 
-Fichier écrit par `genesis-drop-zone` v1.3.2 après consent utilisateur.
+Fichier écrit par `genesis-drop-zone` v1.3.3 après consent utilisateur.
 Lisible comme seed par `genesis-protocol` Phase 0 (Step 0.1 détection + Step 0.2a parsing).
 
 ## Mirror affiché à l'utilisateur
@@ -499,6 +612,51 @@ Lisible comme seed par `genesis-protocol` Phase 0 (Step 0.1 détection + Step 0.
    Tech          React ou Next.js
 ```
 ````
+
+### Example concrete file — EN body variant (illustrative, `content_locale = EN`, v1.3.3)
+
+Note: frontmatter **still carries FR canonical null-class tokens** (`"non mentionne"`, `"non mentionnee"`) even though the body echoes the EN mirror. Intentional Layer A / Layer B asymmetry — the frontmatter is the parseable contract.
+
+````markdown
+<!-- SPDX-License-Identifier: MIT -->
+---
+schema_version: 1
+created_at: 2026-04-17T14:32:05Z
+skill: genesis-drop-zone
+skill_version: 1.3.3
+
+idea_summary: "artisan bakery for morning delivery"
+pour_qui: "neighbourhood residents wanting fresh bread"
+type: "web app with online ordering"
+nom: "a trouver ensemble"
+attaches: "1 brief 'brief.pdf' + 1 photo 'logo.png'"
+langue_detectee: "EN"
+budget_ou_contrainte: "non mentionne"
+prive_ou_public: "non mentionnee"
+hints_techniques: "React or Next.js"
+---
+
+# Intent captured at the drop zone on 2026-04-17
+
+File written by `genesis-drop-zone` v1.3.3 after user consent.
+Readable as a seed by `genesis-protocol` Phase 0 (Step 0.1 detection + Step 0.2a parsing).
+
+## Mirror shown to the user
+
+```
+   Idea          artisan bakery for morning delivery
+   Who for       neighbourhood residents wanting fresh bread
+   Kind          web app with online ordering
+   Name          to be found together
+   Dropped       1 brief 'brief.pdf' + 1 photo 'logo.png'
+   Language      EN
+   Budget        not mentioned
+   Visibility    not mentioned
+   Tech          React or Next.js
+```
+````
+
+In the EN body, null-class values render in EN display form (`to be found together`, `not mentioned`) for human readability of the mirror echo. In the frontmatter, null-class tokens stay FR canonical (`"a trouver ensemble"`, `"non mentionne"`) for Layer B's Step 0.2a parser. The contract preserves zero-ripple onto Layer B.
 
 ## Write flow — consent → write → bridge (v1.3.2)
 
@@ -557,18 +715,22 @@ Per anti-Frankenstein narrow-privilege discipline, v1.3.2 does not surface custo
 
 Any of these producing real user pain in v1.3.2 is a v1.3.3+ candidate for a halt + remediation refinement. v1.3.2's floor is "write succeeds or the harness shows the stack".
 
-## Halt branch — file already exists (v1.3.2)
+## Halt branch — file already exists (v1.3.2, v1.3.3 locale-switched)
 
-When the pre-write existence check at step 6 of the write flow finds a `drop_zone_intent.md` already in cwd, the skill prints a bilingual halt message and exits without proceeding to the consent card.
+When the pre-write existence check at step 6 of the write flow finds a `drop_zone_intent.md` already in cwd, the skill prints a halt message and exits without proceeding to the consent card. **v1.3.3** dispatches on `content_locale`: the FR variant or EN variant is printed (not both). Both variants were already authored in v1.3.2.
 
-### Template
+### Template — FR variant (rendered when `content_locale = FR`)
 
 ```
 Un fichier `drop_zone_intent.md` existe déjà ici :
   → <absolute-cwd-path>/drop_zone_intent.md
 
 Supprime-le d'abord, ou ouvre Claude Code dans un autre dossier et relance.
+```
 
+### Template — EN variant (rendered when `content_locale = EN`)
+
+```
 A `drop_zone_intent.md` already exists here:
   → <absolute-cwd-path>/drop_zone_intent.md
 
@@ -582,16 +744,22 @@ Delete it first, or open Claude Code in a different folder and retry.
 - **No overwrite, no timestamp-suffix fallback, no "are you sure" second-consent prompt.** The anomaly is genuine (the context guard has already asserted a fresh cwd on entry — an existing `drop_zone_intent.md` is unexpected state that the user should reconcile manually).
 - Matches the halt-on-leak gate precedent of `session-post-processor` — when a ship-critical invariant fails, halt with remediation message, never mask-then-recover.
 
-## Bridge messages — accept and decline (v1.3.2)
+## Bridge messages — accept and decline (v1.3.2, v1.3.3 locale-switched)
 
-Two version-scoped bridges replace the v1.3.1 single bridge. Selection is determined by the user's response to the consent card: accept → accept bridge + write; decline → decline bridge, no write. Both are plain-prose bilingual, both route through the UTF-8-stable stream path, both keep accents.
+Two version-scoped bridges replace the v1.3.1 single bridge. Selection is determined by the user's response to the consent card: accept → accept bridge + write; decline → decline bridge, no write. Both route through the UTF-8-stable stream path and keep accents. **v1.3.3** dispatches on `content_locale`: one variant printed, not both. Both variants were already authored in v1.3.2.
 
 ### Accept bridge (Branch A, after successful write)
+
+FR variant (rendered when `content_locale = FR`):
 
 ```
 C'est noté — tape `/genesis-protocol` quand tu es prêt pour créer
 le projet (GitHub, fichiers, mémoire) à partir de ce fichier.
+```
 
+EN variant (rendered when `content_locale = EN`):
+
+```
 Saved — type `/genesis-protocol` when you're ready to create the
 project (GitHub, files, memory) from this file.
 ```
@@ -603,10 +771,16 @@ project (GitHub, files, memory) from this file.
 
 ### Decline bridge (Branch B, after user says no)
 
+FR variant (rendered when `content_locale = FR`):
+
 ```
 OK, rien d'écrit. Ton idée reste dans notre échange pour l'instant.
 Relance-moi quand tu veux la poser sur disque.
+```
 
+EN variant (rendered when `content_locale = EN`):
+
+```
 OK, nothing written. Your idea stays in our exchange for now.
 Come back whenever you want to save it to disk.
 ```
@@ -757,6 +931,8 @@ Cross-skill-pattern #1: when a skill is a faithful implementation of a canonical
 | Scope — v1.3.0 vertical slice | `## Scope / In scope (v1.3.0)` sub-block (historical, retained for version traceability) | Mirrored |
 | Scope — v1.3.1 extraction | `## Scope / In scope (v1.3.1)` sub-block (in/out bullets, copied verbatim) | Mirrored |
 | Scope — v1.3.2 write + Layer B handoff | `## Scope / In scope (v1.3.2)` sub-block (in/out bullets, copied verbatim) | Mirrored |
+| Scope — v1.3.3 runtime locale rendering | `## Scope / In scope (v1.3.3)` sub-block (in/out bullets, copied verbatim) | Mirrored |
+| Runtime locale — signal + dispatch (v1.3.3) | `## Locale dispatch (v1.3.3)` (two-variable table + render-target map) | Mirrored |
 | Trigger evaluation gate | `## Trigger` + `## Context guard` (two sections in SKILL.md for dispatch clarity) | Mirrored |
 | Welcome body | `## Phase 0 — welcome` with pointer to `phase-0-welcome.md` (no duplicated template text in SKILL.md) | Mirrored (pointer) |
 | Mirror screen — template & reveal | `## Phase 0 — mirror` (pattern description only; full template lives in `phase-0-welcome.md`) | Mirrored (pattern) |
@@ -769,7 +945,7 @@ Cross-skill-pattern #1: when a skill is a faithful implementation of a canonical
 | Bridge messages — accept and decline (v1.3.2) | `## Phase 0 — bridges (v1.3.2)` with pointer to `phase-0-welcome.md § Accept/Decline bridges (v1.3.2)` | Mirrored (pointer) |
 | Layer B integration — genesis-protocol Phase 0 (v1.3.2) | `## Phase 0 — handoff to genesis-protocol` (precedence rule + field mapping + forward note) | Mirrored (precedence + mapping) |
 | Concentrated privilege declaration | `## Concentrated privilege` (verbatim v1.3.0 none + v1.3.1 none + v1.3.2 write declaration + mitigations) | Mirrored |
-| Deferred to v1.3.3+ | `## Deferred scope` (verbatim bullet list, updated) | Mirrored |
+| Deferred to v1.3.4+ | `## Deferred scope` (verbatim bullet list, updated) | Mirrored |
 | Problem statement | — | **Spec-only** (design rationale) |
 | UX canon backing | — | **Spec-only** (design rationale) |
 | R9 language policy applied | — | **Spec-only** (tier map across artefacts, dev-internal) |
@@ -778,6 +954,7 @@ Cross-skill-pattern #1: when a skill is a faithful implementation of a canonical
 | Relation to the vision doc | — | **Spec-only** (cross-doc navigation) |
 | Rationale for v1.3.1 route | — | **Spec-only** (design decision log) |
 | Rationale for v1.3.2 route | — | **Spec-only** (design decision log) |
+| Rationale for v1.3.3 route | — | **Spec-only** (design decision log) |
 
 Rule of thumb for the drift-check gate: **every row tagged `Mirrored` must show section-for-section correspondence; every row tagged `Spec-only` is an expected asymmetry** and is not flagged during review. SKILL.md is the dispatch surface; spec is the design record.
 
@@ -805,28 +982,32 @@ Three tiers per Layer 0 R9:
 | `v2_etape_0_drop_zone.md` (this file) | Dev/tooling internal doc | English only |
 | `skills/genesis-drop-zone/SKILL.md` | Dev/tooling skill dispatch | English only |
 | `skills/genesis-drop-zone/phase-0-welcome.md` — **comments + section headings** | Dev/tooling | English only |
-| `skills/genesis-drop-zone/phase-0-welcome.md` — **runtime string templates (welcome box, mirror template + 9-field labels, consent card (v1.3.2), halt message (v1.3.2), accept + decline bridges (v1.3.2))** | User-facing runtime | Bilingual FR + EN coauthored day 1 |
+| `skills/genesis-drop-zone/phase-0-welcome.md` — **runtime string templates (welcome box, mirror template + 9-field labels, consent card (v1.3.2), halt message (v1.3.2), accept + decline bridges (v1.3.2), zero-content re-prompt (EN pair new in v1.3.3))** | User-facing runtime | Bilingual FR + EN coauthored day 1; **v1.3.3 runtime-locale-dispatched** via `welcome_locale` / `content_locale` — only one variant rendered at a time per § "Runtime locale — signal + dispatch (v1.3.3)" |
 | Trigger phrases in `SKILL.md` `description:` frontmatter | User-facing invocation surface | Bilingual FR + EN day 1 — covers both the one-line `description:` text AND the embedded trigger phrase list; written as one frontmatter block, not two |
 | `drop_zone_intent.md` written at cwd (v1.3.2) — **frontmatter keys** | Dev-layer data (file consumed by Layer B parser) | English only (snake_case) |
-| `drop_zone_intent.md` written at cwd (v1.3.2) — **frontmatter values + body prose intro + mirror echo** | User-facing runtime (archive fidelity of what Victor saw) | FR rendering (v1.3.1 hardcoded default); EN rendering deferred to v1.3.3+ runtime locale detection |
+| `drop_zone_intent.md` written at cwd (v1.3.2) — **frontmatter values** (extracted user strings + null-class tokens) | Dev-layer data contract (parsed by Layer B Step 0.2a) | FR canonical null-class tokens (`"a trouver ensemble"`, `"non mentionne"`, `"non mentionnee"`, `"a affiner — X ou Y"`) regardless of `content_locale` — **v1.3.3 deliberately preserves FR canonical here** so Layer B's parser stays unchanged. Extracted user strings (e.g. `idea_summary`) follow the user's language naturally. |
+| `drop_zone_intent.md` written at cwd (v1.3.2) — **body prose intro + mirror echo** | User-facing runtime (archive fidelity of what Victor saw) | **v1.3.3: locale-detected** via `content_locale` — FR body when content is FR, EN body when content is EN. v1.3.2 hardcoded FR. |
 | Phase 0 Step 0.4 intent card origin tags (v1.3.2) | User-facing runtime (visible to Victor in detailed/semi-auto modes) | English short tags (`(from drop zone)`, `(derived)`, `(default)`, `(inferred)`); deliberately non-jargon (not `(Layer A)`) but English-only for card coherence with existing Phase 0 card text |
 | Phase 0 Step 0.5 `## Conversational context from drop zone` section (v1.3.2) | User-visible archive | English headings / labels (matches surrounding Layer B bootstrap_intent.md template which is English); values preserved verbatim in their source language (typically FR for v1.3.2) |
 
 The mixed-tier nature of `phase-0-welcome.md` is intentional: the file's structure and comments are dev-facing (so a maintainer reads the file in English), but the string templates it ships are what Victor sees and must be bilingual. This is the standard pattern for runtime-text-bearing skill bodies — a precedent to establish here, to reuse when LAYER A grows further (Étapes 1, 2, 3).
 
-The v1.3.2 `drop_zone_intent.md` file introduces a **new tier blending**: the frontmatter is a parseable contract (dev-layer English keys + FR/EN runtime values), while the body is archive fidelity (FR prose intro + ASCII-pure mirror echo). Keys stay English so Layer B parsing is language-neutral; values honour the locale at capture so the file reads honestly to Victor. This is a precedent for any future file that is both dev-parseable and user-inspectable — keys stay dev-layer English, values follow the user's locale.
+The v1.3.2 `drop_zone_intent.md` file introduces a **new tier blending**: the frontmatter is a parseable contract (dev-layer English keys + FR/EN runtime values), while the body is archive fidelity (prose intro + ASCII-pure mirror echo). Keys stay English so Layer B parsing is language-neutral; values honour the locale at capture so the file reads honestly to Victor. This is a precedent for any future file that is both dev-parseable and user-inspectable — keys stay dev-layer English, values follow the user's locale.
 
-## Deferred to v1.3.3+
+**v1.3.3 refinement to the tier blending**: the body is now locale-detected (body = FR when content is FR, EN when content is EN) while the frontmatter **null-class tokens** stay FR canonical regardless of `content_locale`. This split (body = locale-detected human echo; frontmatter = FR canonical data contract) is intentional: the frontmatter contract is parsed by Layer B, and a stable FR canonical token set means Layer B does not grow a bilingual parsing branch. Bilingual frontmatter null-class tokens are a v1.4+ consideration if a concrete pain point emerges. Extracted user strings in the frontmatter (e.g. `idea_summary`) naturally follow the user's language — they echo what the user wrote. Only the three synthetic null-class strings are normatively FR canonical.
 
-Ordered by rough priority, non-binding, revisit at each session boundary. Items 2 (`bootstrap_intent.md` file write — reshaped as `drop_zone_intent.md`) and 3 (Layer B handoff) were closed in v1.3.2; this list reflects what remains.
+## Deferred to v1.3.4+
 
-1. **Path A Citations upgrade** — replace v1.3.1's in-context extraction with an Anthropic API call enabling `citations: {enabled: true}` per `document` block. Surfaces `cited_text` + `document_index` for each extracted field, so the mirror can optionally show source attribution (`[page 1 du brief]`) with API-hard traceability. Introduces the first "external API call" privilege for `genesis-drop-zone` (a second privilege class on top of v1.3.2's disk write, with its own mitigations — `ANTHROPIC_API_KEY` presence check, token-budget awareness, graceful fallback to in-context extraction). Downstream reader is now in place as of v1.3.2 so the privilege ship is no longer speculative.
-2. **Runtime locale detection** — detect user language from trigger match + message content; switch between FR and EN variants dynamically for welcome box + mirror + consent card + halt message + bridges. v1.3.2 extracts and preserves `langue_detectee` end-to-end (Layer A frontmatter → Layer B `## Conversational context from drop zone`) but does not yet render in the detected language; v1.3.3 closes the rendering loop.
-3. **Programmatic handoff** — auto-invoke `genesis-protocol` without the user typing `/genesis-protocol` after the accept bridge. Requires a harness-level skill-to-skill invocation mechanism that is not 2026-04 Claude Code ready. Human-in-the-loop via the accept bridge's instruction is the v1.3.2 pattern; the programmatic path can ship when the harness supports it without changing the bridge text semantics.
-4. `GH_BROWSER` profile routing wire-up — read Chrome profile map from Layer 0, export `GH_BROWSER` before any `gh` invocation in the downstream LAYER B.
-5. UX toolkit integration — `@clack/prompts` structural skeleton, Charm Gum for select prompts, cli-spinners for the `◐` animation.
-6. Completion chime (cross-platform) — macOS `afplay`, Windows `[console]::beep`, Linux `paplay`. Honours the "rising interval" convention per vision doc § "The sound of Genesis".
-7. Error handling refinements — permission-denied / disk-full / symlink-pointing-to-directory edge cases currently let `OSError` bubble up naturally. v1.3.3+ adds halt + remediation if any of these produces real user pain in v1.3.2 usage. v1.3.2's floor is "write succeeds or harness shows the stack".
+Ordered by rough priority, non-binding, revisit at each session boundary. Items closed across the v1.3.x cycle so far: the `bootstrap_intent.md` file write and Layer B handoff (both closed in v1.3.2), and **runtime locale detection** (closed in v1.3.3 — welcome + mirror + consent card + halt + bridges + body prose + body mirror echo all dispatch on `welcome_locale` / `content_locale`). This list reflects what remains.
+
+1. **Path A Citations upgrade** — replace v1.3.1's in-context extraction with an Anthropic API call enabling `citations: {enabled: true}` per `document` block. Surfaces `cited_text` + `document_index` for each extracted field, so the mirror can optionally show source attribution (`[page 1 du brief]`) with API-hard traceability. Introduces the first "external API call" privilege for `genesis-drop-zone` (a second privilege class on top of v1.3.2's disk write, with its own mitigations — `ANTHROPIC_API_KEY` presence check, token-budget awareness, graceful fallback to in-context extraction). Downstream reader is now in place as of v1.3.2 so the privilege ship is no longer speculative. **v1.3.4 candidate.**
+2. **Programmatic handoff** — auto-invoke `genesis-protocol` without the user typing `/genesis-protocol` after the accept bridge. Requires a harness-level skill-to-skill invocation mechanism that is not 2026-04 Claude Code ready. Human-in-the-loop via the accept bridge's instruction is the v1.3.2 pattern; the programmatic path can ship when the harness supports it without changing the bridge text semantics.
+3. `GH_BROWSER` profile routing wire-up — read Chrome profile map from Layer 0, export `GH_BROWSER` before any `gh` invocation in the downstream LAYER B.
+4. UX toolkit integration — `@clack/prompts` structural skeleton, Charm Gum for select prompts, cli-spinners for the `◐` animation.
+5. Completion chime (cross-platform) — macOS `afplay`, Windows `[console]::beep`, Linux `paplay`. Honours the "rising interval" convention per vision doc § "The sound of Genesis".
+6. Error handling refinements — permission-denied / disk-full / symlink-pointing-to-directory edge cases currently let `OSError` bubble up naturally. v1.3.4+ adds halt + remediation if any of these produces real user pain in v1.3.2–1.3.3 usage. v1.3.2's floor is "write succeeds or harness shows the stack".
+7. **Bilingual Layer B null-class parsing** — if `drop_zone_intent.md` frontmatter null-class tokens ever carry EN canonical variants alongside FR canonical, Layer B's Step 0.2a parser grows a bilingual branch. **v1.4+** target, not v1.3.x.
+8. **Three-locale-or-more expansion** — if Genesis ships beyond FR + EN (e.g. ES, DE), `welcome_locale` and `content_locale` become n-way enums. Minor, deferred until a real non-FR/EN user emerges.
 
 ## References (R8 inline citations consolidated)
 
@@ -879,21 +1060,39 @@ All v1.3.0 regression guarantees preserved. Mirror template, extraction schema, 
 
 | # | Scenario | Expected |
 |---|---|---|
-| 13 | Fresh empty dir, user drops content, mirror renders, consent card prints, user says `oui`. | `drop_zone_intent.md` written to cwd. File content validates: YAML frontmatter with 9 semantic keys + 4 metadata keys (`schema_version: 1`, `created_at` in ISO-8601 UTC, `skill: genesis-drop-zone`, `skill_version: 1.3.2`). Body contains FR prose intro + FR mirror echo inside code fence. UTF-8 no BOM. LF line endings. Accept bridge prints after write. Skill exits clean. |
-| 14 | Same setup as #13 but user says `non`. | `drop_zone_intent.md` **absent** from cwd. No write performed. Decline bridge prints bilingually. Skill exits clean. |
-| 15 | Fresh dir already containing a `drop_zone_intent.md` (context guard passes — the file is neither `CLAUDE.md` nor `memory/`, git commit count < 3). User drops content. | Mirror renders token-streamed. Pre-write existence check at step 6 of the write flow detects the file. Halt message prints bilingually with absolute path and remediation text. **Consent card does not print.** No overwrite. Skill exits clean. |
-| 16 | Drop + mirror + consent card printed. User replies `"non c'est pour un restaurant pas une boulangerie"` (modification, not refusal). | Claude re-runs the 9-field extraction with the corrected `type`. Mirror re-renders with `Type` row updated. Consent card re-prints with the same absolute path. Loop continues until affirmative or negative. |
-| 17 | R9 audit of a post-write `drop_zone_intent.md`. | Frontmatter keys all snake_case English. Null-class string values are accent-free ASCII (`a trouver ensemble`, `non mentionne`, `non mentionnee`). Body prose intro FR with accents (UTF-8 stable). Mirror echo inside code fence is ASCII-pure (matches the v1.3.0/v1.3.1 accent discipline for table content). |
+| 13 | Fresh empty dir, user drops content, mirror renders, consent card prints, user says `oui`. | `drop_zone_intent.md` written to cwd. File content validates: YAML frontmatter with 9 semantic keys + 4 metadata keys (`schema_version: 1`, `created_at` in ISO-8601 UTC, `skill: genesis-drop-zone`, `skill_version: 1.3.3`). Body contains FR prose intro + FR mirror echo inside code fence (for FR content; EN body for EN content per v1.3.3). UTF-8 no BOM. LF line endings. Accept bridge prints after write. Skill exits clean. |
+| 14 | Same setup as #13 but user says `non`. | `drop_zone_intent.md` **absent** from cwd. No write performed. Decline bridge prints in the detected `content_locale` (v1.3.3). Skill exits clean. |
+| 15 | Fresh dir already containing a `drop_zone_intent.md` (context guard passes — the file is neither `CLAUDE.md` nor `memory/`, git commit count < 3). User drops content. | Mirror renders token-streamed (in detected `content_locale`). Pre-write existence check at step 6 of the write flow detects the file. Halt message prints in `content_locale` with absolute path and remediation text. **Consent card does not print.** No overwrite. Skill exits clean. |
+| 16 | Drop + mirror + consent card printed. User replies `"non c'est pour un restaurant pas une boulangerie"` (modification, not refusal). | Claude re-runs the 9-field extraction with the corrected `type`. Mirror re-renders with `Type` row updated. Consent card re-prints with the same absolute path. `content_locale` re-evaluated on each extraction — if the correction shifts `langue_detectee`, subsequent surfaces switch locale. Loop continues until affirmative or negative. |
+| 17 | R9 audit of a post-write `drop_zone_intent.md`. | Frontmatter keys all snake_case English. Null-class string values are FR canonical accent-free ASCII (`a trouver ensemble`, `non mentionne`, `non mentionnee`) **regardless of body locale** (v1.3.3 asymmetry). Body prose intro in `content_locale` with accents allowed (UTF-8 stable). Mirror echo inside code fence is ASCII-pure (matches the v1.3.0/v1.3.1 accent discipline for table content). |
 | 18 | Fresh dir already containing a valid v1.3.2-format `drop_zone_intent.md` (carried over from a prior drop-zone session). User invokes `/genesis-protocol`. | Step 0.1 detects `drop_zone_intent.md` and logs `Primary seed: drop_zone_intent.md`. Step 0.2a parses the YAML frontmatter and maps 9 Layer A fields per the § "Field mapping (Step 0.2a)" table. Step 0.4 card renders with origin tags `(from drop zone)` on Vision / Project name / Is-a-plugin / Stack hints. The `Additional context from drop zone` block renders with `pour_qui`, `langue_detectee`, `budget_ou_contrainte`, `prive_ou_public`. User confirms `yes` → Step 0.5 writes `memory/project/bootstrap_intent.md` containing populated fields + new `## Conversational context from drop zone` section + `## Raw config.txt` rendered as `n/a — seeded from drop_zone_intent.md`. Phase 1 proceeds normally. |
 | 19 | Same setup as #18 but `config.txt` also present in cwd alongside `drop_zone_intent.md`. | Step 0.1 logs the precedence note: `config.txt found but drop_zone_intent.md takes precedence — ignoring config.txt`. Step 0.2a runs. Step 0.4 / 0.5 identical to #18. `## Raw config.txt` section in Step 0.5 output still reads `n/a — seeded from drop_zone_intent.md` (config.txt content never parsed, never archived in Phase 0 output). |
+
+### v1.3.2 regression set for v1.3.3
+
+All v1.3.0 + v1.3.1 regression guarantees preserved. The v1.3.2 Layer B parser surface (Step 0.1 detection, Step 0.2a parsing, Step 0.4 card, Step 0.5 archiving) is completely untouched by v1.3.3 — zero Layer B file changes. The v1.3.2 write flow, halt branch, consent card template schema, and bridge text are all preserved; v1.3.3 only changes which variant (FR or EN) is rendered at runtime per `welcome_locale` / `content_locale`. Scenarios #18 and #19 remain valid as regression probes against the Layer B parser, with the additional check that Layer B parser still reads FR canonical null-class tokens (which v1.3.3 preserves by contract).
+
+### v1.3.3 new scenarios
+
+| # | Scenario | Expected |
+|---|---|---|
+| 20 | Fresh empty dir, FR intent phrase `"je veux créer un projet"`, then EN content drop ("I want to build a small task tracker for my team"). | `welcome_locale = FR` → FR welcome box prints. Content extracted → `langue_detectee = EN` → `content_locale = EN`. Mirror renders in EN with EN 9-field labels. Consent card prints EN variant (not FR). Halt/accept/decline bridges all use EN variants at runtime. Divergence between welcome FR and mirror-onwards EN is expected and spec-documented. |
+| 21 | Fresh empty dir, EN intent phrase `"I want to create a project"`, then FR content drop ("je veux une boulangerie artisanale"). | `welcome_locale = EN` → EN welcome box prints. Content extracted → `langue_detectee = FR` → `content_locale = FR`. Mirror renders in FR. Consent card in FR. Inverse divergence of #20; expected. |
+| 22 | Fresh empty dir, FR intent, then mixed FR+EN content (e.g. a brief written in bilingual style). | `content_locale = FR` (tiebreaker on `langue_detectee = mixte`). Mirror + consent card + halt + bridges all render FR. |
+| 23 | Fresh empty dir, slash invocation `/genesis-drop-zone`, no trigger phrase signal. | `welcome_locale = FR` (default on slash). Welcome FR. Then user drops EN content → `content_locale = EN` → mirror onwards in EN. Welcome FR, rest EN is the graceful-degradation path for EN-on-slash. |
+| 24 | Fresh empty dir, any trigger, zero content in first response. | Zero-content re-prompt prints in `welcome_locale` (FR or EN variant depending on trigger source). When content eventually arrives, `content_locale` resolves at mirror time and subsequent surfaces switch. |
+| 25 | Fresh empty dir, EN drop leading to successful write + accept. | `drop_zone_intent.md` written with frontmatter `langue_detectee: "EN"`, body prose intro in EN, mirror echo in EN (EN labels, EN null-class display strings `to be found together` / `not mentioned`). **Frontmatter null-class tokens are FR canonical** (`"a trouver ensemble"`, `"non mentionne"`) — v1.3.3 asymmetry preserved. Fixture to match: `tests/fixtures/drop_zone_intent_fixture_v1_3_3_en.md`. |
+| 26 | R9 audit of v1.3.3 additions — grep `phase-0-welcome.md` for the newly-authored EN zero-content re-prompt `I'm listening — drop or write whatever you want to share.`. | Exact EN string present exactly once. FR companion `Je t'écoute — dépose ou écris ce que tu veux me partager.` still present exactly once. |
+| 27 | Layer B regression — run Step 0.2a against the EN fixture from #25 (frontmatter has FR canonical null tokens alongside EN body). | Parser succeeds unchanged from v1.3.2 behaviour. Null-class detection matches on `"a trouver ensemble"`, `"non mentionne"`, `"non mentionnee"`, `"a affiner — ..."` exactly as before. Body content is cosmetic — not parsed by Layer B. Confirms v1.3.3 zero-Layer-B-ripple. |
 
 ### Ship gates
 
 - **v1.3.0 (original)**: #1, #3, #6 mandatory. #2, #4 strongly recommended. #5 documented.
 - **v1.3.1 (original)**: #7, #9, #12 mandatory. Regression on v1.3.0 #3 + #6 mandatory. #8 strongly recommended. #10, #11 documented non-blocking.
-- **v1.3.2 (this ship)**: **#13, #14, #15, #18 mandatory** — write happy path + decline path + halt-on-existing (pre-consent, safety-critical) + Layer B happy path (first cross-layer wire). **Strongly recommended**: #16 (modification-in-flight), #19 (Layer B precedence on double-file). **Regression on v1.3.1 mandatory**: #3 (context guard), #6 (R9 audit SKILL.md — extended for v1.3.2 additions), #9 (zero-content branch — verify v1.3.2 does not plumb consent / write when this branch fires), #12 (R9 audit `phase-0-welcome.md` — extended for consent card + halt + bridges). **Documented non-blocking**: #17 (R9 audit on the written file).
+- **v1.3.2 (previous)**: #13, #14, #15, #18 mandatory. #16, #19 strongly recommended. Regression on v1.3.1 #3, #6, #9, #12 mandatory. #17 documented non-blocking.
+- **v1.3.3 (this ship)**: **#20, #21, #25, #26, #27 mandatory** — welcome+content divergence (bidirectional) + EN body write + R9 audit on new EN re-prompt + Layer B zero-ripple regression. **Strongly recommended**: #22 (mixte tiebreaker), #23 (slash graceful degradation), #24 (zero-content locale). **Regression on v1.3.2 mandatory**: #15 (halt-on-existing — now must render in detected `content_locale`), #16 (modification loop — `content_locale` re-evaluation), #17 (R9 audit of the written file — FR canonical null tokens preserved in frontmatter). **Regression on v1.3.1 mandatory**: #9 (zero-content branch — now has bilingual re-prompt pair). **Documented non-blocking**: #10 updated to reflect v1.3.3 closure (EN content now renders EN mirror; scenario #10's v1.3.1 expectation is superseded).
 
-**Scenario #1 / #13 / #18 runtime replay note**: runtime replay of #1 (mirror dispatch), #13 (write happy path), and #18 (Layer B happy path) all require a fresh Claude Code process in an empty directory, not executable from inside a running session. Artefact-level verification remains the ship gate for each — specifically: template parseability, dispatch coherence, context-guard logic verified against real filesystem, YAML frontmatter validation against a synthetic `drop_zone_intent.md` fixture, Step 0.2a parsing exercised against the same fixture, and Step 0.4 card rendering traced against the fixture's parsed fields. Runtime replay of #13 and #18 deferred to an externally-launched fresh session — same harness constraint as v1.3.1's #1 roll-forward. A consistent −0.2 Pain-driven deduction applies for each replay-deferred scenario and rolls forward until runtime replay happens. The ship gate treats all three scenarios symmetrically: artefact-level green = ship gate passed; runtime replay is a separate observability track, not a merge-blocker.
+**Scenario #1 / #13 / #18 / #20 / #21 runtime replay note**: runtime replay of scenarios driven by a fresh Claude Code process in an empty directory (including v1.3.3's #20, #21, #23, #24 which exercise the locale dispatch live) is not executable from inside a running session. Artefact-level verification remains the ship gate — template parseability per locale variant, dispatch coherence, fixture inspection, Layer B parser regression on the new EN fixture. A consistent −0.2 Pain-driven deduction applies per replay-deferred scenario and rolls forward until runtime replay happens, continuing the v1.3.1 / v1.3.2 convention.
 
 ## Rationale for v1.3.2 route
 
@@ -905,6 +1104,17 @@ All v1.3.0 regression guarantees preserved. Mirror template, extraction schema, 
 - **Path not repeated in accept bridge** — the consent card 2 lines above already showed the absolute path; repeating it alourdir without adding information. Scroll-back recovers the path if needed.
 - **Preserve Layer-A-specific extras at Layer B** — `pour_qui`, `langue_detectee`, `budget_ou_contrainte`, `prive_ou_public` cost Victor's conversation turn to extract. Dropping them at Layer B would be silent information loss. Archiving them in `## Conversational context from drop zone` keeps the end-to-end flow informationally complete, available to Phases 1-7 that may want them.
 - **Living spec, version-scoped sections** — extending `v2_etape_0_drop_zone.md` with a `## Scope — v1.3.2 write + Layer B handoff` section (and the per-surface sections below) preserves the canonical vein-of-truth pattern that v1.3.1 established. A separate spec for Layer B integration would fragment the narrative; keeping it inline means one document describes the full Étape 0 → Phase 0 cross-layer wire.
+
+## Rationale for v1.3.3 route
+
+- **R9 tier-3 loop closure end-to-end with one dispatch variable per stage** — v1.3.0 / v1.3.1 / v1.3.2 shipped FR + EN runtime strings in parallel (R9 tier 3: bilingual coauthored day 1, no retrofit). v1.3.3 is the single ship that flips rendering from "hardcoded FR / always bilingual" to "locale-detected one-variant-at-a-time". Every string pair already exists; the ship is a rendering policy change, not a template creation ship.
+- **Two variables (`welcome_locale` + `content_locale`), not one** — the welcome surface precedes any content. Using one variable forces choosing between always-FR welcome (ignores the EN trigger signal) or blocked welcome (loses the "welcome box IS the invitation" UX principle). Two variables with distinct lifecycles honour the best signal per stage, at the cost of one piece of documented divergence behaviour (welcome in one locale, mirror onwards in another when content differs from trigger).
+- **Frontmatter contract unchanged, body locale-switched** — splitting the v1.3.3 change so that Layer B has zero ripple. The Layer B Step 0.2a parser detects null classes by FR canonical string match; extending it to bilingual is a v1.4+ target if real user pain emerges, not a v1.3.x ship. The asymmetry (body = locale-detected human echo; frontmatter = FR canonical data contract) is documented in § "R9 language policy applied" and illustrated in § "Example concrete file — EN body variant".
+- **`mixte` → FR tiebreaker** — `langue_detectee` has three values. Display needs deterministic routing. FR is the primary project language (French-speaking machine, Layer 0 user profile, trigger list starts with FR). Picking always-bilingual-for-mixte would re-introduce the exact anti-pattern v1.3.3 removes. Users who want EN can state their intent more clearly.
+- **Slash command → FR default** — no language signal at invocation; FR default aligns with trigger-list ordering and is deterministic. Reading `$LANG` / `$LC_ALL` is heavier, error-prone on Windows, and adds environment surface area for tiny benefit (users who type a slash command already have the engineer-oriented entry point). Welcome in FR, mirror onwards in detected locale is acceptable graceful degradation.
+- **One new bilingual pair only** — v1.3.3 authors exactly one new runtime string pair (the EN zero-content re-prompt). All other EN variants already existed since v1.3.0 / v1.3.1 / v1.3.2. The small surface area is a feature: the ship is narrow, the anti-Frankenstein gate clears cleanly, the reviewer pass is fast.
+- **No new privilege class** — v1.3.3 touches zero privilege map entries. `genesis-drop-zone` stays at v1.3.2's single write privilege. Runtime locale rendering is a read-layer-only change; no disk write beyond what v1.3.2 already authorized, no API call, no subprocess. Clean scope.
+- **Living spec, version-scoped sections (third application)** — extending `v2_etape_0_drop_zone.md` with a `## Scope — v1.3.3 runtime locale rendering` section preserves the canonical vein-of-truth pattern established at v1.3.1 and reinforced at v1.3.2. Readers walk the version-scoped sections top-to-bottom to see what each ship layered on — third consecutive application of the pattern.
 
 ## Relation to the vision doc
 
