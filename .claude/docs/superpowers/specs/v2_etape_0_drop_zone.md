@@ -212,12 +212,13 @@ The slice was intentionally surface-only so the first MINOR bump of the v1.3.x c
 
 1. **End-to-end audit-trail visibility** — v1.4.0 persists `<field>_source_citation` nested keys in `drop_zone_intent.md` frontmatter; v1.4.1 makes them visible in `genesis-protocol`'s Phase 0 Step 0.4 intent card and Step 0.5 `bootstrap_intent.md` template. The extraction value loop opened by v1.4.0 closes inside Layer B rather than terminating at Layer A's mirror.
 2. **Step 0.2a extension — citation preservation** — the dict-based YAML parse already reads the full frontmatter; v1.4.1 retains the `<field>_source_citation` nested dicts for the 9 semantic source fields alongside the existing 9+4 key preservation. No mapping change, no new mandatory field. Each preserved citation is a dict with five keys (`type`, `document_index`, `start`, `end`, `cited_text_preview`) per v1.4.0 § "Citations API — signal + dispatch (v1.4.0) / Citation object shape".
-3. **Step 0.4 card — inline citation suffix on mapped fields** — four card rows gain an inline citation suffix when the corresponding `<source>_source_citation` key is present:
+3. **Step 0.4 card — inline citation suffix on mapped fields** — five card rows gain an inline citation suffix when the corresponding `<source>_source_citation` key is present:
    - `Project name` ← `nom_source_citation`
+   - `Project slug` ← `nom_source_citation` (propagated — slug is derived from `nom`)
    - `Vision` ← `idea_summary_source_citation`
    - `Stack hints` ← `hints_techniques_source_citation`
-   - `Is-a-plugin` ← `type_source_citation` (propagated from the inferred-from source field)
-   Project slug also renders the same citation as Project name (the slug is derived from `nom`, so the citation source is identical). When a citation key is absent (legacy config.txt seed, fallback-path write, image-only drop, or field without citation), the row renders exactly as v1.3.2/v1.3.3 — no placeholder, no `[unknown]`, no empty brackets.
+   - `Is-a-plugin` ← `type_source_citation` (propagated — inferred from `type`)
+   Two of the five rows (Project slug, Is-a-plugin) propagate their citation from an upstream source field rather than sourcing directly, because the rendered value is a deterministic function of the cited source. When a citation key is absent (legacy config.txt seed, fallback-path write, image-only drop, or field without citation), the row renders exactly as v1.3.2/v1.3.3 — no placeholder, no `[unknown]`, no empty brackets.
 4. **Step 0.4 card — inline citation suffix on `Additional context from drop zone` rows** — the four extras rows gain the same treatment:
    - `Target audience` ← `pour_qui_source_citation`
    - `Language detected` ← `langue_detectee_source_citation`
@@ -1140,7 +1141,7 @@ Three gates determine whether citation suffixes render:
 2. **Step 0.2a parse succeeded** with `schema_version == 1`. Parse failures fall through to `config.txt` path per v1.3.2 rule — same gate 1 outcome applies.
 3. **At least one `<field>_source_citation` key present** in the parsed frontmatter. When all citation keys are absent (fallback-path write, image-only drop, legacy v1.3.2 / v1.3.3 writer), no row renders a suffix. This is anti-Frankenstein null-visible discipline: absence of citation is not rendered as `[unknown]` or `[n/a]` — it is simply absent.
 
-Gate 3 evaluation is per-row, not per-card: each of the 8 citation-eligible rows (4 mapped + 4 extras) inspects its own citation key independently. A card with some-but-not-all citations renders suffixes only on the populated rows.
+Gate 3 evaluation is per-row, not per-card: each of the 9 citation-eligible rows (5 mapped + 4 extras) inspects its own citation key independently. Of the 5 mapped rows, 3 (Project name / Vision / Stack hints) source directly from their Layer A field's citation, and 2 (Project slug / Is-a-plugin) propagate from an upstream source field's citation. A card with some-but-not-all citations renders suffixes only on the populated rows.
 
 #### Annotation format — single source of truth
 
@@ -1362,7 +1363,7 @@ Cross-skill-pattern #1: when a skill is a faithful implementation of a canonical
 | Bridge messages — accept and decline (v1.3.2) | `## Phase 0 — bridges (v1.3.2)` with pointer to `phase-0-welcome.md § Accept/Decline bridges (v1.3.2)` | Mirrored (pointer) |
 | Layer B integration — genesis-protocol Phase 0 (v1.3.2) | `## Phase 0 — handoff to genesis-protocol` (precedence rule + field mapping + forward note) | Mirrored (precedence + mapping) |
 | Concentrated privilege declaration | `## Concentrated privilege` (per-class table v1.3.0-v1.4.0 + disk-class mitigations + network-class mitigations + cross-skill-pattern #2 refinement) | Mirrored |
-| Deferred to v1.4.1+ | `## Deferred scope` (verbatim bullet list, updated) | Mirrored |
+| Deferred to v1.4.2+ | `## Deferred scope` (verbatim bullet list, updated — pending SKILL.md rename sweep in a future Layer A touch since v1.4.1 ships zero Layer A changes) | Mirrored (heading-label drift until next SKILL.md touch) |
 | Problem statement | — | **Spec-only** (design rationale) |
 | UX canon backing | — | **Spec-only** (design rationale) |
 | R9 language policy applied | — | **Spec-only** (tier map across artefacts, dev-internal) |
