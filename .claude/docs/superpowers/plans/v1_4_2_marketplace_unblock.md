@@ -92,7 +92,13 @@ Run WebSearch with query: `"Claude Code session transcript JSONL format 2026 mes
 
 Expected: results describing current JSONL record shape. Compare against the baseline.
 
-**Escape trigger**: if results surface a NEW top-level record type (beyond `user` / `assistant` / `system` etc.), a NEW redaction pattern conventions, or a change in how content blocks are classified — **pause, escalate, route through v1.5.x**.
+**Escape trigger (any of these)**:
+- a NEW top-level record type (beyond `user` / `assistant` / `system` etc.)
+- a NEW redaction pattern convention
+- a change in how content blocks are classified
+- **schema drift** — content-block type rename (e.g. `text` → `text_block`), mandatory-field addition, required-key removal, field-semantics shift
+
+If any trigger fires → **pause, escalate, route through v1.5.x** (structural refresh is not PATCH-appropriate).
 
 - [ ] **Step 0.4: Gate decision**
 
@@ -220,11 +226,27 @@ Run: `cp .claude/docs/superpowers/research/sota/spdx-headers_2026-04-14.md skill
 
 Expected: file created.
 
-- [ ] **Step 2.4: Verify all 3 templates present with byte-count matching sources**
+- [ ] **Step 2.4: Verify all 3 templates present with byte-count matching sources (pre-frontmatter-refresh)**
 
 Run: `ls -la skills/genesis-protocol/research-templates/sota/`
 
-Expected: 3 files, byte-count matches sources (the copy is verbatim).
+Expected: 3 files, byte-count matches sources (the copy is verbatim before Step 2.5).
+
+- [ ] **Step 2.5: Refresh frontmatter on the 3 copied templates — per in-skill refresh-policy**
+
+**Why**: the source entries were created 2026-04-14 / 2026-04-15 (7-day TTL). At feat time (2026-04-19), `expires_at` in the source frontmatter is already near expiry (2026-04-21 / 2026-04-22). Templates that ship with an about-to-expire `expires_at` would force downstream seed-time refresh within days of seed. Per research-templates/README.md refresh-policy, templates track skill version — frontmatter dates should reflect the v1.4.2 ship date.
+
+For each of the 3 copied sota templates, use Edit tool to update frontmatter fields:
+- `created_at: 2026-04-14` (or `-04-15`) → `created_at: 2026-04-19`
+- `expires_at: 2026-04-21` (or `-04-22`) → `expires_at: 2026-04-26` (7-day TTL from v1.4.2 ship date)
+- `supersedes: null` (unchanged; these are direct copies, not supersessions — supersedes would only apply if refreshing content)
+- Preserve all other frontmatter + body verbatim.
+
+Verify post-edit: `grep "expires_at:" skills/genesis-protocol/research-templates/sota/*.md` → expect 3 lines, each `expires_at: 2026-04-26`.
+
+**Alternative (if content currency preferred over date refresh)**: leave frontmatter verbatim and document in the README refresh-policy that skill-local template TTLs are advisory (skill version is the authoritative freshness anchor; downstream seed-time re-derives `expires_at` from seed date anyway per Task 7.4 copy-and-rename discipline). If this route chosen, skip the frontmatter edits and add a note to README.md § "Refresh policy" clarifying the precedence.
+
+**Decision default**: execute the frontmatter refresh (primary path) since it matches the spec's "in-skill templates live alongside the skill version" discipline. Skip only if feat executor verifies README.md already documents the precedence clarification.
 
 ---
 
@@ -310,15 +332,20 @@ Expected: zero or minimal (frontmatter-only) diff.
 **Files:**
 - Modify: `.claude/docs/superpowers/research/INDEX.md`
 
-- [ ] **Step 5.1: Read current INDEX.md state**
+- [ ] **Step 5.1: Read current INDEX.md state + probe anthropic-python archive status**
 
 Run: `cat .claude/docs/superpowers/research/INDEX.md`
 
-Expected: see `## Active` table with 8 entries (7 sota + 1 stack `anthropic-python_2026-04-18.md` expiring 2026-04-19). See `## Archive` with 3 entries including the 2 we're refreshing.
+Expected: see `## Active` + `## Archive` sections. The `anthropic-python_2026-04-18.md` entry was last seen in Active with `expires 2026-04-19`. At feat time (likely 2026-04-19 or later), it may have already been moved to Archive per R8 session-open TTL discipline.
+
+**Insertion-anchor probe**: determine where to insert the 2 new rows:
+- If `anthropic-python` row still in `## Active` section → insert the 2 new refreshed-stack rows immediately after it (preserves stack-section grouping).
+- If `anthropic-python` has been moved to `## Archive` → insert the 2 new rows at the end of the `## Active` table (as the first stack entries post-archival).
+- In both cases, confirm the 2 new rows are contiguous and clearly demarcated as stack entries.
 
 - [ ] **Step 5.2: Append 2 refreshed entries to Active table**
 
-Edit the Active table to add 2 rows after `anthropic-python`:
+Edit the Active table to add 2 rows (insertion anchor determined by Step 5.1 probe):
 
 ```markdown
 | [claude-code-plugin-structure](stack/claude-code-plugin-structure_2026-04-19.md) | stack | 2026-04-19 | 2026-04-20 | high | Refreshed for v1.4.2 marketplace unblock ship. `.claude-plugin/plugin.json` shape + skills/templates/hooks conventions + install-manifest patterns. Supersedes archive/claude-code-plugin-structure_2026-04-14.md. Also shipped in-skill at `skills/genesis-protocol/research-templates/stack/claude-code-plugin-structure.md` (no date suffix, skill-local canonical). |
@@ -354,7 +381,11 @@ Expected: see current Source resolution + Fallback (legacy) paragraphs, followed
 
 Use Edit tool to replace the legacy fallback paragraph with the single-path halt message per spec.
 
-Target text to replace: `**Fallback (legacy)**: if \`<skill_dir>/rules/v1_rules.md\` is not present — which can only happen if the skill was installed from a source earlier than v1.2.1 — look for the file at \`<plugin-root>/.claude/docs/superpowers/rules/v1_rules.md\` (three levels above this skill's \`SKILL.md\`). If neither path resolves, halt and surface BOTH expected paths in the error message. Do not silently skip the rules copy.`
+Target text to replace (presented below in a code fence so inner backticks are preserved verbatim — copy the exact content between the code fence markers as the `old_string` argument to Edit):
+
+~~~
+**Fallback (legacy)**: if `<skill_dir>/rules/v1_rules.md` is not present — which can only happen if the skill was installed from a source earlier than v1.2.1 — look for the file at `<plugin-root>/.claude/docs/superpowers/rules/v1_rules.md` (three levels above this skill's `SKILL.md`). If neither path resolves, halt and surface BOTH expected paths in the error message. Do not silently skip the rules copy.
+~~~
 
 Replacement text:
 ```markdown
@@ -378,7 +409,10 @@ Run: `grep -c "Do not rewrite" skills/genesis-protocol/phase-1-rules-memory.md` 
 
 - [ ] **Step 6.4: Verify legacy fallback gone**
 
-Run: `grep -c "three levels above" skills/genesis-protocol/phase-1-rules-memory.md` → expect `1` (only Step 2.3 still has it, fixed in Task 7).
+Note: Step 1.3 (line 71) contains "three levels above"; Step 2.3 (line 246) contains "three levels up from". Different exact phrasing. After Task 6 deletion, only Step 2.3's "three levels up" phrase remains (fixed in Task 7).
+
+Run: `grep -c "three levels above" skills/genesis-protocol/phase-1-rules-memory.md` → expect `0` (Step 1.3 reference deleted).
+Run: `grep -c "three levels up" skills/genesis-protocol/phase-1-rules-memory.md` → expect `1` (Step 2.3 still has it, will be fixed in Task 7).
 Run: `grep -c "Fallback (legacy)" skills/genesis-protocol/phase-1-rules-memory.md` → expect `0`.
 
 ---
@@ -398,30 +432,93 @@ Expected: see current opening paragraph (line 246 three-levels-up), follow-on (l
 
 - [ ] **Step 7.2: Rewrite the opening paragraph (line 246)**
 
-Use Edit tool. Target text (line 246): `The Genesis plugin ships its own R8 cache at \`<plugin-root>/.claude/docs/superpowers/research/\` — where \`<plugin-root>\` is derived via the same "three levels up from \`skills/genesis-protocol/SKILL.md\`" rule used at Phase 1 Step 1.3. This cache contains entries that are also relevant to any downstream project, specifically the ones about Claude Code itself (plugin structure, session JSONL format, in-IDE tools, cross-OS ecosystem). Phase 2 **copies** these entries — not by-reference, because they are project-level references the downstream project needs to read offline.`
+Use Edit tool. Both target text and replacement shown in outer `~~~` fences so inner backticks render verbatim (no escape gymnastics). Copy the content between the fence markers literally as `old_string` / `new_string`.
 
-Replacement: `The Genesis plugin ships R8 cache **templates** inside this skill at \`<skill_dir>/research-templates/\` — the canonical five entries listed in the "Entries to copy" table below (3 sota + 2 stack) relevant to any downstream Claude-Code-based project. Phase 2 copies these templates into the downstream project's \`.claude/docs/superpowers/research/\` (the conventional R8 cache location). Post-copy, the downstream project owns its cache independently; refreshing entries is a downstream-project concern.
+**Target text (current line 246)** — to pass as `old_string`:
 
-**Source resolution (v1.4.2)**: identical discipline to Phase 1 Step 1.3. \`<skill_dir>/research-templates/\` is the single authoritative source. No fallback to \`<plugin-root>/.claude/docs/superpowers/research/\`. If the templates directory is missing, halt with a single-path error message:
+~~~
+The Genesis plugin ships its own R8 cache at `<plugin-root>/.claude/docs/superpowers/research/` — where `<plugin-root>` is derived via the same "three levels up from `skills/genesis-protocol/SKILL.md`" rule used at Phase 1 Step 1.3. This cache contains entries that are also relevant to any downstream project, specifically the ones about Claude Code itself (plugin structure, session JSONL format, in-IDE tools, cross-OS ecosystem). Phase 2 **copies** these entries — not by-reference, because they are project-level references the downstream project needs to read offline.
+~~~
 
-\`\`\`
+**Replacement** — to pass as `new_string`:
+
+~~~
+The Genesis plugin ships R8 cache **templates** inside this skill at `<skill_dir>/research-templates/` — the canonical five entries listed in the "Entries to copy" table below (3 sota + 2 stack) relevant to any downstream Claude-Code-based project. Phase 2 copies these templates into the downstream project's `.claude/docs/superpowers/research/` (the conventional R8 cache location). Post-copy, the downstream project owns its cache independently; refreshing entries is a downstream-project concern.
+
+**Source resolution (v1.4.2)**: identical discipline to Phase 1 Step 1.3. `<skill_dir>/research-templates/` is the single authoritative source. No fallback to `<plugin-root>/.claude/docs/superpowers/research/`. If the templates directory is missing, halt with a single-path error message:
+
+```
 R8 cache templates not found at: <resolved_path>
 This indicates a corrupted or incomplete skill install. Reinstall the
 genesis-protocol skill and re-run Phase 2.
-\`\`\``
+```
+~~~
 
-- [ ] **Step 7.3: Patch 5-row table Source column**
+- [ ] **Step 7.3: Patch 5-row table Source column — 5 surgical Edit calls**
 
-Current lines 254-258 Source column entries (row-by-row):
-- `sota/claude-code-plugin-distribution_*.md` → `<skill_dir>/research-templates/sota/claude-code-plugin-distribution.md`
-- `stack/claude-code-plugin-structure_*.md` → `<skill_dir>/research-templates/stack/claude-code-plugin-structure.md`
-- `stack/claude-code-session-jsonl-format_*.md` → `<skill_dir>/research-templates/stack/claude-code-session-jsonl-format.md`
-- `sota/claude-ecosystem-cross-os_*.md` → `<skill_dir>/research-templates/sota/claude-ecosystem-cross-os.md`
-- `sota/spdx-headers_*.md` → `<skill_dir>/research-templates/sota/spdx-headers.md`
+Each row is edited separately with a verbatim before-text. The `old_string` per Edit call MUST include the full row (from leading `|` to trailing `|`) to guarantee unique match — not just the Source fragment. Destination + "Why copy not link" columns preserved verbatim in each new_string.
 
-**Destination** column unchanged. **Why copy not link** column unchanged. **Row membership** unchanged.
+- [ ] **Step 7.3.1: Row 1 — claude-code-plugin-distribution**
 
-Use 5 Edit tool calls, one per row (each uniquely identifies its row by the Source column token).
+Edit old_string:
+~~~
+| `sota/claude-code-plugin-distribution_*.md` | `sota/` in downstream | Every Genesis downstream may ship as a plugin — needs local reference |
+~~~
+
+Edit new_string:
+~~~
+| `<skill_dir>/research-templates/sota/claude-code-plugin-distribution.md` | `sota/` in downstream | Every Genesis downstream may ship as a plugin — needs local reference |
+~~~
+
+- [ ] **Step 7.3.2: Row 2 — claude-code-plugin-structure**
+
+Edit old_string:
+~~~
+| `stack/claude-code-plugin-structure_*.md` | `stack/` in downstream | Same reason — plugin structure is consumed at every session |
+~~~
+
+Edit new_string:
+~~~
+| `<skill_dir>/research-templates/stack/claude-code-plugin-structure.md` | `stack/` in downstream | Same reason — plugin structure is consumed at every session |
+~~~
+
+- [ ] **Step 7.3.3: Row 3 — claude-code-session-jsonl-format**
+
+Edit old_string:
+~~~
+| `stack/claude-code-session-jsonl-format_*.md` | `stack/` in downstream | Needed for `session-post-processor` to run on the downstream's sessions |
+~~~
+
+Edit new_string:
+~~~
+| `<skill_dir>/research-templates/stack/claude-code-session-jsonl-format.md` | `stack/` in downstream | Needed for `session-post-processor` to run on the downstream's sessions |
+~~~
+
+- [ ] **Step 7.3.4: Row 4 — claude-ecosystem-cross-os**
+
+Edit old_string:
+~~~
+| `sota/claude-ecosystem-cross-os_*.md` | `sota/` in downstream | Multidevice refs used by Phase -1 and Phase 7 across OS |
+~~~
+
+Edit new_string:
+~~~
+| `<skill_dir>/research-templates/sota/claude-ecosystem-cross-os.md` | `sota/` in downstream | Multidevice refs used by Phase -1 and Phase 7 across OS |
+~~~
+
+- [ ] **Step 7.3.5: Row 5 — spdx-headers**
+
+Edit old_string:
+~~~
+| `sota/spdx-headers_*.md` | `sota/` in downstream | SPDX rule is enforced in R10 — the reference must be local |
+~~~
+
+Edit new_string:
+~~~
+| `<skill_dir>/research-templates/sota/spdx-headers.md` | `sota/` in downstream | SPDX rule is enforced in R10 — the reference must be local |
+~~~
+
+**Row membership preserved identically** — 5 rows in the same order, only Source column cell text changes. Destination + rationale columns verbatim. Post-edits, verify via `grep -c "research-templates" skills/genesis-protocol/phase-1-rules-memory.md` → expect ≥ 5 (5 table rows + surrounding narrative).
 
 - [ ] **Step 7.4: Copy-and-rename discipline note appended after table**
 
@@ -468,7 +565,7 @@ Expected: `YAML OK`.
 
 Run: `grep -c "^  - check:" skills/genesis-protocol/install-manifest.yaml`
 
-Expected: previous 13 checks + 10 new = **23 checks total**.
+Expected: previous **17** checks + 10 new = **27 checks total**. (Pre-polish baseline: filesystem-grounded count via `grep -c` on the actual current file, not memory-assumed 13.)
 
 ---
 
@@ -563,7 +660,7 @@ Expected:
 
 Run: `python -c "import yaml; m = yaml.safe_load(open('skills/genesis-protocol/install-manifest.yaml')); print('version:', m['version'], 'checks:', len(m['verification']))"`
 
-Expected: `version: 1.4.2 checks: 23`.
+Expected: `version: 1.4.2 checks: 27`.
 
 - [ ] **Step 11.4: JSON validity of plugin.json**
 
