@@ -68,7 +68,16 @@ Copy the canonical R1-R10 rules template shipped inside this skill at `<skill_di
 - **Plugin-dir install** (`claude --plugin-dir <path>`) — `<plugin-dir>/skills/genesis-protocol/SKILL.md` → `<plugin-dir>/skills/genesis-protocol/rules/v1_rules.md`
 - **Personal-scope install** (`cp -r skills/ ~/.claude/skills/` per F18 workaround) — `~/.claude/skills/genesis-protocol/SKILL.md` → `~/.claude/skills/genesis-protocol/rules/v1_rules.md`
 
-**Fallback (legacy)**: if `<skill_dir>/rules/v1_rules.md` is not present — which can only happen if the skill was installed from a source earlier than v1.2.1 — look for the file at `<plugin-root>/.claude/docs/superpowers/rules/v1_rules.md` (three levels above this skill's `SKILL.md`). If neither path resolves, halt and surface BOTH expected paths in the error message. Do not silently skip the rules copy.
+**If the file is missing**: halt with a single-path error message:
+
+```
+Rules template not found at: <resolved_path>
+This indicates a corrupted or incomplete skill install. Reinstall the
+genesis-protocol skill (re-copy the full skills/genesis-protocol/
+directory from the Genesis plugin source) and re-run Phase 1.
+```
+
+Do not attempt alternate locations. Do not silently skip the rules copy. A halt with clear remediation is better than a silent gap in the downstream project's rule enforcement.
 
 **Why skill-local**: v1.2.0 self-dogfood reproduced F29 — the three-levels-up heuristic resolved to `~/.claude/` (which has no `.claude/docs/superpowers/rules/`) when Genesis was installed to personal scope. Making the skill self-contained (shipping `rules/v1_rules.md` inside the skill package) eliminates the install-mode coupling.
 
@@ -243,7 +252,15 @@ and apply to every project on this machine:
 
 ### Step 2.3 — Copy stack-relevant entries from the Genesis plugin's own cache
 
-The Genesis plugin ships its own R8 cache at `<plugin-root>/.claude/docs/superpowers/research/` — where `<plugin-root>` is derived via the same "three levels up from `skills/genesis-protocol/SKILL.md`" rule used at Phase 1 Step 1.3. This cache contains entries that are also relevant to any downstream project, specifically the ones about Claude Code itself (plugin structure, session JSONL format, in-IDE tools, cross-OS ecosystem). Phase 2 **copies** these entries — not by-reference, because they are project-level references the downstream project needs to read offline.
+The Genesis plugin ships R8 cache **templates** inside this skill at `<skill_dir>/research-templates/` — the canonical five entries listed in the "Entries to copy" table below (3 sota + 2 stack) relevant to any downstream Claude-Code-based project. Phase 2 copies these templates into the downstream project's `.claude/docs/superpowers/research/` (the conventional R8 cache location). Post-copy, the downstream project owns its cache independently; refreshing entries is a downstream-project concern.
+
+**Source resolution (v1.4.2)**: identical discipline to Phase 1 Step 1.3. `<skill_dir>/research-templates/` is the single authoritative source. No fallback to `<plugin-root>/.claude/docs/superpowers/research/`. If the templates directory is missing, halt with a single-path error message:
+
+```
+R8 cache templates not found at: <resolved_path>
+This indicates a corrupted or incomplete skill install. Reinstall the
+genesis-protocol skill and re-run Phase 2.
+```
 
 These entries apply to any Claude Code project, plugin or not — a non-plugin downstream still benefits from understanding plugin structure (the SKILL.md it already has inherited from Genesis uses plugin conventions), the JSONL session format (for `session-post-processor` to run), and the SPDX header rule (enforced by R10). No branching on `is-a-plugin` at this step.
 
@@ -251,13 +268,15 @@ Entries to copy (subject to availability and TTL):
 
 | Source | Destination | Why copy not link |
 |---|---|---|
-| `sota/claude-code-plugin-distribution_*.md` | `sota/` in downstream | Every Genesis downstream may ship as a plugin — needs local reference |
-| `stack/claude-code-plugin-structure_*.md` | `stack/` in downstream | Same reason — plugin structure is consumed at every session |
-| `stack/claude-code-session-jsonl-format_*.md` | `stack/` in downstream | Needed for `session-post-processor` to run on the downstream's sessions |
-| `sota/claude-ecosystem-cross-os_*.md` | `sota/` in downstream | Multidevice refs used by Phase -1 and Phase 7 across OS |
-| `sota/spdx-headers_*.md` | `sota/` in downstream | SPDX rule is enforced in R10 — the reference must be local |
+| `<skill_dir>/research-templates/sota/claude-code-plugin-distribution.md` | `sota/` in downstream | Every Genesis downstream may ship as a plugin — needs local reference |
+| `<skill_dir>/research-templates/stack/claude-code-plugin-structure.md` | `stack/` in downstream | Same reason — plugin structure is consumed at every session |
+| `<skill_dir>/research-templates/stack/claude-code-session-jsonl-format.md` | `stack/` in downstream | Needed for `session-post-processor` to run on the downstream's sessions |
+| `<skill_dir>/research-templates/sota/claude-ecosystem-cross-os.md` | `sota/` in downstream | Multidevice refs used by Phase -1 and Phase 7 across OS |
+| `<skill_dir>/research-templates/sota/spdx-headers.md` | `sota/` in downstream | SPDX rule is enforced in R10 — the reference must be local |
 
 Each copied entry has its `expires_at` frontmatter preserved — the downstream project inherits the original TTL. If the entry has already expired by the time Phase 2 runs, **archive** the source (via Genesis-side R8 maintenance) before copying, never copy a stale entry.
+
+**Copy-and-rename discipline (v1.4.2)**: the skill-local templates drop the `_YYYY-MM-DD` suffix (skill version pin = freshness anchor). When seeded into the downstream project's cache, the copy adds the seed date to the filename per downstream R8 convention (e.g. skill-local `sota/claude-code-plugin-distribution.md` → downstream `sota/claude-code-plugin-distribution_<seed-date>.md`). The destination frontmatter `created_at` is updated to the seed date; `expires_at` follows the normal R8 TTL from the seed date.
 
 ### Step 2.4 — Update `INDEX.md` with the copied entries
 
