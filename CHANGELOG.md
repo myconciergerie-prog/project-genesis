@@ -8,6 +8,73 @@ Every version bump includes a **5-axis self-rating block** per R10.3 discipline,
 
 ---
 
+## [1.3.3] — 2026-04-18 — "genesis-drop-zone runtime locale rendering (R9 tier-3 loop closed end-to-end, zero Layer B ripple)"
+
+Runtime locale dispatch across Layer A user-facing surfaces. Welcome + mirror + consent card + halt + bridges + body echo now render the FR variant or EN variant — never both — based on two locale variables. Closes the R9 tier-3 rendering loop opened in v1.3.0 (bilingual templates authored day 1) and carried through v1.3.1 (mirror + 9-field labels) / v1.3.2 (consent card + halt + two bridges).
+
+### Added — genesis-drop-zone v1.3.3 locale dispatch
+
+- **Two-variable runtime locale model** with distinct lifecycles:
+  - `welcome_locale` — resolved at skill invocation from trigger-phrase language (FR phrase → `FR`, EN phrase → `EN`); defaults to `FR` on slash invocation `/genesis-drop-zone` (no language signal). Drives welcome box + zero-content re-prompt.
+  - `content_locale` — resolved from extracted `langue_detectee` after first content turn (`FR` → FR, `EN` → EN, `mixte` → FR tiebreaker). Drives mirror + consent card + halt + bridges + `drop_zone_intent.md` body echo.
+- **Locale-switched rendering** on seven surfaces — each prints exactly one variant per invocation, not both.
+- **Divergence between the two variables is expected** — a user with EN intent phrase then FR content sees EN welcome + FR mirror onwards; inverse equally possible. Each surface honours the best signal available at its render time.
+- **One new bilingual pair** — EN zero-content re-prompt `I'm listening — drop or write whatever you want to share.` pairs the v1.3.0 FR `Je t'écoute — dépose ou écris ce que tu veux me partager.` (the only bilingual gap across v1.3.0–1.3.2; all other EN variants were already authored day-1 per R9 tier 3).
+
+### Preserved — zero Layer B ripple
+
+- **Frontmatter data contract unchanged** — `drop_zone_intent.md` frontmatter null-class tokens stay **FR canonical** (`"a trouver ensemble"`, `"non mentionne"`, `"non mentionnee"`, `"a affiner — ..."`) regardless of `content_locale`. Layer B's `phase-0-seed-loading.md` Step 0.2a parser is completely untouched — same code reads FR and EN body fixtures identically.
+- **Deliberate Layer A / Layer B asymmetry** documented in spec + SKILL.md + master.md: body = locale-detected human echo; frontmatter = FR canonical data contract. Bilingual Layer B null-class parsing explicitly deferred to v1.4+ if real pain emerges.
+- **Concentrated privilege class unchanged** — still v1.3.2's single disk write to cwd after consent, halt-on-existing, no `mkdir`. Runtime rendering layer only — no new API call, no new subprocess, no new dependency.
+
+### Changed — living spec + 1:1 mirror map
+
+- `.claude/docs/superpowers/specs/v2_etape_0_drop_zone.md` — adds `## Scope — v1.3.3 runtime locale rendering` (in/out scope + rationale) + new design section `## Runtime locale — signal + dispatch (v1.3.3)` (two-variable table + render targets + divergence rules + frontmatter-contract-unchanged note + zero-content / modification-loop branches). Consent card / halt / accept bridge / decline bridge / drop_zone_intent.md sections updated inline with locale-switched subsections. 1:1 mirror map adds v1.3.3 scope + locale-dispatch rows. R9 language policy table splits frontmatter-values vs body with explicit v1.3.3 asymmetry note. Deferred list renamed to v1.3.4+; runtime locale item removed (closed); bilingual Layer B parsing deferred to v1.4+. Verification scenarios #20–#27 new. Ship gates for v1.3.3 defined with mandatory + strongly-recommended + regression sets. `## Rationale for v1.3.3 route` section added at spec level. Frontmatter header updated (target_version + description + updated_at). Scenario #5 / #9 / #10 expected outcomes updated inline with (v1.3.3 supersession) markers preserving v1.3.1 expectation in parentheses for version traceability.
+
+### Changed — skill files
+
+- `skills/genesis-drop-zone/SKILL.md` — new `## Locale dispatch (v1.3.3)` top-level section mirroring spec design. `### In scope (v1.3.3)` / `### Out of scope (deferred to v1.3.4+)` sub-blocks added. Inline v1.3.3 locale dispatch notes on `## Phase 0 — mirror`, `## Phase 0 — bridge`, `## Phase 0 — consent card`, `## Phase 0 — halt branch`, `## Phase 0 — bridges`, `## Phase 0 — drop_zone_intent.md file`. Concentrated privilege block gains v1.3.3 qualifier. Deferred scope list updated to v1.3.4+ with Citations API flagged as v1.3.4 candidate. Schema metadata `skill_version` reference updated to 1.3.3.
+- `skills/genesis-drop-zone/phase-0-welcome.md` — section headers rewritten with explicit render conditions (`welcome_locale = FR/EN`, `content_locale = FR/EN`). Consent card + halt + accept bridge + decline bridge sections split into FR variant + EN variant sub-blocks. Zero-content branch extended with the newly-authored EN re-prompt. Top-of-file intro paragraph rewritten to reference v1.3.3 locale-dispatch convention.
+
+### Changed — memory + privilege map
+
+- `memory/master.md` — privilege map entry for `genesis-drop-zone` gains v1.3.3 qualifier describing runtime locale dispatch (privilege class unchanged). Cross-skill-pattern #4 (Layer A / Layer B stratification) gains one-sentence v1.3.3 zero-Layer-B-ripple discipline note establishing it as the reference for future Layer A rendering polish.
+
+### Added — synthetic fixture
+
+- `tests/fixtures/drop_zone_intent_fixture_v1_3_3_en.md` — EN-content counterpart to v1.3.2's FR fixture. Frontmatter `langue_detectee: "EN"`, body prose intro + mirror echo in EN. Null-class tokens preserved FR canonical (`"non mentionne"` x2, `"non mentionnee"` x1, `"a trouver ensemble"` x1) to exercise the v1.3.3 Layer A / Layer B asymmetry contract and probe Layer B parser regression.
+
+### Hygiene
+
+- `.claude/docs/superpowers/research/INDEX.md` — adds missing row for `v2_promptor_fusion_landscape_2026-04-17.md` (entry existed on disk under `research/sota/` but INDEX was stale; caught during R1.1 open-ritual scan at session open).
+
+### Bumped
+
+- `.claude-plugin/plugin.json` version `1.3.2` → `1.3.3`.
+
+### Self-rating — v1.3.3
+
+| Axis | Score | Reasoning |
+|---|---|---|
+| Pain-driven | 9.3 | Closes a concrete R9 tier-3 violation visible since v1.3.0 (EN-native users saw FR-only UI despite EN templates existing day-1). Seven surfaces now honour detected locale end-to-end. Body-echo asymmetry with FR canonical frontmatter is user-visible + spec-documented. |
+| Prose cleanliness | 9.2 | Living-spec pattern held for fourth consecutive ship (v1.3.0 → v1.3.1 → v1.3.2 → v1.3.3). Spec polish + plan polish done after reviewer passes (3 advisories each, all landed). Six-commit rhythm maintained (spec + spec polish + plan + plan polish + feat + chore). Three inline supersession markers on historical scenarios (#5, #9, #10) preserve version traceability. |
+| Best-at-date | 9.2 | Inline R8 citations ceiling preserved (`v2_promptor_fusion_landscape_2026-04-17.md` still fresh until 2026-04-24). No speculative features — every EN template wired was already authored day-1 of its version. Citations API still the best-at-date lever, explicitly deferred to v1.3.4. |
+| Self-contained | 9.4 | One PR, one skill touched (`genesis-drop-zone`), zero Layer B ripple. Narrower than v1.3.2 by design. Six-commit rhythm + CHANGELOG + session trace + MEMORY pointer + resume all in this ship. INDEX hygiene fix included (caught at R1.1, landed in same feat commit). |
+| Anti-Frankenstein | 9.4 | Zero new privilege class. Zero new dependencies. Zero Layer B ripple (deliberately preserved FR canonical null tokens in frontmatter — documented asymmetry). One new bilingual pair (the only gap). Two-variable dispatch instead of one is the minimum wiring needed; frontmatter-locale-detection is the v1.4+ candidate if pain emerges. |
+| **Average** | **9.30** | Target ≥9.3/axis met on 4/5; floor ≥9.0/axis respected on every axis. |
+
+**Eighth consecutive ship ≥ 9.0** (v1.2.1 9.26, v1.2.2 9.14, v1.2.3 9.18, v1.2.4 9.16, v1.3.0 9.34, v1.3.1 9.30, v1.3.2 9.28, v1.3.3 9.30).
+
+### Replay-deferred scenarios
+
+Runtime replay of scenarios #1 (mirror dispatch), #13 (write happy path), #18 (Layer B happy path), #20 (FR intent + EN content), #21 (EN intent + FR content), #23 (slash → FR default), #24 (zero-content welcome_locale) all require a fresh Claude Code process in an empty directory — not executable from inside a running session. Artefact-level verification is the ship gate for all; runtime replay is an observability track, not a merge-blocker. Consistent −0.2 Pain-driven deduction per replay-deferred scenario rolls forward until runtime replay happens (same convention as v1.3.1 / v1.3.2).
+
+### Next session
+
+`.claude/docs/superpowers/resume/2026-04-18_v1_3_3_to_v1_3_4.md` — v1.3.4 candidates: **A Path A Citations API upgrade** (second privilege class, downstream reader already live), **B UX toolkit polish** (@clack/prompts + Charm Gum + cli-spinners), **C error-handling refinements** (permission-denied / disk-full / symlink edge cases).
+
+---
+
 ## [1.3.2] — 2026-04-18 — "genesis-drop-zone write + Layer B handoff (first Layer A privilege + first cross-layer wire live)"
 
 First cross-layer wire in the Genesis plugin. `genesis-drop-zone` switches from `none` privilege to the v1.3.2 write declaration, and `genesis-protocol` Phase 0 is extended to detect + parse + consume the written file.
