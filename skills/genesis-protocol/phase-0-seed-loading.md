@@ -71,6 +71,26 @@ The following 4 fields are not consumed by Phase 0 mapping but are **preserved**
 - `budget_ou_contrainte` — budget / deadline / constraint mention.
 - `prive_ou_public` — private / public / team visibility.
 
+#### Citation preservation (v1.4.1)
+
+**Added in v1.4.1.** `drop_zone_intent.md` frontmatter may carry optional `<field>_source_citation` nested dicts (written by `genesis-drop-zone` v1.4.0+ on the Citations API extraction path). Step 0.2a reads and **preserves** these keys alongside the 9 semantic + 4 metadata keys — the dict-based YAML parser already reads the entire frontmatter; no new parser branching is introduced.
+
+The 9 citation keys that may be preserved (one per semantic field):
+
+- `idea_summary_source_citation`
+- `nom_source_citation`
+- `type_source_citation`
+- `hints_techniques_source_citation`
+- `attaches_source_citation`
+- `pour_qui_source_citation`
+- `langue_detectee_source_citation`
+- `budget_ou_contrainte_source_citation`
+- `prive_ou_public_source_citation`
+
+Each preserved citation dict has five keys per the v1.4.0 contract: `type` (one of `pdf_page_range`, `text_char_range`), `document_index` (int), `start` (int), `end` (int), `cited_text_preview` (str ≤ 80 chars). Key omission (not explicit `null`) signals absence — a field without citation has no corresponding `_source_citation` key in the frontmatter. Step 0.4 + Step 0.5 render logic inspects each citation key independently per row; the `_source_citation` preservation is read-only passthrough to those render surfaces.
+
+Parser mechanics are **unchanged** — this is a documentation-only note naming which keys are carried forward. Zero Layer A ripple: `genesis-drop-zone` is byte-identical across the v1.4.0 → v1.4.1 boundary.
+
 #### Null-class handling
 
 Null-class strings (`a trouver ensemble`, `non mentionne`, `non mentionnee`, `a affiner — X ou Y`) are preserved verbatim. They signal "user hasn't said yet", not a valid value. Step 0.4 card will prompt for any null-class field that is mandatory downstream (name, vision).
@@ -116,21 +136,21 @@ Render a structured card showing everything Phase 0 parsed. Use the following te
 📋 Parsed intent — Phase 0
 
 Target folder          : <absolute path>
-Project name           : <value or [missing]> (<origin>)
-Project slug           : <derived or [pending name]>
-Vision                 : <value or [missing]> (<origin>)
-Stack hints            : <value or [none]> (<origin>)
+Project name           : <value or [missing]> (<origin>)<citation>
+Project slug           : <derived or [pending name]><citation>
+Vision                 : <value or [missing]> (<origin>)<citation>
+Stack hints            : <value or [none]> (<origin>)<citation>
 License                : <value or MIT (default)>
-Is-a-plugin            : <yes | no | [missing]> (<origin>)
+Is-a-plugin            : <yes | no | [missing]> (<origin>)<citation>
 Plan tier              : <Max | Pro | Team | Free | [missing]>
 Scope locks            : <list or [none]>
 Mixed media            : <file list or [none]>
 
 Additional context from drop zone:
-  Target audience      : <pour_qui value>
-  Language detected    : <FR | EN | mixte>
-  Budget / constraint  : <value or non mentionne>
-  Visibility           : <value or non mentionnee>
+  Target audience      : <pour_qui value><citation>
+  Language detected    : <FR | EN | mixte><citation>
+  Budget / constraint  : <value or non mentionne><citation>
+  Visibility           : <value or non mentionnee><citation>
 
 Gaps to fill before Phase 1:
   - <gap 1>
@@ -141,6 +161,45 @@ Proceed with these values?  (yes / edit / abort)
 ```
 
 The `Additional context from drop zone` block renders **only when `drop_zone_intent.md` was the Phase 0 seed source** (v1.3.2+). For legacy `config.txt` bootstraps the block is omitted entirely (no blank section). Origin tags on each field: `(from drop zone)`, `(from config.txt)`, `(derived)`, `(default)`, `(inferred)`.
+
+#### Citation suffix on card rows (v1.4.1)
+
+**Added in v1.4.1.** The `<citation>` placeholder renders an inline `[page N]` / `[pages N-M]` / `[lines X-Y]` suffix when the row's Layer A source field carries a `<source>_source_citation` key in the `drop_zone_intent.md` frontmatter. When no citation is available for the row, `<citation>` expands to the empty string (no leading space, no placeholder text, no `[unknown]`).
+
+Citation-source mapping per row (9 citation-eligible rows — 5 mapped + 4 extras):
+
+| Card row | Citation source key | Propagation |
+|---|---|---|
+| Project name | `nom_source_citation` | Direct |
+| Project slug | `nom_source_citation` | Propagated — slug is derived from `nom` |
+| Vision | `idea_summary_source_citation` | Direct |
+| Stack hints | `hints_techniques_source_citation` | Direct |
+| Is-a-plugin | `type_source_citation` | Propagated — inferred from `type` |
+| Target audience | `pour_qui_source_citation` | Direct |
+| Language detected | `langue_detectee_source_citation` | Direct |
+| Budget / constraint | `budget_ou_contrainte_source_citation` | Direct |
+| Visibility | `prive_ou_public_source_citation` | Direct |
+
+Propagated citations honour the principle that a deterministically-derived value (slug from `nom`, Is-a-plugin inferred from `type`) shares provenance with its source field. When the source citation is absent, both the source-derived row and the direct row render without suffix.
+
+**Citation suffix format** reuses verbatim `skills/genesis-drop-zone/phase-0-welcome.md § "Citation annotation format (v1.4.0)"` as the single source of truth across both layers:
+
+- `pdf_page_range` with `start == end` → ` [page N]` (N is 1-indexed page)
+- `pdf_page_range` with `start != end` → ` [pages N-M]`
+- `text_char_range` → ` [lines X-Y]` (1-indexed, inclusive; line-count via `\n` counting on source text)
+
+Language-neutral ASCII. Identical rendering across FR / EN / mixte locales.
+
+#### Rows explicitly NOT annotated
+
+Six rows on the card carry no Layer A source, and therefore receive no citation suffix even when the seed source was `drop_zone_intent.md`:
+
+- `Target folder` — computed from `Bash pwd`; no Layer A source.
+- `License` — defaults to MIT or sourced from `config.txt`; no Layer A source.
+- `Plan tier` — prompted at Step 0.4 or sourced from `config.txt`; no Layer A source.
+- `Scope locks` — sourced from `config.txt`; no Layer A source.
+- `Gaps to fill` — synthesized by Phase 0 logic; no single-source attribution.
+- `Mixed media` — sourced from Step 0.3 disk `Glob`, **not** from Layer A's `attaches` frontmatter field. The two sources can legitimately diverge (Victor drops "logo.png" but the actual file on disk is `brand_logo.png`). Rendering `attaches_source_citation` on this row would cite the wrong provenance — claiming the row's value came from the user's drop-zone description when it actually came from disk. Honest stance: `attaches_source_citation` is **preserved by Step 0.2a** (dict parse reads everything) but **not rendered** on this row. Cross-check any rendered card: a grep for `[page N]` on the Mixed media line must return zero matches regardless of whether `attaches_source_citation` exists in the frontmatter.
 
 The user responds with:
 
@@ -175,13 +234,13 @@ phase: 0
 
 | Field | Value | Source |
 |---|---|---|
-| Project name | <value> | config.txt / user edit |
-| Slug | <value> | config.txt / derived |
-| Vision | <one-paragraph> | config.txt |
+| Project name | <value><citation> | config.txt / drop_zone_intent.md / user edit |
+| Slug | <value><citation> | config.txt / derived |
+| Vision | <one-paragraph><citation> | config.txt / drop_zone_intent.md |
 | License | <value> | config.txt / default |
-| Is-a-plugin | <yes|no> | config.txt / user edit |
+| Is-a-plugin | <yes|no><citation> | config.txt / drop_zone_intent.md / user edit |
 | Plan tier | <value> | config.txt / user edit |
-| Stack hints | <list> | config.txt |
+| Stack hints | <list><citation> | config.txt / drop_zone_intent.md |
 | Scope locks | <list> | config.txt / user edit |
 | Mixed media | <file list> | folder scan |
 
@@ -195,10 +254,10 @@ phase: 0
 
 | Field | Value |
 |---|---|
-| Target audience (pour qui) | <value or "a trouver ensemble"> |
-| Language detected | <FR / EN / mixte> |
-| Budget or constraint | <value or "non mentionne"> |
-| Visibility (private / public) | <value or "non mentionnee"> |
+| Target audience (pour qui) | <value or "a trouver ensemble"><citation> |
+| Language detected | <FR / EN / mixte><citation> |
+| Budget or constraint | <value or "non mentionne"><citation> |
+| Visibility (private / public) | <value or "non mentionnee"><citation> |
 
 Source: `drop_zone_intent.md` written by `genesis-drop-zone` v<version> at <ISO timestamp>.
 
@@ -208,6 +267,8 @@ Source: `drop_zone_intent.md` written by `genesis-drop-zone` v<version> at <ISO 
 ```
 
 When the seed source was `drop_zone_intent.md`, the `## Raw config.txt` section is retained in the template but rendered as `n/a — seeded from drop_zone_intent.md`. This preserves the file's section structure across both seed paths and makes the seed source explicit to any future reader.
+
+**Citation suffix inside `Value` columns (v1.4.1)**: the `<citation>` placeholder in the `## Fields` and `## Conversational context from drop zone` tables renders the same inline `[page N]` / `[pages N-M]` / `[lines X-Y]` suffix as Step 0.4's card (citation-source mapping + annotation format documented in § "Step 0.4 / Citation suffix on card rows (v1.4.1)" above). When the seed source was `config.txt` (legacy bootstrap, no `drop_zone_intent.md`), no citation suffixes render — the `## Fields` table matches v1.3.2 layout verbatim, and the `## Conversational context from drop zone` section is omitted entirely (no Layer A seed → no section). The `Mixed media` row is deliberately unadorned even when `attaches_source_citation` is preserved, per the honest-provenance rule in § "Rows explicitly NOT annotated".
 
 After the file is written, Phase 0 is complete. Control returns to the orchestrator which advances to Phase 1.
 
