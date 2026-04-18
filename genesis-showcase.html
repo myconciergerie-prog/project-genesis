@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<!-- SPDX-License-Identifier: MIT -->
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Project Genesis — 15 façons de bien commencer</title>
+<meta name="description" content="Genesis transforme une idée en projet bien structuré en une conversation. 15 cas d'usages : pro, perso, et avec vos enfants.">
+<meta property="og:title" content="Project Genesis — 15 façons de bien commencer">
+<meta property="og:description" content="Un plugin Claude Code qui bootstrape vos projets avec discipline — règles, mémoire, recherche, journal, versioning.">
+<meta property="og:type" content="website">
+<style>
+:root {
+  --ink: #1d2233;
+  --ink-soft: #3a3f55;
+  --warm: #d97757;
+  --sage: #7ca98a;
+  --cream: #f0c987;
+  --bg: #f7f3ea;
+  --card: #ffffff;
+  --line: #e8e2d3;
+  --muted: #6b7280;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, "Helvetica Neue", Arial, sans-serif;
+  color: var(--ink);
+  background: var(--bg);
+  line-height: 1.65;
+  font-size: 16px;
+}
+a { color: var(--warm); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* HEADER */
+header.hero {
+  background: var(--ink);
+  color: var(--bg);
+  padding: 4rem 1.5rem 3.5rem;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+header.hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle at 20% 30%, rgba(217,119,87,0.12) 0, transparent 40%),
+                    radial-gradient(circle at 80% 70%, rgba(124,169,138,0.10) 0, transparent 35%);
+  pointer-events: none;
+}
+header.hero > * { position: relative; z-index: 1; }
+header.hero .badge {
+  display: inline-block;
+  font-family: "SF Mono", "Menlo", Consolas, monospace;
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--cream);
+  border: 1px solid rgba(240,201,135,0.3);
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  margin-bottom: 1.25rem;
+}
+header.hero h1 {
+  font-family: "SF Mono", "Menlo", Consolas, monospace;
+  font-size: clamp(2.2rem, 5vw, 3.4rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-bottom: 0.75rem;
+}
+header.hero h1 .accent { color: var(--warm); }
+header.hero .tagline {
+  font-size: clamp(1rem, 2vw, 1.2rem);
+  max-width: 620px;
+  margin: 0 auto 0.4rem;
+  color: var(--bg);
+}
+header.hero .tagline-en {
+  font-size: clamp(0.85rem, 1.8vw, 0.98rem);
+  max-width: 620px;
+  margin: 0 auto;
+  color: var(--cream);
+  opacity: 0.75;
+  font-style: italic;
+}
+header.hero .cta {
+  margin-top: 2rem;
+  display: inline-flex;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+header.hero .cta a {
+  display: inline-block;
+  padding: 0.7rem 1.3rem;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 0.95rem;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+header.hero .cta a.primary {
+  background: var(--warm);
+  color: var(--ink);
+}
+header.hero .cta a.primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(217,119,87,0.3);
+  text-decoration: none;
+}
+header.hero .cta a.secondary {
+  border: 1px solid rgba(247,243,234,0.3);
+  color: var(--bg);
+}
+header.hero .cta a.secondary:hover {
+  border-color: var(--cream);
+  text-decoration: none;
+}
+
+/* MAIN */
+main {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 3rem 1.5rem 2rem;
+}
+
+/* INTRO */
+section.intro {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 2rem 2.25rem;
+  margin-bottom: 3rem;
+  box-shadow: 0 2px 16px rgba(29,34,51,0.04);
+}
+section.intro .lead {
+  font-size: 1.15rem;
+  color: var(--ink);
+  margin-bottom: 0.9rem;
+}
+section.intro .lead strong { color: var(--warm); }
+section.intro p { margin-bottom: 0.6rem; color: var(--ink-soft); }
+section.intro p.en { font-size: 0.92rem; color: var(--muted); font-style: italic; margin-top: 0.8rem; }
+
+/* PILLARS */
+.pillars {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+.pillar {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+}
+.pillar-dot {
+  flex-shrink: 0;
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--sage);
+  margin-top: 0.5rem;
+}
+.pillar strong { color: var(--ink); display: block; font-size: 0.95rem; }
+
+/* SECTIONS */
+section.uses { margin-bottom: 3.5rem; }
+section.uses .section-head {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid var(--line);
+}
+section.uses h2 {
+  font-family: "SF Mono", "Menlo", Consolas, monospace;
+  font-size: clamp(1.4rem, 3vw, 1.8rem);
+  color: var(--ink);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+section.uses h2 .emoji { margin-right: 0.5rem; }
+section.uses h2 .count {
+  color: var(--warm);
+  font-weight: 500;
+  font-size: 0.9rem;
+  margin-left: 0.5rem;
+}
+section.uses .en-heading {
+  color: var(--muted);
+  font-size: 0.95rem;
+  font-style: italic;
+}
+section.uses .section-intro {
+  margin-bottom: 1.8rem;
+  color: var(--ink-soft);
+  font-size: 1rem;
+  max-width: 720px;
+}
+
+/* CARDS */
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+  gap: 1.3rem;
+}
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 1.6rem 1.5rem 1.4rem;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+.card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 28px rgba(29,34,51,0.08);
+  border-color: var(--warm);
+}
+.card .icon-wrap {
+  width: 52px; height: 52px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(217,119,87,0.12), rgba(240,201,135,0.18));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.1rem;
+}
+.card .icon-wrap svg {
+  width: 28px; height: 28px;
+  stroke: var(--warm);
+  stroke-width: 1.6;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.card h3 {
+  font-size: 1.08rem;
+  line-height: 1.35;
+  margin-bottom: 0.2rem;
+  color: var(--ink);
+}
+.card .subtitle-en {
+  font-size: 0.82rem;
+  color: var(--warm);
+  font-style: italic;
+  margin-bottom: 0.85rem;
+  font-weight: 500;
+}
+.card p.desc {
+  font-size: 0.93rem;
+  color: var(--ink-soft);
+  margin-bottom: 0.6rem;
+}
+.card p.desc-en {
+  font-size: 0.82rem;
+  color: var(--muted);
+  font-style: italic;
+  margin-top: auto;
+  padding-top: 0.4rem;
+  border-top: 1px dashed var(--line);
+}
+
+/* section-specific accent — kids section softer */
+section.uses#enfants .card .icon-wrap {
+  background: linear-gradient(135deg, rgba(124,169,138,0.15), rgba(240,201,135,0.2));
+}
+section.uses#enfants .card .icon-wrap svg { stroke: var(--sage); }
+section.uses#enfants .card .subtitle-en { color: var(--sage); }
+
+section.uses#perso .card .icon-wrap {
+  background: linear-gradient(135deg, rgba(240,201,135,0.18), rgba(217,119,87,0.1));
+}
+
+/* FOOTER */
+footer {
+  background: var(--ink);
+  color: var(--bg);
+  padding: 3rem 1.5rem 2.5rem;
+  text-align: center;
+  margin-top: 2rem;
+}
+footer .logo {
+  font-family: "SF Mono", "Menlo", Consolas, monospace;
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: var(--cream);
+}
+footer .links {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.5rem;
+  font-size: 0.92rem;
+}
+footer .license {
+  font-size: 0.8rem;
+  color: var(--cream);
+  opacity: 0.55;
+  margin-bottom: 1.5rem;
+}
+footer .sponsor {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(247,243,234,0.1);
+  font-size: 0.85rem;
+  color: var(--cream);
+  opacity: 0.8;
+}
+footer .sponsor a {
+  color: var(--cream);
+  font-weight: 500;
+}
+
+/* INSTALL BLOCK */
+.install {
+  background: #0e1220;
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+  margin: 2rem auto 0;
+  max-width: 620px;
+  text-align: left;
+  font-family: "SF Mono", "Menlo", Consolas, monospace;
+  font-size: 0.88rem;
+  color: var(--cream);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.3);
+}
+.install .prompt { color: var(--sage); margin-right: 0.4rem; }
+.install .cmd { color: var(--bg); }
+.install .comment { color: var(--muted); display: block; margin-top: 0.4rem; font-size: 0.78rem; }
+
+/* RESPONSIVE */
+@media (max-width: 600px) {
+  header.hero { padding: 3rem 1.25rem 2.5rem; }
+  main { padding: 2rem 1rem 1.5rem; }
+  section.intro { padding: 1.5rem 1.3rem; }
+  .cards { grid-template-columns: 1fr; }
+  .card { padding: 1.4rem 1.3rem 1.2rem; }
+}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <span class="badge">Claude Code · Plugin · MIT</span>
+  <h1>Project <span class="accent">Genesis</span></h1>
+  <p class="tagline">Transformez une idée en projet bien structuré — en une conversation.</p>
+  <p class="tagline-en">Turn an idea into a well-structured project — in one conversation.</p>
+  <div class="cta">
+    <a class="primary" href="#pro">Voir les 15 cas d'usages ↓</a>
+    <a class="secondary" href="https://github.com/myconciergerie-prog/project-genesis">GitHub ↗</a>
+  </div>
+</header>
+
+<main>
+
+<section class="intro">
+  <p class="lead"><strong>Genesis</strong> est un plugin pour <strong>Claude Code</strong> qui bootstrape vos projets avec discipline dès la première minute : règles, mémoire, cache de recherche, journal, versioning propre, resume prompts — en français comme en anglais.</p>
+  <p>Vous parlez, Claude structure. Chaque projet démarre avec les mêmes bases saines, se reprend la semaine suivante sans rien chercher, et garde une trace claire de chaque décision.</p>
+  <p class="en">You talk, Claude structures. Every project starts with the same healthy foundations, resumes the following week without hunting around, and keeps a clear trace of every decision.</p>
+
+  <div class="pillars">
+    <div class="pillar"><span class="pillar-dot"></span><span><strong>Mémoire</strong>Sept types — projet, journal, pépites, référence…</span></div>
+    <div class="pillar"><span class="pillar-dot"></span><span><strong>Discipline</strong>Règles R1–R10, anti-Frankenstein, worktrees</span></div>
+    <div class="pillar"><span class="pillar-dot"></span><span><strong>Reprise</strong>Resume prompt à chaque fin de session</span></div>
+    <div class="pillar"><span class="pillar-dot"></span><span><strong>Bilingue</strong>FR + EN coauthored dès le jour 1</span></div>
+  </div>
+</section>
+
+<!-- ========== PRO ========== -->
+<section class="uses" id="pro">
+  <div class="section-head">
+    <h2><span class="emoji">☕</span>Au travail<span class="count">· 5 cas</span></h2>
+    <span class="en-heading">/ At work</span>
+  </div>
+  <p class="section-intro">Cinq situations professionnelles où Genesis fait gagner des heures dès le jour 1 — et laisse une trace auditable pour la suite.</p>
+
+  <div class="cards">
+
+    <!-- 1. MVP startup -->
+    <article class="card">
+      <div class="icon-wrap">
+        <svg viewBox="0 0 24 24"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg>
+      </div>
+      <h3>Démarrer un MVP startup en 10 minutes</h3>
+      <p class="subtitle-en">Launch a startup MVP in 10 minutes</p>
+      <p class="desc">Vous déposez le brief, Genesis crée le repo, la doc, les règles, la structure mémoire. Phase 1 dev prête à enchaîner.</p>
+      <p class="desc-en">Drop the brief; Genesis creates repo, docs, rules, memory. Phase 1 ready to go.</p>
+    </article>
+
+    <!-- 2. Team onboarding -->
+    <article class="card">
+      <div class="icon-wrap">
+        <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      </div>
+      <h3>Standardiser l'onboarding projet d'une équipe</h3>
+      <p class="subtitle-en">Standardize your team's project onboarding</p>
+      <p class="desc">Chaque dev bootstrap avec Genesis = même structure, mêmes règles, même mémoire. Fini les « chacun fait à sa sauce ».</p>
+      <p class="desc-en">Every dev bootstraps via Genesis = same structure, same rules. No more snowflake projects.</p>
+    </article>
+
+    <!-- 3. Client engagement -->
+    <article class="card">
+      <div class="icon-wrap">
+        <svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/><line x1="2" y1="13" x2="22" y2="13"/></svg>
+      </div>
+      <h3>Ouvrir un dossier client (consulting, cabinet, agence)</h3>
+      <p class="subtitle-en">Open a client engagement</p>
+      <p class="desc">Journal des décisions, mémoire des échanges, cache des recherches, règles de confidentialité. Le dossier reste auditable en tout temps.</p>
+      <p class="desc-en">Decision journal, conversation memory, research cache, confidentiality rules — fully auditable.</p>
+    </article>
+
+    <!-- 4. R&D program -->
+    <article class="card">
+      <div class="icon-wrap">
+        <svg viewBox="0 0 24 24"><path d="M9 2v6l-4 6a4 4 0 0 0 0 4l6 4"/><path d="M15 2v6l4 6a4 4 0 0 1 0 4l-6 4"/><line x1="9" y1="2" x2="15" y2="2"/><line x1="7" y1="14" x2="17" y2="14"/></svg>
+      </div>
+      <h3>Lancer un programme de R&D structuré</h3>
+      <p class="subtitle-en">Launch a structured R&amp;D program</p>
+      <p class="desc">Cache R8 avec TTL pour les sources, journal stratifié pour les pistes, flagging « pépite » pour les découvertes. La discipline scientifique en package.</p>
+      <p class="desc-en">R8 cache with TTL, stratified journal, pépite flagging for findings. Scientific rigor packaged.</p>
+    </article>
+
+    <!-- 5. Multi-LLM product -->
+    <article class="card">
+      <div class="icon-wrap">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="2.5"/><circle cx="5" cy="19" r="2.5"/><circle cx="19" cy="19" r="2.5"/><line x1="12" y1="7.5" x2="6.5" y2="17"/><line x1="12" y1="7.5" x2="17.5" y2="17"/><line x1="7.5" y1="19" x2="16.5" y2="19"/></svg>
+      </div>
+      <h3>Construire un produit multi-LLM</h3>
+      <p class="subtitle-en">Build a multi-LLM product</p>
+      <p class="desc">BYO-AI dès le départ (Claude + GPT + Gemini), auth pré-flight pour les API, mémoire partagée entre modèles. Les pièges d'intégration évités d'avance.</p>
+      <p class="desc-en">BYO-AI from day one, pre-flight auth, shared memory across models. Integration pitfalls avoided.</p>
+    </article>
+
+  </div>
+</section>
+
+<!-- ========== PERSO ========== -->
+<section class="uses" id="perso">
+  <div class="section-head">
+    <h2><span class="emoji">🌿</span>Dans la vie perso<span class="count">· 5 cas</span></h2>
+    <span class="en-heading">/ In personal life</span>
+  </div>
+  <p class="section-intro">Cinq projets personnels où la mémoire, le journal et les resume prompts changent tout — même quand on ne bosse que 20 minutes le dimanche soir.</p>
+
+  <div class="cards">
+
+    <!-- 1. Write a book -->
+    <article class="card">
+      <div class="icon-wrap">
+        <svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><line x1="9" y1="7" x2="15" y2="7"/><line x1="9" y1="11" x2="15" y2="11"/></svg>
+      </div>
+      <h3>Écrire un livre, une thèse, une newsletter</h3>
+      <p class="subtitle-en">Write a book, thesis, or newsletter</p>
+      <p class="desc">Mémoire des chapitres, journal des idées folles, resume prompts pour reprendre exactement où vous étiez la veille. Votre carnet d'écrivain, mais intelligent.</p>
+      <p class="desc-en">Chapter memory, idea journal, resume prompts. Your writer's notebook, but smart.</p>
+    </article>
+
+    <!-- 2. Major life event -->
+    <article class="card">
+      <div class="icon-wrap">
+        <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><circle cx="12" cy="16" r="1.5" fill="currentColor"/></svg>
+      </div>
+      <h3>Planifier un mariage, un déménagement, une construction</h3>
+      <p class="subtitle-en">Plan a wedding, move, or house build</p>
+      <p class="desc">Chaque étape en phase, chaque décision en journal, chaque contact en mémoire. « Le numéro du traiteur » — retrouvé en 3 secondes.</p>
+      <p class="desc-en">Each step as a phase, each decision journaled, each contact in memory. Findable instantly.</p>
+    </article>
+
+    <!-- 3. Learn a skill -->
+    <article class="card">
+      <div class="icon-wrap">
+        <svg viewBox="0 0 24 24"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+      </div>
+      <h3>Apprendre une langue, un instrument, un sport</h3>
+      <p class="subtitle-en">Learn a language, instrument, or sport</p>
+      <p class="desc">Cache des ressources fraîches (TTL 7 jours), journal de progression, mémoire des leçons. Le carnet d'apprentissage qui ne se perd jamais.</p>
+      <p class="desc-en">Fresh-resource cache, progress journal, lesson memory. The notebook that never gets lost.</p>
+    </article>
+
+    <!-- 4. Side project -->
+    <article class="card">
+      <div class="icon-wrap">
+        <svg viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+      </div>
+      <h3>Faire vivre un side project open source</h3>
+      <p class="subtitle-en">Keep a side-project alive</p>
+      <p class="desc">GitHub créé, SPDX en place, règles R1–R10 adaptées, resume prompts. Même 20 minutes le dimanche soir suffisent pour reprendre le fil.</p>
+      <p class="desc-en">GitHub ready, SPDX in place, resume prompts. Twenty Sunday-night minutes is enough.</p>
+    </article>
+
+    <!-- 5. Long-term personal -->
+    <article class="card">
+      <div class="icon-wrap">
+        <svg viewBox="0 0 24 24"><polyline points="3 17 9 11 13 15 21 7"/><polyline points="14 7 21 7 21 14"/></svg>
+      </div>
+      <h3>Suivre un projet de vie long-terme (santé, finances, potager)</h3>
+      <p class="subtitle-en">Track a long-term personal project</p>
+      <p class="desc">Journal stratifié + mémoire + cache de recherches. Plus jamais de « qu'est-ce que le médecin avait dit en mars ? » — la réponse est là, à la seconde.</p>
+      <p class="desc-en">Stratified journal, memory, research cache. No more "what did the doc say in March?".</p>
+    </article>
+
+  </div>
+</section>
+
+<!-- ========== ENFANTS ========== -->
+<section class="uses" id="enfants">
+  <div class="section-head">
+    <h2><span class="emoji">🎨</span>Avec vos enfants<span class="count">· 5 cas</span></h2>
+    <span class="en-heading">/ With your kids</span>
+  </div>
+  <p class="section-intro">Cinq projets père/mère/enfant où l'enfant découvre sans jargon la mémoire structurée, le versioning, et la discipline projet — en construisant quelque chose qu'il aime vraiment.</p>
+
+  <div class="cards">
+
+    <!-- 1. Collection notebook -->
+    <article class="card">
+      <div class="icon-wrap">
+        <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+      </div>
+      <h3>Un carnet de collection (cartes, insectes, cailloux, livres)</h3>
+      <p class="subtitle-en">A collection notebook</p>
+      <p class="desc">Votre enfant catalogue sa collection. Chaque entrée a sa fiche, sa photo, sa date. Genesis enseigne la mémoire structurée par l'exemple — sans jargon.</p>
+      <p class="desc-en">Your child catalogues their collection, one fiche at a time. Structured memory, no jargon.</p>
+    </article>
+
+    <!-- 2. Travel journal -->
+    <article class="card">
+      <div class="icon-wrap">
+        <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M12 11v.01M9 11v.01M15 11v.01"/></svg>
+      </div>
+      <h3>Un journal de voyage ou d'année scolaire</h3>
+      <p class="subtitle-en">A travel or school-year journal</p>
+      <p class="desc">Photos, dessins, anecdotes, souvenirs. Le journal devient un trésor retrouvable en 2050, pas juste des photos perdues dans un dossier.</p>
+      <p class="desc-en">Photos, drawings, memories. A treasure findable in 2050 — not lost pics in a folder.</p>
+    </article>
+
+    <!-- 3. Lego / Minecraft project -->
+    <article class="card">
+      <div class="icon-wrap">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      </div>
+      <h3>Documenter un projet Lego, Minecraft ou Scratch</h3>
+      <p class="subtitle-en">Document a Lego, Minecraft, or Scratch build</p>
+      <p class="desc">Chaque étape = un « commit », chaque version = un « tag ». L'enfant découvre le versioning en construisant son château préféré. Concept technique, démarche ludique.</p>
+      <p class="desc-en">Each step a commit, each version a tag. Kids learn versioning by building what they love.</p>
+    </article>
+
+    <!-- 4. Co-write BD -->
+    <article class="card">
+      <div class="icon-wrap">
+        <svg viewBox="0 0 24 24"><path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"/><line x1="16" y1="8" x2="2" y2="22"/><line x1="17.5" y1="15" x2="9" y2="15"/></svg>
+      </div>
+      <h3>Co-écrire une BD, un livre, un jeu de famille</h3>
+      <p class="subtitle-en">Co-write a comic, book, or family game</p>
+      <p class="desc">Scripts, planches, itérations, personnages. La mémoire est partagée entre parent et enfant — vous reprenez à quatre mains sans rien oublier.</p>
+      <p class="desc-en">Scripts, pages, characters. Shared memory across four hands, nothing forgotten.</p>
+    </article>
+
+    <!-- 5. First site / app -->
+    <article class="card">
+      <div class="icon-wrap">
+        <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+      </div>
+      <h3>Lancer le premier site, jeu, ou appli de votre enfant</h3>
+      <p class="subtitle-en">Launch your child's first website, game, or app</p>
+      <p class="desc">Phase -1 dépendances, Phase 0 setup, Phase 1 dev. L'enfant apprend la discipline projet (lister, découper, sauvegarder) sur quelque chose qu'il aime vraiment.</p>
+      <p class="desc-en">Dependencies, setup, dev — real project discipline on something they truly love.</p>
+    </article>
+
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="logo">Project Genesis</div>
+  <div class="links">
+    <a href="https://github.com/myconciergerie-prog/project-genesis">Code source (GitHub)</a>
+    <a href="https://github.com/myconciergerie-prog/project-genesis/blob/main/README.md">Documentation</a>
+    <a href="https://github.com/myconciergerie-prog/project-genesis/blob/main/CHANGELOG.md">Changelog</a>
+  </div>
+  <div class="install">
+    <span class="prompt">$</span><span class="cmd">claude plugin install myconciergerie-prog/project-genesis</span>
+    <span class="comment"># Plugin Claude Code — MIT License — FR + EN — zéro configuration</span>
+  </div>
+  <p class="license">Project Genesis is an open-source Claude Code plugin. MIT License.</p>
+  <p class="sponsor">Une présentation hébergée par <a href="https://myconciergerie.fr">myconciergerie.fr</a> — votre conciergerie familiale.</p>
+</footer>
+
+</body>
+</html>
