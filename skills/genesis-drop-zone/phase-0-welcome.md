@@ -161,6 +161,37 @@ Per-field labels EN (matching FR row-for-row):
 
 Same alignment, truncation, and branch rules as the FR variant.
 
+### Citation annotation format (v1.4.0)
+
+When the v1.4.0 Citations API extraction path ran successfully and a field received a citation, the mirror row suffixes the value with a source annotation. The annotation is language-neutral ASCII — the same format renders under both `content_locale = FR` and `content_locale = EN`.
+
+**Format per citation type**:
+
+- `pdf_page_range` → ` [page N]` (1-indexed page, inclusive range collapses to single page when start == end; ranges print as `[pages N-M]`).
+- `text_char_range` → ` [lines X-Y]` where `X` and `Y` are line numbers derived from the character offsets via `\n` counting (1-indexed, inclusive).
+
+Example rendered row (FR variant):
+
+```
+   Idee          boulangerie artisanale pour livraison matin [page 1]
+```
+
+Example rendered row (EN variant):
+
+```
+   Idea          artisan bakery for morning delivery [lines 3-5]
+```
+
+**Truncation rule exception**: the v1.3.1 truncation rule (row value ≤ 60 chars, truncate at 57 + `...`) applies to the row *value* before the annotation. When an annotation is appended, the total row may exceed 60 chars — this is the single exception to the truncation rule. Rationale: truncating the annotation hides the audit-trail, which is the whole point of v1.4.0. Annotated rows may reach ~75 characters in the worst case; still within 80-col terminals.
+
+**When no annotation prints**:
+
+- Fallback path fired (API unavailable, subprocess failure, or any of the four fallback triggers per SKILL.md § "Citations API dispatch (v1.4.0) / Fallback triggers").
+- Image-only drops — Citations API does not cite images.
+- Field received no citation from the API (e.g. inferred rather than directly quoted).
+
+Rows without annotations render exactly as the v1.3.3 mirror — no visible indication that the API path was attempted.
+
 ## Bridge message (v1.3.1 — both languages always printed)
 
 > **v1.3.2 supersession**: the v1.3.1 bridge below is preserved as regression-set context. At runtime in v1.3.2, this bridge is replaced by the two version-scoped bridges in §"Accept bridge (v1.3.2)" and §"Decline bridge (v1.3.2)" further down. v1.3.1 installations still use the bridge below; v1.3.2 installations never reach it.
