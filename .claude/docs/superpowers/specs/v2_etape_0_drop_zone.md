@@ -206,6 +206,52 @@ The slice was intentionally surface-only so the first MINOR bump of the v1.3.x c
 - **`tests/fixtures/` gains three files, not two** — the extra `_fallback.md` fixture is the explicit regression probe for the fallback-path byte-identity claim above. Without the fallback fixture, a reader has to infer the zero-diff invariant; with it, the property is assertible via `diff`.
 - **Living spec, version-scoped sections (fourth application)** — extending `v2_etape_0_drop_zone.md` with a `## Scope — v1.4.0 Citations API extraction` section preserves the canonical vein-of-truth pattern established at v1.3.1 and reinforced at v1.3.2 / v1.3.3. The version history walks top-to-bottom; readers see what each ship layered on without scavenging commit history.
 
+## Scope — v1.4.1 Layer B citation surfacing
+
+### In scope
+
+1. **End-to-end audit-trail visibility** — v1.4.0 persists `<field>_source_citation` nested keys in `drop_zone_intent.md` frontmatter; v1.4.1 makes them visible in `genesis-protocol`'s Phase 0 Step 0.4 intent card and Step 0.5 `bootstrap_intent.md` template. The extraction value loop opened by v1.4.0 closes inside Layer B rather than terminating at Layer A's mirror.
+2. **Step 0.2a extension — citation preservation** — the dict-based YAML parse already reads the full frontmatter; v1.4.1 retains the `<field>_source_citation` nested dicts for the 9 semantic source fields alongside the existing 9+4 key preservation. No mapping change, no new mandatory field. Each preserved citation is a dict with five keys (`type`, `document_index`, `start`, `end`, `cited_text_preview`) per v1.4.0 § "Citations API — signal + dispatch (v1.4.0) / Citation object shape".
+3. **Step 0.4 card — inline citation suffix on mapped fields** — four card rows gain an inline citation suffix when the corresponding `<source>_source_citation` key is present:
+   - `Project name` ← `nom_source_citation`
+   - `Vision` ← `idea_summary_source_citation`
+   - `Stack hints` ← `hints_techniques_source_citation`
+   - `Is-a-plugin` ← `type_source_citation` (propagated from the inferred-from source field)
+   Project slug also renders the same citation as Project name (the slug is derived from `nom`, so the citation source is identical). When a citation key is absent (legacy config.txt seed, fallback-path write, image-only drop, or field without citation), the row renders exactly as v1.3.2/v1.3.3 — no placeholder, no `[unknown]`, no empty brackets.
+4. **Step 0.4 card — inline citation suffix on `Additional context from drop zone` rows** — the four extras rows gain the same treatment:
+   - `Target audience` ← `pour_qui_source_citation`
+   - `Language detected` ← `langue_detectee_source_citation`
+   - `Budget / constraint` ← `budget_ou_contrainte_source_citation`
+   - `Visibility` ← `prive_ou_public_source_citation`
+5. **Step 0.5 template — citation suffix inside Value columns** — the existing `## Fields` and `## Conversational context from drop zone` tables gain the same inline suffix format inside the `Value` column. No new section added, no new column added, no schema version bump. Parsers that consume `bootstrap_intent.md` (none in Genesis v1 — the file is human/Claude readable) see the suffix as part of the value string; the format is stable and deterministic.
+6. **Annotation format — reuse of Layer A discipline verbatim** — the citation suffix format reuses `skills/genesis-drop-zone/phase-0-welcome.md § "Citation annotation format (v1.4.0)"` without redefinition. A single source of truth for the annotation format across both layers:
+   - `pdf_page_range` with `start == end` → ` [page N]`
+   - `pdf_page_range` with `start != end` → ` [pages N-M]`
+   - `text_char_range` → ` [lines X-Y]`
+   All ASCII, language-neutral, locale-dispatch-free. Rendering is identical under FR / EN / any future locale.
+7. **Mixed media row deliberately unchanged** — the `Mixed media` card row sources its value from Step 0.3 disk `Glob` (not from `attaches`). `attaches_source_citation` (if present) is preserved by Step 0.2a but **not rendered** on the Mixed media row — the row's value is not sourced from `attaches`. Honest provenance alignment: Layer B shows citations for values it actually read from Layer A, nothing else.
+8. **Patch semver bump — v1.4.0 → v1.4.1** — read-only rendering of existing data. No new privilege (`genesis-drop-zone` privilege map unchanged; `genesis-protocol` gains no new class). No new frontmatter keys. No schema version bump. No new dependency. No subprocess. No network call. Zero Layer A ripple. PATCH is the honest tranche.
+9. **No new fixtures required** — the existing `tests/fixtures/drop_zone_intent_fixture_v1_4_0_fr_with_citations.md` and `_en_with_citations.md` fixtures exercise the v1.4.1 Layer B render path without modification. The fallback fixture continues to exercise the absence-of-citation render path. Zero fixture churn.
+
+### Out of scope (deferred to v1.4.2+)
+
+- **`cited_text_preview` surfacing** — the frontmatter citation dict carries up to 80 chars of source text. v1.4.1 does not render this preview — only the position annotation (`[page N]` etc.). Surfacing the preview on hover / expand is a v1.4.2+ UX option if users want to see the quoted text inline. Rationale: keeping the Step 0.4 card terse prevents clutter; the preview is already archived in `drop_zone_intent.md` for any reader who wants the full quote.
+- **Hyperlinks into source files** — e.g. `[page 3](./cahier_des_charges.pdf#page=3)` on the card. Deferred: the Phase 0 card is rendered in Claude's terminal surface; hyperlinks require harness-level support that varies across IDE / terminal / web. The ASCII annotation works everywhere.
+- **Citations on `License` / `Plan tier` / `Scope locks` rows** — these fields are not sourced from Layer A. License defaults to MIT; Plan tier is prompted at Step 0.4; Scope locks default `[none]`. No `_source_citation` key exists for them at Layer A, so no rendering possible. Deferring reflects the data contract, not a UX choice.
+- **Files API (beta) adoption** — stays deferred (v1.4.0 deferred list item 2). Not blocked by v1.4.1.
+- **Programmatic handoff / `GH_BROWSER` / UX toolkit / chime / error handling / contradictions / CoVe / bilingual Layer B null-class parsing / three-locale expansion / Structured Outputs** — all unchanged from v1.4.0 deferred list.
+
+### Rationale for v1.4.1 route
+
+- **PATCH is the honest tranche** — v1.4.1 adds no new privilege, no new dependency, no new subprocess, no new network call, no new schema keys. It reads existing frontmatter data (written by v1.4.0) and renders it on two existing surfaces. Every argument for a MINOR bump (structural weight, cross-version surface growth, external dependency) is absent. Running average ≈ 8.88 has 0.38 tampon above 8.5 — PATCH ship with ≥ 9.0 self-rating fits cleanly inside the streak envelope.
+- **Closing the audit-trail loop where it terminates** — v1.4.0 positioned citations as end-to-end audit trail but rendered them only in Layer A's mirror. Victor who reaches Layer B's Phase 0 card (`detailed` / `semi-auto` mode) sees parsed fields without provenance — a gap between the Layer A surface ("Vision: ... [page 3]") and the Layer B surface ("Vision: ..."). Closing this gap is v1.4.1's sole purpose. The feature exists because v1.4.0 created an asymmetry, not because new research surfaced.
+- **Cross-skill-pattern #4 discipline upgrade, not break** — v1.3.3 established *"body = locale-detected human echo; frontmatter = FR canonical data contract"*; v1.4.0 extended with *"additive frontmatter keys preserve zero-Layer-B-ripple at parser level"*. v1.4.1 refines one step further: *"Layer B may opt-in to render additive keys read-only. Parser mechanics remain unchanged; rendering logic gains conditional branches on key presence. No schema version bump required."* This is a fourth discipline data-point layering on the same principle — forward-compat with old writers is preserved (old Layer A writers + new Layer B reader = zero citations rendered since no keys exist); zero-ripple at parser level is intact (Step 0.2a still dict-based YAML, unknown keys still ignored naturally in the broader parse); the additive renders at *surface* level, not *contract* level.
+- **Inline suffix, not dedicated column or section** — an earlier draft considered a dedicated `## Source attribution from drop zone` section under Step 0.5 with a mapping table (field → citation). Rejected: introduces a second section the reader must reconcile with the `## Fields` table; keeping attribution next to the value is more legible and closer to the Layer A mirror convention. An alternative with a third column `Attribution` in the `## Fields` table was also rejected: changes the table's structural shape (three columns → four) and breaks legacy config.txt sessions' table layout. Inline suffix inside the `Value` column is the minimum-surface option: one string concatenation, no layout change.
+- **Mixed media row stays unadorned** — the `Mixed media` value on the Step 0.4 card is sourced from Step 0.3 disk `Glob`, not from Layer A's `attaches`. Surfacing `attaches_source_citation` on this row would create a provenance lie: "this row cites what Victor typed in the drop zone, not what Step 0.3 actually found on disk". The two sources can legitimately diverge (Victor drops "logo.png" but the file is actually `brand_logo.png`). Honest provenance alignment — cite what was actually read.
+- **No new verification fixtures** — the v1.4.0 `_fr_with_citations` and `_en_with_citations` fixtures already contain the full citation frontmatter shape. v1.4.1 exercises them against the extended Step 0.4 / Step 0.5 render logic. Zero fixture churn preserves the "three fixtures" discipline established at v1.4.0 and keeps the regression surface flat.
+- **Living spec, version-scoped sections (fifth application)** — extending `v2_etape_0_drop_zone.md` with a `## Scope — v1.4.1 Layer B citation surfacing` section continues the vein-of-truth pattern. Five consecutive version-scoped scope sections (v1.3.0, v1.3.1, v1.3.2, v1.3.3, v1.4.0) gave the pattern load-bearing status; v1.4.1 is the sixth instantiation across the PATCH/MINOR boundary.
+- **Pain-driven axis honestly narrower than v1.3.x / v1.4.0** — no concrete user pain triggered this ship. The feature is loop-closing, not pain-responsive. Self-rating at v1.4.1 will reflect this honestly on the Pain-driven axis (projected 8.5–8.7) and compensate via Prose cleanliness, Best-at-date (same R8 source, fresh until 2026-04-24), Self-contained (single-skill touch, genesis-drop-zone unchanged), Anti-Frankenstein (narrow-scope additive rendering, no decoration). Target floor ≥ 9.0 remains plausible on 3/5 axes.
+
 ## Trigger evaluation gate
 
 The skill is invoked in two ways:
@@ -1082,6 +1128,144 @@ Source: `drop_zone_intent.md` written by `genesis-drop-zone` v<version> at <ISO 
 
 The existing `## Raw config.txt` section is retained in the template but rendered as `n/a — seeded from drop_zone_intent.md` when the source was Layer A. This preserves the file's section structure across both seed paths and makes the seed source explicit to any future reader.
 
+### Citation rendering (v1.4.1)
+
+Extends Step 0.2a / Step 0.4 / Step 0.5 with read-only rendering of the `<field>_source_citation` nested keys introduced by v1.4.0. Zero parser change (dict-based YAML already reads the full frontmatter); rendering logic gains conditional branches on key presence.
+
+#### Dispatch lifecycle
+
+Three gates determine whether citation suffixes render:
+
+1. **Seed source was `drop_zone_intent.md`** — Step 0.1 logged `Primary seed: drop_zone_intent.md`. Legacy `config.txt` seeds have no citation source at all — all rows render without suffixes (v1.3.2 parity).
+2. **Step 0.2a parse succeeded** with `schema_version == 1`. Parse failures fall through to `config.txt` path per v1.3.2 rule — same gate 1 outcome applies.
+3. **At least one `<field>_source_citation` key present** in the parsed frontmatter. When all citation keys are absent (fallback-path write, image-only drop, legacy v1.3.2 / v1.3.3 writer), no row renders a suffix. This is anti-Frankenstein null-visible discipline: absence of citation is not rendered as `[unknown]` or `[n/a]` — it is simply absent.
+
+Gate 3 evaluation is per-row, not per-card: each of the 8 citation-eligible rows (4 mapped + 4 extras) inspects its own citation key independently. A card with some-but-not-all citations renders suffixes only on the populated rows.
+
+#### Annotation format — single source of truth
+
+The suffix format is **identical** to `skills/genesis-drop-zone/phase-0-welcome.md § "Citation annotation format (v1.4.0)"`. No re-definition in Layer B:
+
+- `pdf_page_range` with `start == end` → ` [page N]`
+- `pdf_page_range` with `start != end` → ` [pages N-M]`
+- `text_char_range` → ` [lines X-Y]` (1-indexed, inclusive; derivation via `\n` counting on source text, identical to Layer A)
+
+Language-neutral ASCII. No locale dispatch. Rendering is byte-identical across the FR / EN / mixte content_locale values.
+
+One space separator between the value (or origin tag) and the suffix. No trailing punctuation.
+
+#### Step 0.4 card — extended template
+
+The v1.3.2 template is extended with inline citation suffixes on 4 mapped rows + 4 extras rows. The card layout, column widths, and origin-tag positions are preserved.
+
+```
+📋 Parsed intent — Phase 0
+
+Target folder          : <absolute path>
+Project name           : <value or [missing]> (<origin>)<citation>
+Project slug           : <derived or [pending name]><citation>
+Vision                 : <value or [missing]> (<origin>)<citation>
+Stack hints            : <value or [none]> (<origin>)<citation>
+License                : <value or MIT (default)>
+Is-a-plugin            : <yes | no | [missing]> (<origin>)<citation>
+Plan tier              : <Max | Pro | Team | Free | [missing]>
+Scope locks            : <list or [none]>
+Mixed media            : <file list or [none]>
+
+Additional context from drop zone:            ← rendered only if drop_zone_intent.md seeded
+  Target audience      : <pour_qui value><citation>
+  Language detected    : <FR | EN | mixte><citation>
+  Budget / constraint  : <value or non mentionne><citation>
+  Visibility           : <value or non mentionnee><citation>
+
+Gaps to fill before Phase 1:
+  - <gap 1>
+  - <gap 2>
+  ...
+
+Proceed with these values?  (yes / edit / abort)
+```
+
+Where `<citation>` is:
+- **empty** (zero characters, no leading space) when the corresponding `<source>_source_citation` key is absent
+- ` [page N]` / ` [pages N-M]` / ` [lines X-Y]` per annotation format when the citation key is present
+
+Citation-source mapping per row (rows not listed receive no citation — they have no Layer A source):
+
+| Card row | Citation source key |
+|---|---|
+| Project name | `nom_source_citation` |
+| Project slug | `nom_source_citation` (propagated — slug is derived from `nom`) |
+| Vision | `idea_summary_source_citation` |
+| Stack hints | `hints_techniques_source_citation` |
+| Is-a-plugin | `type_source_citation` (propagated — Is-a-plugin is inferred from `type`) |
+| Target audience | `pour_qui_source_citation` |
+| Language detected | `langue_detectee_source_citation` |
+| Budget / constraint | `budget_ou_contrainte_source_citation` |
+| Visibility | `prive_ou_public_source_citation` |
+
+**Rows explicitly NOT annotated**:
+
+- `Target folder` — computed from `Bash pwd`, no Layer A source.
+- `License` — defaults to MIT or configured in `config.txt`, no Layer A source.
+- `Plan tier` — prompted at Step 0.4 or sourced from `config.txt`, no Layer A source.
+- `Scope locks` — sourced from `config.txt`, no Layer A source.
+- `Mixed media` — sourced from Step 0.3 disk `Glob`. `attaches_source_citation` is preserved by Step 0.2a but **not rendered** on this row (honest provenance — the row reflects disk reality, not the user's drop-zone typed description).
+- `Gaps to fill` — synthesized by Phase 0 logic, no single-source attribution.
+
+The origin tag `(from drop zone)` is preserved exactly as in v1.3.2; the citation suffix follows it with one space separator. When the origin is `(derived)` (e.g. Project slug derived from Project name, or Is-a-plugin inferred from `type`), the citation propagates from the source field — this is the honest reading, since the derived value depends on the cited source.
+
+#### Step 0.5 `bootstrap_intent.md` template — extended
+
+The v1.3.2 `## Fields` table and the v1.3.2 `## Conversational context from drop zone` table gain inline citation suffixes inside the `Value` column. No new section, no new column, no new frontmatter key.
+
+```markdown
+## Fields
+
+| Field | Value | Source |
+|---|---|---|
+| Project name | <value><citation> | config.txt / drop_zone_intent.md / user edit |
+| Slug | <value><citation> | config.txt / derived |
+| Vision | <one-paragraph><citation> | config.txt / drop_zone_intent.md |
+| License | <value> | config.txt / default |
+| Is-a-plugin | <yes|no><citation> | config.txt / drop_zone_intent.md / user edit |
+| Plan tier | <value> | config.txt / user edit |
+| Stack hints | <list><citation> | config.txt / drop_zone_intent.md |
+| Scope locks | <list> | config.txt / user edit |
+| Mixed media | <file list> | folder scan |
+
+...
+
+## Conversational context from drop zone
+
+(Rendered only when `drop_zone_intent.md` was the Phase 0 seed source.)
+
+| Field | Value |
+|---|---|
+| Target audience (pour qui) | <value or "a trouver ensemble"><citation> |
+| Language detected | <FR / EN / mixte><citation> |
+| Budget or constraint | <value or "non mentionne"><citation> |
+| Visibility (private / public) | <value or "non mentionnee"><citation> |
+
+Source: `drop_zone_intent.md` written by `genesis-drop-zone` v<version> at <ISO timestamp>.
+```
+
+Same citation-source mapping as the Step 0.4 card. Legacy `config.txt` sessions render the `## Fields` table exactly as v1.3.2 (no citation suffixes anywhere, since no `drop_zone_intent.md` seeded the session).
+
+#### Zero ripple elsewhere
+
+v1.4.1 does not modify:
+
+- **Step 0.1 detection** — same row in the detection table, same precedence rule.
+- **Step 0.2 `config.txt` parser** — unchanged.
+- **Step 0.2a parser mechanics** — same dict-based YAML read, same field mapping, same null-class handling. Only the set of preserved keys widens (citation keys are preserved alongside semantic + metadata keys) — no branching logic.
+- **Step 0.3 mixed media scan** — unchanged.
+- **Step 0.4 card structure** — same rows, same columns, same width, same origin tags. Only the per-row value rendering gains an optional inline suffix.
+- **Step 0.5 write flow** — same file path, same atomic write pattern, same exit condition.
+- **Consent gate** (Category C) — unchanged. Mode dispatch (detailed / semi-auto / auto) unchanged.
+- **`genesis-drop-zone` skill** — zero code change. Layer A writes v1.4.0-shape files; Layer B v1.4.1 reads them.
+- **Schema version** — stays at `1`. No `schema_version: 2` anywhere.
+
 ### Cross-layer pattern (master.md cross-skill-pattern #4)
 
 v1.3.2 is the first cross-layer wire in the Genesis plugin. The pattern established here is the reference implementation for future Étape 1 → Phase 1 / Étape 2 → Phase 2 / Étape 3 → Phase 3 wires as Layer A grows:
@@ -1093,6 +1277,8 @@ v1.3.2 is the first cross-layer wire in the Genesis plugin. The pattern establis
 5. Origin tags on Layer B's Phase card make the Layer A → Layer B provenance explicit to Victor.
 
 This pattern is load-bearing for the v2 conversational surface. Future sessions that add an Étape 1 skill will follow the same shape.
+
+**v1.4.1 discipline upgrade — Layer B may opt-in to render additive keys read-only.** v1.3.3 established *"Layer B parser naturally ignores unknown keys"*; v1.4.0 extended with *"additive frontmatter keys preserve zero-Layer-B-ripple at parser level"*. v1.4.1 refines further: Layer B may render additive keys as read-only surface enrichment, without bumping schema version and without growing the parser. "Zero ripple" is measured at two levels: (a) **parser-level** — unchanged across the v1.3.2 → v1.4.1 range (dict-based YAML, unknown keys ignored); (b) **contract-level** — forward-compat with old writers preserved (old Layer A writers + new Layer B reader = zero citations rendered since no citation keys exist; new Layer A writer + old Layer B reader = citation keys ignored, no crash). The additive happens at the *surface* layer — Step 0.4 card and Step 0.5 template gain conditional rendering branches — without touching the data contract. Fifth discipline data-point layering on the same principle: v1.3.2 wire + v1.3.3 body-vs-frontmatter asymmetry + v1.4.0 additive keys + v1.4.1 additive rendering + (future) contradictions[] surfacing at v1.5+ would follow the same discipline.
 
 ## Concentrated privilege declaration
 
@@ -1161,6 +1347,7 @@ Cross-skill-pattern #1: when a skill is a faithful implementation of a canonical
 | Scope — v1.3.2 write + Layer B handoff | `## Scope / In scope (v1.3.2)` sub-block (in/out bullets, copied verbatim) | Mirrored |
 | Scope — v1.3.3 runtime locale rendering | `## Scope / In scope (v1.3.3)` sub-block (in/out bullets, copied verbatim) | Mirrored |
 | Scope — v1.4.0 Citations API extraction | `## Scope / In scope (v1.4.0)` sub-block (in/out bullets, copied verbatim) | Mirrored |
+| Scope — v1.4.1 Layer B citation surfacing | — (no `genesis-drop-zone/SKILL.md` counterpart — v1.4.1 touches only `genesis-protocol`) | **Spec-only** for this map; mirrored downstream per Layer B addendum below |
 | Runtime locale — signal + dispatch (v1.3.3) | `## Locale dispatch (v1.3.3)` (two-variable table + render-target map) | Mirrored |
 | Citations API — signal + dispatch (v1.4.0) | `## Citations API dispatch (v1.4.0)` (three-gate lifecycle + extractor contract + fallback triggers + env vars) | Mirrored |
 | Trigger evaluation gate | `## Trigger` + `## Context guard` (two sections in SKILL.md for dispatch clarity) | Mirrored |
@@ -1186,6 +1373,7 @@ Cross-skill-pattern #1: when a skill is a faithful implementation of a canonical
 | Rationale for v1.3.2 route | — | **Spec-only** (design decision log) |
 | Rationale for v1.3.3 route | — | **Spec-only** (design decision log) |
 | Rationale for v1.4.0 route | — | **Spec-only** (design decision log) |
+| Rationale for v1.4.1 route | — | **Spec-only** (design decision log) |
 
 Rule of thumb for the drift-check gate: **every row tagged `Mirrored` must show section-for-section correspondence; every row tagged `Spec-only` is an expected asymmetry** and is not flagged during review. SKILL.md is the dispatch surface; spec is the design record.
 
@@ -1201,6 +1389,10 @@ v1.3.2 is the first ship where this spec documents cross-skill changes (addition
 | Layer B integration — Step 0.5 bootstrap_intent.md template (extended) | `### Step 0.5 — Persist the intent as bootstrap_intent.md` (template extended with `## Conversational context from drop zone` section) | Mirrored |
 | Layer B integration — SKILL.md seed description | `skills/genesis-protocol/SKILL.md` Phase 0 paragraph | Mirrored |
 | Layer B integration — verification scenario | `skills/genesis-protocol/verification.md` new scenario block | Mirrored |
+| Citation rendering (v1.4.1) — Step 0.2a citation preservation | `### Step 0.2a — Parse drop_zone_intent.md` (new "Citation preservation" subsection — lists which `_source_citation` keys are carried forward) | Mirrored |
+| Citation rendering (v1.4.1) — Step 0.4 card extended template | `### Step 0.4 — Surface the parsed intent card` (extended again with `<citation>` suffix placeholder + citation-source mapping table) | Mirrored |
+| Citation rendering (v1.4.1) — Step 0.5 Value-column suffix | `### Step 0.5 — Persist the intent as bootstrap_intent.md` (Value columns in `## Fields` and `## Conversational context from drop zone` tables gain inline `<citation>` placeholder) | Mirrored |
+| Citation rendering (v1.4.1) — verification scenario | `skills/genesis-protocol/verification.md` new v1.4.1 scenario block | Mirrored |
 
 Drift between this spec and any row in the Layer B mirror family is a merge-blocker at the same discipline level as the primary (genesis-drop-zone) mirror.
 
@@ -1239,22 +1431,25 @@ The v1.3.2 `drop_zone_intent.md` file introduces a **new tier blending**: the fr
 
 The Python extractor stays entirely English because it is developer-facing code — its strings never reach Victor's terminal directly. Citation annotations in the mirror are language-neutral by design (brackets + digits are universal) so `content_locale` dispatch does not branch them.
 
-## Deferred to v1.4.1+
+**v1.4.1 — no new R9 rows.** Layer B's Phase 0 card and `bootstrap_intent.md` template are already English-only per `skills/genesis-protocol/phase-0-seed-loading.md` (dev-facing runbook — tier 1) and `memory/project/bootstrap_intent.md` (dev-parseable archive with English labels, values preserved verbatim in source language — tier 2 blending from v1.3.2). The v1.4.1 inline citation suffix reuses the language-neutral ASCII annotation format from the v1.4.0 mirror row above; rendering is identical across FR / EN / mixte. Zero new locale branches, zero new bilingual pairs.
 
-Ordered by rough priority, non-binding, revisit at each session boundary. Items closed across the v1.3.x / v1.4.0 cycle so far: the `bootstrap_intent.md` file write and Layer B handoff (both closed in v1.3.2); **runtime locale detection** (closed in v1.3.3 — welcome + mirror + consent card + halt + bridges + body prose + body mirror echo all dispatch on `welcome_locale` / `content_locale`); **Path A Citations API extraction** (closed in v1.4.0 — second privilege class with graceful fallback, `source_citation` frontmatter extension, mirror annotations). This list reflects what remains.
+## Deferred to v1.4.2+
 
-1. **Layer B citation surfacing** — Layer B Step 0.4 intent card and Step 0.5 `bootstrap_intent.md` template could optionally display the citation annotations alongside the parsed fields ("Vision: ... [page 3 of the brief]"). v1.4.0 writes the citations into `drop_zone_intent.md` but Layer B does not render them. Ship v1.4.1 when / if user pain emerges around wanting the audit-trail visible on the Phase 0 card.
-2. **Files API (beta) adoption** — v1.4.0 uses inline base64 document blocks. The Anthropic Files API beta (`anthropic-beta: files-api-2025-04-14`) enables dedup across sessions and larger file limits. Useful for users who drop the same brief multiple times or exceed the 32 MB × 600-page inline limit. Ship when a concrete user hits the limit or the cost trend justifies the complexity.
-3. **Programmatic handoff** — auto-invoke `genesis-protocol` without the user typing `/genesis-protocol` after the accept bridge. Requires a harness-level skill-to-skill invocation mechanism that is not 2026-04 Claude Code ready. Human-in-the-loop via the accept bridge's instruction is the v1.3.2 pattern; the programmatic path can ship when the harness supports it without changing the bridge text semantics.
-4. `GH_BROWSER` profile routing wire-up — read Chrome profile map from Layer 0, export `GH_BROWSER` before any `gh` invocation in the downstream LAYER B.
-5. UX toolkit integration — `@clack/prompts` structural skeleton, Charm Gum for select prompts, cli-spinners for the `◐` animation. With R9 closed (v1.3.3) and citations shipped (v1.4.0), the surface is complete — polish can land without re-fragmenting it.
-6. Completion chime (cross-platform) — macOS `afplay`, Windows `[console]::beep`, Linux `paplay`. Honours the "rising interval" convention per vision doc § "The sound of Genesis".
-7. Error handling refinements — permission-denied / disk-full / symlink-pointing-to-directory edge cases currently let `OSError` bubble up naturally. v1.4.1+ adds halt + remediation if any of these produces real user pain in v1.3.2–1.4.0 usage. v1.3.2's floor is "write succeeds or harness shows the stack".
-8. **Contradictions surfacing** — when multiple documents dropped, cross-reference conflicts could populate a `contradictions[]` array (per R8 Stage 2 recommendation). v1.5+ if multi-document drops become common.
-9. **Chain-of-Verification (CoVe) second pass** — Haiku 4.5 verification of Citations output. R8 ranks Citations above CoVe and recommends skipping unless evals show failure. Skip until evals demand.
-10. **Bilingual Layer B null-class parsing** — if `drop_zone_intent.md` frontmatter null-class tokens ever carry EN canonical variants alongside FR canonical, Layer B's Step 0.2a parser grows a bilingual branch. v1.5+ target.
-11. **Three-locale-or-more expansion** — if Genesis ships beyond FR + EN (e.g. ES, DE), `welcome_locale` and `content_locale` become n-way enums. Minor, deferred until a real non-FR/EN user emerges.
-12. **Structured Outputs (Path B) alternative** — v2 architectural pivot question. Would require dropping Citations (API incompatibility). Not considered until Path A evals expose a concrete shortfall.
+Ordered by rough priority, non-binding, revisit at each session boundary. Items closed across the v1.3.x / v1.4.x cycle so far: the `bootstrap_intent.md` file write and Layer B handoff (both closed in v1.3.2); **runtime locale detection** (closed in v1.3.3 — welcome + mirror + consent card + halt + bridges + body prose + body mirror echo all dispatch on `welcome_locale` / `content_locale`); **Path A Citations API extraction** (closed in v1.4.0 — second privilege class with graceful fallback, `source_citation` frontmatter extension, mirror annotations); **Layer B citation surfacing** (closed in v1.4.1 — Step 0.4 card + Step 0.5 template render `[page N]` / `[lines X-Y]` suffix inline on mapped + extras rows, zero parser change, zero schema bump, zero Layer A ripple). This list reflects what remains.
+
+1. **`cited_text_preview` inline surfacing** — the citation dict carries up to 80 chars of quoted source text; v1.4.1 renders only the position annotation. Surfacing the preview inline (e.g. on hover or via `cited_text:` tooltip syntax) is a v1.4.2+ UX option. Preview is already archived verbatim in `drop_zone_intent.md` for any reader who wants the full quote.
+2. **Hyperlinks into source files on the Phase 0 card** — e.g. `[page 3](./cahier_des_charges.pdf#page=3)`. Harness-dependent rendering (ASCII annotation works everywhere; hyperlinks work in some IDEs, not in bash terminals). Deferred until a Genesis install path runs inside a hyperlink-rendering surface by default.
+3. **Files API (beta) adoption** — v1.4.0 uses inline base64 document blocks. The Anthropic Files API beta (`anthropic-beta: files-api-2025-04-14`) enables dedup across sessions and larger file limits. Useful for users who drop the same brief multiple times or exceed the 32 MB × 600-page inline limit. Ship when a concrete user hits the limit or the cost trend justifies the complexity.
+4. **Programmatic handoff** — auto-invoke `genesis-protocol` without the user typing `/genesis-protocol` after the accept bridge. Requires a harness-level skill-to-skill invocation mechanism that is not 2026-04 Claude Code ready. Human-in-the-loop via the accept bridge's instruction is the v1.3.2 pattern; the programmatic path can ship when the harness supports it without changing the bridge text semantics.
+5. `GH_BROWSER` profile routing wire-up — read Chrome profile map from Layer 0, export `GH_BROWSER` before any `gh` invocation in the downstream LAYER B.
+6. UX toolkit integration — `@clack/prompts` structural skeleton, Charm Gum for select prompts, cli-spinners for the `◐` animation. With R9 closed (v1.3.3) and citations shipped + surfaced (v1.4.0 + v1.4.1), the surface is complete — polish can land without re-fragmenting it.
+7. Completion chime (cross-platform) — macOS `afplay`, Windows `[console]::beep`, Linux `paplay`. Honours the "rising interval" convention per vision doc § "The sound of Genesis".
+8. Error handling refinements — permission-denied / disk-full / symlink-pointing-to-directory edge cases currently let `OSError` bubble up naturally. v1.4.2+ adds halt + remediation if any of these produces real user pain in v1.3.2–1.4.1 usage. v1.3.2's floor is "write succeeds or harness shows the stack".
+9. **Contradictions surfacing** — when multiple documents dropped, cross-reference conflicts could populate a `contradictions[]` array (per R8 Stage 2 recommendation). v1.5+ if multi-document drops become common.
+10. **Chain-of-Verification (CoVe) second pass** — Haiku 4.5 verification of Citations output. R8 ranks Citations above CoVe and recommends skipping unless evals show failure. Skip until evals demand.
+11. **Bilingual Layer B null-class parsing** — if `drop_zone_intent.md` frontmatter null-class tokens ever carry EN canonical variants alongside FR canonical, Layer B's Step 0.2a parser grows a bilingual branch. v1.5+ target.
+12. **Three-locale-or-more expansion** — if Genesis ships beyond FR + EN (e.g. ES, DE), `welcome_locale` and `content_locale` become n-way enums. Minor, deferred until a real non-FR/EN user emerges.
+13. **Structured Outputs (Path B) alternative** — v2 architectural pivot question. Would require dropping Citations (API incompatibility). Not considered until Path A evals expose a concrete shortfall.
 
 ## References (R8 inline citations consolidated)
 
@@ -1280,13 +1475,14 @@ External sources cited (resolved inside the R8 entry above):
 
 ## Verification scenarios
 
-The scenarios below cover **five ship-gate blocks** (v1.3.0 / v1.3.1 / v1.3.2 / v1.3.3 / v1.4.0). Range map:
+The scenarios below cover **six ship-gate blocks** (v1.3.0 / v1.3.1 / v1.3.2 / v1.3.3 / v1.4.0 / v1.4.1). Range map:
 
 - Scenarios **#1-#6** — v1.3.0 welcome / context-guard / trigger-evaluation regression set (preserved with expected-outcome updates as later versions supersede specific surfaces).
 - Scenarios **#7-#12** — v1.3.1 additions targeting the mirror screen, extraction schema, zero-content branch, truncation, R9 audit.
 - Scenarios **#13-#19** — v1.3.2 additions targeting the write flow, halt-on-existing, modification loop, Layer B parser cross-layer wire, precedence rule.
 - Scenarios **#20-#27** — v1.3.3 additions targeting runtime locale divergence, EN body write, R9 audit of the new EN re-prompt, Layer B zero-ripple on locale changes.
 - Scenarios **#28-#39** — v1.4.0 additions targeting API-path happy cases, four fallback triggers, fallback byte-identity, R9 audit of the Python extractor, Layer B parser zero-ripple on the extended frontmatter, annotation-truncation edge case.
+- Scenarios **#40-#44** — v1.4.1 additions targeting Layer B card + bootstrap_intent.md citation rendering happy path, absence-of-citations render parity, legacy `config.txt` render parity, partial-citation per-row render, Mixed media unadorned honesty.
 
 See § "Ship gates" at the end of this Verification section for the per-version mandatory / strongly-recommended / non-blocking split and the runtime-replay note that rolls forward from v1.3.1.
 
@@ -1366,15 +1562,30 @@ All v1.3.0 + v1.3.1 + v1.3.2 regression guarantees preserved. v1.4.0 does not to
 | 38 | Fallback-path byte-identity — compare a v1.4.0 fallback-written `drop_zone_intent.md` to the canonical regression fixture `tests/fixtures/drop_zone_intent_fixture_v1_4_0_fallback.md` (which is itself byte-identical to `drop_zone_intent_fixture_v1_3_3_en.md` modulo `skill_version`). | `diff` reports zero differences modulo `created_at` timestamp only (ISO-8601 varies per run). `skill_version` matches (both `1.4.0`). Null-class tokens identical (FR canonical). Body content identical. No `_source_citation` keys in either. A second auxiliary diff `diff tests/fixtures/drop_zone_intent_fixture_v1_4_0_fallback.md tests/fixtures/drop_zone_intent_fixture_v1_3_3_en.md` reports the single expected delta — `skill_version` line only — documenting that the v1.4.0-labelled delta is the skill_version stamp itself, nothing else. |
 | 39 | Annotated row truncation interaction — synthetic case where value + annotation exceeds 60 chars. | Value truncates at 57 chars + `...` per v1.3.1 rule. Annotation `[page N]` appended after the ellipsis. Example: `Idee          boulangerie artisanale pour livraison matin tre... [page 1]`. Total row length may exceed 60 but stays within 80-col terminal. This is the single documented exception to the 60-char rule per § "Citations API — signal + dispatch (v1.4.0) / Truncation rule interaction". |
 
+### v1.4.0 regression set for v1.4.1
+
+All v1.3.0 + v1.3.1 + v1.3.2 + v1.3.3 + v1.4.0 regression guarantees preserved. v1.4.1 does not modify any Layer A surface — `genesis-drop-zone/*` files are byte-identical across the boundary. Scenarios #28-#39 remain valid regression probes. The v1.4.0 fixtures `drop_zone_intent_fixture_v1_4_0_fr_with_citations.md` / `_en_with_citations.md` / `_fallback.md` stay unchanged. Layer A writes are untouched; v1.4.1 reads what v1.4.0 wrote.
+
+### v1.4.1 new scenarios
+
+| # | Scenario | Expected |
+|---|---|---|
+| 40 | Fresh empty dir, seed via `tests/fixtures/drop_zone_intent_fixture_v1_4_0_fr_with_citations.md` (has 4 `_source_citation` entries). Run `/genesis-protocol`. | Step 0.1 detects the file as `Primary seed: drop_zone_intent.md`. Step 0.2a parses frontmatter including `idea_summary_source_citation`, `pour_qui_source_citation`, `type_source_citation`, `hints_techniques_source_citation`. Step 0.4 card renders 4 mapped rows + 4 extras rows with inline suffixes. Concretely: `Project name : a trouver ensemble (from drop zone)` (no suffix — Project name's source `nom` has no citation in this fixture since `nom` is null-class), `Vision : boulangerie artisanale pour livraison matin (from drop zone) [page 1]`, `Stack hints : React ou Next.js (from drop zone) [page 3]`, `Is-a-plugin : no (inferred) [page 2]` (propagated from `type_source_citation`). `Additional context from drop zone` block shows `Target audience : habitants du quartier ... [page 1]`. Step 0.5 `bootstrap_intent.md` written with same suffixes inline in Value columns. |
+| 41 | Fresh empty dir, seed via `tests/fixtures/drop_zone_intent_fixture_v1_4_0_fallback.md` (no `_source_citation` entries anywhere). Run `/genesis-protocol`. | Step 0.1 detection + Step 0.2a parse identical to scenario #18. Step 0.4 card renders with ZERO citation suffixes on any row — zero brackets, zero placeholders, identical to v1.3.2 rendering for the same fixture. Step 0.5 template writes `## Fields` table with no citation suffixes, `## Conversational context from drop zone` table with no citation suffixes. Anti-Frankenstein null-visible discipline: absence of citation is absence of suffix, not `[unknown]`. |
+| 42 | Fresh empty dir, seed via legacy `config.txt` (no `drop_zone_intent.md` anywhere). Run `/genesis-protocol`. | Step 0.1 detects `config.txt` only. Step 0.2 parses free-form. No Step 0.2a. Step 0.4 card renders without the `Additional context from drop zone` block (preserved v1.3.2 behaviour) and without any citation suffixes anywhere (no Layer A source). Step 0.5 `## Fields` table without suffixes, `## Raw config.txt` with verbatim contents, no `## Conversational context from drop zone` section. Byte-identical to v1.3.2 / v1.3.3 rendering for a legacy session — v1.4.1 adds zero ripple to the legacy path. |
+| 43 | Synthetic partial-citations fixture — only `idea_summary_source_citation` present, others absent. | Step 0.4 card: `Vision` row carries `[page N]` suffix; Project name / Stack hints / Is-a-plugin / extras rows render without suffix. Per-row gate evaluation confirmed: each row inspects its own citation key independently. Step 0.5 `## Fields` Vision row has suffix, others do not. |
+| 44 | Mixed media unadorned honesty — fixture where `attaches_source_citation` is present and cites page 4 of the brief. | `attaches_source_citation` is preserved by Step 0.2a (dict-based parse reads the key). Step 0.4 `Mixed media` row renders **without** suffix (the row's value comes from Step 0.3 disk `Glob`, not from `attaches`). Step 0.5 `## Fields` `Mixed media` row also without suffix. Preserved-but-not-rendered is the honest stance: Layer B cites what it read, and the Mixed media value was read from disk, not from Layer A. Cross-check: a grep of the rendered `bootstrap_intent.md` for `[page 4]` on the Mixed media line returns zero matches. |
+
 ### Ship gates
 
 - **v1.3.0 (original)**: #1, #3, #6 mandatory. #2, #4 strongly recommended. #5 documented.
 - **v1.3.1 (original)**: #7, #9, #12 mandatory. Regression on v1.3.0 #3 + #6 mandatory. #8 strongly recommended. #10, #11 documented non-blocking.
 - **v1.3.2 (previous)**: #13, #14, #15, #18 mandatory. #16, #19 strongly recommended. Regression on v1.3.1 #3, #6, #9, #12 mandatory. #17 documented non-blocking.
 - **v1.3.3 (previous)**: #20, #21, #25, #26, #27 mandatory. #22, #23, #24 strongly recommended. Regression on v1.3.2 #15, #16, #17 mandatory. Regression on v1.3.1 #9 mandatory. #10 updated / non-blocking.
-- **v1.4.0 (this ship)**: **#29, #32, #33, #36, #37, #38 mandatory** — fallback path silent / identity (#29, #38), auth-error graceful fallback (#32), SDK-missing graceful fallback (#33), R9 audit of extractor code (#36), Layer B parser zero-ripple on extended schema (#37). **Strongly recommended**: #28 (happy-path PDF with citations), #30 (text-only inline with `text_char_range`), #31 (image-only, no citations). **Documented non-blocking**: #34 (rate-limit simulation — hard to reproduce offline), #35 (modification-loop cache hit — cache-token assertion depends on live API), #39 (annotation truncation — edge case, synthetic). **Regression on v1.3.3 mandatory**: #20, #25, #27 (locale dispatch + EN body write + Layer B zero-ripple). **Regression on v1.3.2 mandatory**: #13 (write flow happy path on fallback path). **Regression on v1.3.1 mandatory**: #7 (mirror render on in-context path).
+- **v1.4.0 (previous)**: **#29, #32, #33, #36, #37, #38 mandatory** — fallback path silent / identity (#29, #38), auth-error graceful fallback (#32), SDK-missing graceful fallback (#33), R9 audit of extractor code (#36), Layer B parser zero-ripple on extended schema (#37). **Strongly recommended**: #28 (happy-path PDF with citations), #30 (text-only inline with `text_char_range`), #31 (image-only, no citations). **Documented non-blocking**: #34 (rate-limit simulation — hard to reproduce offline), #35 (modification-loop cache hit — cache-token assertion depends on live API), #39 (annotation truncation — edge case, synthetic). **Regression on v1.3.3 mandatory**: #20, #25, #27 (locale dispatch + EN body write + Layer B zero-ripple). **Regression on v1.3.2 mandatory**: #13 (write flow happy path on fallback path). **Regression on v1.3.1 mandatory**: #7 (mirror render on in-context path).
+- **v1.4.1 (this ship)**: **#40, #41, #42, #44 mandatory** — Layer B citation render happy path (#40), absence-of-citations render parity on fallback fixture (#41), legacy `config.txt` render parity (#42), Mixed media unadorned honesty (#44). **Strongly recommended**: #43 (synthetic partial-citations). **Regression on v1.4.0 mandatory**: #37 (Layer B parser zero-ripple — unchanged; v1.4.1 extends rendering, not parsing), #38 (fallback byte-identity — unchanged; v1.4.1 does not write anything). **Regression on v1.3.2 mandatory**: #18, #19 (Layer B card + bootstrap_intent.md surface — v1.4.1 extends both templates, so the v1.3.2 behaviour must still render correctly for legacy paths). **Regression on v1.3.1 mandatory**: #7 (Layer A mirror unchanged).
 
-**Scenario #1 / #13 / #18 / #20 / #21 / #28 / #29 / #30 / #31 / #32 runtime replay note**: runtime replay of scenarios driven by a fresh Claude Code process in an empty directory (including v1.4.0's #28-#35 which exercise live API + subprocess launch) is not executable from inside a running session. Artefact-level verification remains the ship gate — Python module importability (`python -c "import skills.genesis-drop-zone.scripts.extract_with_citations"`), SKILL.md dispatch-logic walkthrough, fixture byte-identity via `diff`, JSON-schema validation of new fixtures, Layer B parser regression on the extended fixture. A consistent −0.2 Pain-driven deduction applies per replay-deferred scenario and rolls forward until runtime replay happens, continuing the v1.3.1 → v1.3.3 convention.
+**Scenario #1 / #13 / #18 / #20 / #21 / #28 / #29 / #30 / #31 / #32 / #40 / #42 runtime replay note**: runtime replay of scenarios driven by a fresh Claude Code process in an empty directory (including v1.4.0's #28-#35 which exercise live API + subprocess launch, and v1.4.1's #40-#42 which exercise live Phase 0 card render) is not executable from inside a running session. Artefact-level verification remains the ship gate — Python module importability (`python -c "import skills.genesis-drop-zone.scripts.extract_with_citations"`), SKILL.md + phase-0-seed-loading.md dispatch-logic walkthrough, fixture byte-identity via `diff`, JSON / YAML parse validation of fixtures, Layer B parser regression on the extended fixture, grep assertions on the rendered card template (e.g. `[page N]` presence / absence counts). A consistent −0.2 Pain-driven deduction applies per replay-deferred scenario and rolls forward until runtime replay happens, continuing the v1.3.1 → v1.4.0 convention.
 
 ## Rationale for v1.3.2 route
 
@@ -1411,6 +1622,18 @@ All v1.3.0 + v1.3.1 + v1.3.2 regression guarantees preserved. v1.4.0 does not to
 - **Image-only drops produce no citations — honest null-visible discipline at the citation layer** — Citations API does not cite images. The v1.4.0 design does not synthesize a pseudo-citation like "seen in attachment.png" — the field's value still renders (Claude extracted it via vision), the citation is just absent. Same honesty principle as the null-class `a trouver ensemble` / `non mentionne` tokens, applied one level deeper.
 - **Cross-skill-pattern #2 refinement ("at most one per operation class") is precedent, not one-off** — the refinement to master.md's pattern is a permanent evolution, not a v1.4.0 exception. Future skills with legitimate multi-class needs (e.g. Étape 2 creation skill with disk write + external API) will follow the same multi-class declaration. Anti-Frankenstein gate stays tight: a skill accreting a third class is a signal that the skill probably needs splitting.
 - **Living spec, version-scoped sections (fourth application)** — extending `v2_etape_0_drop_zone.md` with a `## Scope — v1.4.0 Citations API extraction` section preserves the canonical vein-of-truth pattern established across the v1.3.x cycle. Four consecutive version-scoped scope sections (v1.3.0, v1.3.1, v1.3.2, v1.3.3) give the pattern load-bearing status — v1.4.0 is the fifth instantiation and demonstrates the pattern extends cleanly across the PATCH/MINOR boundary.
+
+## Rationale for v1.4.1 route
+
+- **PATCH is the honest tranche** — read-only rendering of existing v1.4.0 frontmatter data on two existing Layer B surfaces (Step 0.4 card + Step 0.5 template). No privilege, no dependency, no subprocess, no network, no schema bump, no new bilingual pair, no Layer A ripple. Every structural-weight argument for MINOR is absent. The change is pure surface enrichment at Layer B. Running average ≈ 8.88 has 0.38 tampon above 8.5; a PATCH ship with ≥ 9.0 self-rating fits the streak envelope.
+- **Loop-closing, not pain-driven** — no concrete user pain triggered v1.4.1. The feature exists because v1.4.0 created an asymmetry (Layer A mirror shows citations; Layer B card does not) and the system asymmetry is itself the defect. Honest Pain-driven scoring reflects this (projected 8.5–8.7); compensation through Prose cleanliness (tight scope, single additive rendering concept), Best-at-date (reuses the v2_promptor_fusion R8 entry, still fresh until 2026-04-24), Self-contained (single skill touched, `genesis-drop-zone` unchanged byte-for-byte), Anti-Frankenstein (no decoration, no helper, no abstraction — just inline suffix rendering).
+- **Inline suffix, not dedicated column or section** — three design options were considered: (a) dedicated `## Source attribution from drop zone` section in Step 0.5 with field→citation table; (b) third `Attribution` column in the `## Fields` table; (c) inline suffix inside the existing `Value` column. Option (a) introduces a second section the reader must reconcile with `## Fields` — two sources of truth for field-value attribution. Option (b) changes the table's structural shape (3 cols → 4) and ripples into legacy `config.txt` sessions that have nothing to put in the new column. Option (c) — selected — is the minimum-surface option: one string concatenation per row, no layout change, reader sees provenance exactly where the value is.
+- **Mixed media deliberately unadorned** — the `Mixed media` row on the Step 0.4 card is sourced from Step 0.3 disk `Glob`, not from Layer A's `attaches`. Rendering `attaches_source_citation` on this row would lie about provenance: "this row cites what Victor typed, not what Step 0.3 actually found on disk". The two sources can legitimately diverge (the user drops "logo.png" but the file is actually `brand_logo.png`). The honest stance is: cite what was actually read, preserve the key for future tooling that might want to cross-check the divergence.
+- **Propagated citation for derived / inferred fields** — Project slug cites `nom_source_citation` (slug is derived from `nom`, so the provenance is identical). Is-a-plugin cites `type_source_citation` (inferred from `type`, so the provenance of the decision to mark the project as plugin or not traces back to the `type` field's citation). This propagation is honest because the derived value is a deterministic function of the cited source field.
+- **Discipline upgrade for cross-skill-pattern #4** — v1.3.3 said "Layer B naturally ignores unknown keys"; v1.4.0 said "additive frontmatter keys preserve zero-Layer-B-ripple at parser level"; v1.4.1 refines to "Layer B may opt-in to render additive keys read-only". Each refinement is additive to the previous — none contradict. The four data-points (v1.3.2 wire / v1.3.3 asymmetry / v1.4.0 additive keys / v1.4.1 additive rendering) give the pattern full evidence of composability. Future Étape-skills can layer on the same way.
+- **Zero new fixtures** — the v1.4.0 fixtures carry all citation shapes (pdf_page_range + text_char_range). Reusing them is the narrow-scope honest move; churning fixtures for a read-only feature would be Frankenstein.
+- **Living spec, version-scoped sections (sixth application)** — extending `v2_etape_0_drop_zone.md` with a `## Scope — v1.4.1 Layer B citation surfacing` section is the sixth consecutive application of the pattern. Six data-points (v1.3.0 / v1.3.1 / v1.3.2 / v1.3.3 / v1.4.0 / v1.4.1) make the pattern fully load-bearing. The spec's top-to-bottom readability scales: a new reader walks the six scope sections to see what layered on, then reads the five rationale sections for the "why" of each ship.
+- **Pain-driven axis honest compensation** — projection: Pain-driven 8.5, Prose cleanliness 9.3, Best-at-date 9.2, Self-contained 9.4, Anti-Frankenstein 9.2. Average ≈ 9.12. The honest acknowledgement of weak Pain-driven is the v1.4.1 self-rating integrity anchor; forcing a false 9.0+ there would be dishonest given no user pain documented.
 
 ## Relation to the vision doc
 
