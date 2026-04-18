@@ -741,7 +741,7 @@ Changes:
 
 4. install-manifest.yaml: version 0.8.0 -> 1.4.2 + 10 new verification
    checks (rules file + templates dir + README + sota/stack subdirs + 5
-   individual template files). Total 23 checks.
+   individual template files). Total 27 checks (17 existing + 10 new).
 
 5. verification.md: 3 new scenarios S1 (personal-scope install rules
    resolution), S2 (Phase 2 R8 seed from skill-local), S3 (install-manifest
