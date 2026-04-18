@@ -2,9 +2,11 @@
 
 # Phase 0 — welcome runtime templates
 
-This file holds the runtime string templates printed by `genesis-drop-zone` during its welcome → acknowledgement → bridge flow. Dev/tooling structure around the strings stays English per R9; the strings themselves are bilingual FR + EN coauthored day 1. FR variants are printed by default in v1.3.0 — runtime locale selection is deferred to v1.3.1+.
+This file holds the runtime string templates printed by `genesis-drop-zone` during its welcome → acknowledgement → bridge flow. Dev/tooling structure around the strings stays English per R9; the strings themselves are bilingual FR + EN coauthored day 1.
 
-## FR welcome box (printed by default in v1.3.0)
+**v1.3.3 runtime locale dispatch**: each user-facing surface renders exactly one locale variant per invocation based on one of two variables — `welcome_locale` (set at skill invocation from the trigger phrase language; defaults to FR on slash) for the welcome box and zero-content re-prompt, or `content_locale` (set from extracted `langue_detectee`, with `mixte` → FR tiebreaker) for the mirror, consent card, halt message, and bridges. See `SKILL.md § "Locale dispatch (v1.3.3)"` for the full two-variable model and render-target map.
+
+## FR welcome box (rendered when `welcome_locale = FR`)
 
 ```
 ┌────────────────────────────────────────────────────────────┐
@@ -23,7 +25,7 @@ This file holds the runtime string templates printed by `genesis-drop-zone` duri
 
 Plain-ASCII FR text inside the box by design: Unicode box-drawing combines unstably with combining diacritics on some Windows code-page configurations. The bridge and context-guard redirect (below / in `SKILL.md`) keep their accents because they are plain-prose lines routed through the terminal's UTF-8-stable stream path.
 
-## EN welcome box (mirror-ready, not printed in v1.3.0)
+## EN welcome box (rendered when `welcome_locale = EN`)
 
 ```
 ┌────────────────────────────────────────────────────────────┐
@@ -40,9 +42,9 @@ Plain-ASCII FR text inside the box by design: Unicode box-drawing combines unsta
 └────────────────────────────────────────────────────────────┘
 ```
 
-## Mirror template — FR (v1.3.1, printed by default)
+## Mirror template — FR (rendered when `content_locale = FR`)
 
-Reformulates what the user dropped as a 9-row aligned-column table. Each field in the extraction schema renders as one row, revealed progressively per the Ably 2026 token-streaming pattern. FR is the default rendering in v1.3.1 (runtime locale detection deferred v1.3.2+).
+Reformulates what the user dropped as a 9-row aligned-column table. Each field in the extraction schema renders as one row, revealed progressively per the Ably 2026 token-streaming pattern. **v1.3.3**: dispatched on `content_locale` — FR variant when `content_locale = FR` (from `langue_detectee ∈ {FR, mixte}`).
 
 ```
  ◐ Je regarde et je comprends...
@@ -97,15 +99,23 @@ If the content supports multiple interpretations on a field:
 
 `a affiner` is the third null-class label alongside `a trouver ensemble` and `non mentionne(e)`.
 
-### Zero-content branch
+### Zero-content branch (v1.3.0 preserved, v1.3.3 locale-switched)
 
-If the user's response contains only the trigger phrase with no content to echo:
+If the user's response contains only the trigger phrase with no content to echo, the skill prints the zero-content re-prompt. **v1.3.3** dispatches on `welcome_locale` (content has not been extracted yet, so `content_locale` is not resolved).
+
+FR variant (rendered when `welcome_locale = FR`):
 
 ```
  Je t'écoute — dépose ou écris ce que tu veux me partager.
 ```
 
-No `◐`, no mirror, no `✓`. Skill waits for user's next turn and re-runs the mirror flow when content arrives. (v1.3.0 branch preserved unchanged.)
+EN variant (rendered when `welcome_locale = EN`, **newly-authored in v1.3.3**):
+
+```
+ I'm listening — drop or write whatever you want to share.
+```
+
+No `◐`, no mirror, no `✓`. Skill waits for user's next turn and re-runs the mirror flow when content arrives. When content eventually arrives, `content_locale` is resolved from `langue_detectee` and subsequent surfaces (mirror, consent card, halt, bridges, body echo) render in that locale — independent of `welcome_locale`.
 
 ### Unreadable-attachment branch
 
@@ -117,7 +127,7 @@ If Claude cannot read an attached file (exotic binary, oversize PDF > 32 MB × 6
 
 Extraction of the other 8 fields continues from readable content. Graceful, no error code.
 
-## Mirror template — EN (v1.3.1, mirror-ready, not printed in v1.3.1)
+## Mirror template — EN (rendered when `content_locale = EN`)
 
 ```
  ◐ I read and I understand...
@@ -171,9 +181,11 @@ For now, I've read and understood — go back to Claude Code normally.
 
 After the bridge prints, the skill exits cleanly. Control returns to the normal Claude Code conversation.
 
-## Consent card (v1.3.2 — both languages always printed)
+## Consent card (v1.3.2, v1.3.3 locale-switched)
 
-Printed between the mirror's `✓ Lu et compris.` line and the write. Gates the first Layer A concentrated privilege (writing `drop_zone_intent.md` to cwd). The `<absolute-cwd-path>` placeholder is resolved at prompt time via the runtime's current working directory — path separator follows platform convention (`\` on Windows, `/` elsewhere).
+Printed between the mirror's `✓ Lu et compris.` / `✓ Read and understood.` line and the write. Gates the first Layer A concentrated privilege (writing `drop_zone_intent.md` to cwd). The `<absolute-cwd-path>` placeholder is resolved at prompt time via the runtime's current working directory — path separator follows platform convention (`\` on Windows, `/` elsewhere). **v1.3.3 dispatch**: v1.3.2 printed both FR and EN blocks always; v1.3.3 prints only the variant matching `content_locale`.
+
+### FR variant (rendered when `content_locale = FR`)
 
 ```
 Je peux noter ton projet dans un fichier ici :
@@ -181,7 +193,11 @@ Je peux noter ton projet dans un fichier ici :
 
 Ce fichier sera le point de départ pour Claude Code la prochaine fois.
 On le garde comme ça ?  (oui pour l'écrire, non pour annuler)
+```
 
+### EN variant (rendered when `content_locale = EN`)
+
+```
 I can save your project here:
   → <absolute-cwd-path>/drop_zone_intent.md
 
@@ -201,46 +217,64 @@ Three equivalence classes on the next user turn:
 
 Plain-prose bilingual — accents allowed (`é`, `à`, `ê`, `ô`). Same UTF-8-stable stream path as the v1.3.1 bridge. The arrow marker `→` is U+2192, UTF-8-stable on both terminals. Not inside a table/box fence.
 
-## Halt message (v1.3.2 — both languages always printed)
+## Halt message (v1.3.2, v1.3.3 locale-switched)
 
-Printed **in place of** the consent card when the pre-write existence check detects a `drop_zone_intent.md` already in cwd. The skill exits clean after printing this — no overwrite, no timestamp-suffix fallback, no second consent. Matches the halt-on-leak precedent of `session-post-processor`.
+Printed **in place of** the consent card when the pre-write existence check detects a `drop_zone_intent.md` already in cwd. The skill exits clean after printing this — no overwrite, no timestamp-suffix fallback, no second consent. Matches the halt-on-leak precedent of `session-post-processor`. **v1.3.3 dispatch**: v1.3.2 printed both FR and EN blocks always; v1.3.3 prints only the variant matching `content_locale`.
+
+### FR variant (rendered when `content_locale = FR`)
 
 ```
 Un fichier `drop_zone_intent.md` existe déjà ici :
   → <absolute-cwd-path>/drop_zone_intent.md
 
 Supprime-le d'abord, ou ouvre Claude Code dans un autre dossier et relance.
+```
 
+### EN variant (rendered when `content_locale = EN`)
+
+```
 A `drop_zone_intent.md` already exists here:
   → <absolute-cwd-path>/drop_zone_intent.md
 
 Delete it first, or open Claude Code in a different folder and retry.
 ```
 
-Plain-prose bilingual, same accent discipline as the consent card.
+Plain-prose, same accent discipline as the consent card (each variant preserves accents where applicable).
 
-## Accept bridge (v1.3.2 — both languages always printed)
+## Accept bridge (v1.3.2, v1.3.3 locale-switched)
 
-Printed after a successful `drop_zone_intent.md` write. Instructs the user on the next step (type `/genesis-protocol`). Path **not repeated** — the consent card rendered above already showed the absolute path.
+Printed after a successful `drop_zone_intent.md` write. Instructs the user on the next step (type `/genesis-protocol`). Path **not repeated** — the consent card rendered above already showed the absolute path. **v1.3.3 dispatch**: v1.3.2 printed both FR and EN blocks always; v1.3.3 prints only the variant matching `content_locale`.
+
+### FR variant (rendered when `content_locale = FR`)
 
 ```
 C'est noté — tape `/genesis-protocol` quand tu es prêt pour créer
 le projet (GitHub, fichiers, mémoire) à partir de ce fichier.
+```
 
+### EN variant (rendered when `content_locale = EN`)
+
+```
 Saved — type `/genesis-protocol` when you're ready to create the
 project (GitHub, files, memory) from this file.
 ```
 
 "C'est noté" / "Saved" — past-tense, signals the write has completed. `/genesis-protocol` in backticks signals the slash-command.
 
-## Decline bridge (v1.3.2 — both languages always printed)
+## Decline bridge (v1.3.2, v1.3.3 locale-switched)
 
-Printed after the user declines the consent card (class-2 response). No write occurred; skill exits clean.
+Printed after the user declines the consent card (class-2 response). No write occurred; skill exits clean. **v1.3.3 dispatch**: v1.3.2 printed both FR and EN blocks always; v1.3.3 prints only the variant matching `content_locale`.
+
+### FR variant (rendered when `content_locale = FR`)
 
 ```
 OK, rien d'écrit. Ton idée reste dans notre échange pour l'instant.
 Relance-moi quand tu veux la poser sur disque.
+```
 
+### EN variant (rendered when `content_locale = EN`)
+
+```
 OK, nothing written. Your idea stays in our exchange for now.
 Come back whenever you want to save it to disk.
 ```

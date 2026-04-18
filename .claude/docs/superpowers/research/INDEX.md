@@ -16,6 +16,7 @@ Auto-maintained index of R8 research cache entries. Every entry has a TTL and mo
 
 | [zero-friction-bootstrap-ux](sota/zero-friction-bootstrap-ux_2026-04-16.md) | sota | 2026-04-16 | 2026-04-23 | high | v0/Bolt/Replit "one prompt" pattern, @clack/prompts wizard skeleton, Charm Gum, conversational form data (72% higher completion), progressive disclosure, cli-spinners + terminal delight |
 | [gh-cli-single-click-auth](sota/gh-cli-single-click-auth_2026-04-16.md) | sota | 2026-04-16 | 2026-04-23 | high | 4-line auth revolution: `GH_BROWSER` for profile routing, `gh auth login --web` for OAuth, `gh auth setup-git` for HTTPS, `gh repo create --source=. --push` — 6 manual steps → 1 click |
+| [v2_promptor_fusion_landscape](sota/v2_promptor_fusion_landscape_2026-04-17.md) | sota | 2026-04-17 | 2026-04-24 | high | Three-agent parallel research on drag-drop UX, document extraction, and conversational briefing patterns; primary source driving v1.3.x conversational-layer ships (welcome + mirror + extraction + Layer B handoff + runtime locale) |
 
 ## Archive
 
