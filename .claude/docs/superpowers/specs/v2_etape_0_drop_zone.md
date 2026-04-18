@@ -1,11 +1,11 @@
 <!-- SPDX-License-Identifier: MIT -->
 ---
-name: v2 Étape 0 — drop zone welcome + mirror + write + Layer B handoff (genesis-drop-zone skill)
-description: Implementation-grade spec for the LAYER A conversational front door of Genesis v2. Living spec across versions. v1.3.0 shipped welcome + token-streamed acknowledgement + bridge; v1.3.1 upgraded the acknowledgement into a 9-field structured mirror screen (in-context extraction, zero disk write, no API call); v1.3.2 added first Layer A write privilege (drop_zone_intent.md to cwd after consent) + Layer B handoff wire into genesis-protocol Phase 0; v1.3.3 wires runtime locale detection (welcome + mirror + consent card + halt + bridges + body echo switch between FR and EN via welcome_locale / content_locale variables). Citations API upgrade, programmatic handoff, and UX toolkit polish deferred to v1.3.4+.
+name: v2 Étape 0 — drop zone welcome + mirror + write + Layer B handoff + Citations (genesis-drop-zone skill)
+description: Implementation-grade spec for the LAYER A conversational front door of Genesis v2. Living spec across versions. v1.3.0 shipped welcome + token-streamed acknowledgement + bridge; v1.3.1 upgraded the acknowledgement into a 9-field structured mirror screen (in-context extraction, zero disk write, no API call); v1.3.2 added first Layer A write privilege (drop_zone_intent.md to cwd after consent) + Layer B handoff wire into genesis-protocol Phase 0; v1.3.3 wires runtime locale detection (welcome + mirror + consent card + halt + bridges + body echo switch between FR and EN via welcome_locale / content_locale variables); v1.4.0 introduces the second concentrated privilege class for genesis-drop-zone — an Anthropic API extraction call via Python subprocess with Citations enabled, producing per-field source attribution (`[page N]` / `[lines X-Y]`) rendered inline in the mirror and persisted as optional `source_citation` frontmatter entries in drop_zone_intent.md, with graceful fallback to v1.3.3 in-context extraction when ANTHROPIC_API_KEY is absent or the extractor fails. Programmatic handoff, UX toolkit polish, and completion chime deferred to v1.4.1+.
 type: spec
-target_version: v1.3.0 (welcome vertical slice) + v1.3.1 (extraction mirror) + v1.3.2 (write + Layer B handoff) + v1.3.3 (runtime locale rendering) → v1.4.0+ (full Étape 0 polish)
+target_version: v1.3.0 (welcome vertical slice) + v1.3.1 (extraction mirror) + v1.3.2 (write + Layer B handoff) + v1.3.3 (runtime locale rendering) + v1.4.0 (Citations API extraction with fallback) → v1.4.1+ (programmatic handoff + UX polish + chime)
 created_at: 2026-04-17
-updated_at: 2026-04-18 (v1.3.3 brainstorming)
+updated_at: 2026-04-18 (v1.4.0 brainstorming — Citations API + second privilege class + MINOR bump)
 originSessionId: project-genesis v1.3.0 brainstorming
 status: active
 mirrors: skills/genesis-drop-zone/SKILL.md (1:1 section-for-section across versions)
@@ -161,6 +161,51 @@ The slice was intentionally surface-only so the first MINOR bump of the v1.3.x c
 - **No Layer B ripple** — confirms narrow-scope discipline. v1.3.3 touches zero Layer B files. The only spec-level acknowledgement of Layer B lives in § "R9 language policy applied" (the `drop_zone_intent.md` body-rendering row changes from "FR hardcoded v1.3.2" to "locale-detected v1.3.3"; the frontmatter row stays "FR canonical, Layer B contract").
 - **Living spec, version-scoped sections (third application)** — extending `v2_etape_0_drop_zone.md` with a `## Scope — v1.3.3 runtime locale rendering` section preserves the canonical vein-of-truth pattern established at v1.3.1 and reinforced at v1.3.2. Readers walk the version-scoped sections top-to-bottom to see what each ship layered on.
 
+## Scope — v1.4.0 Citations API extraction
+
+### In scope
+
+1. **Second concentrated privilege class** — external Anthropic API network call. `genesis-drop-zone` previously held one privilege class (disk write, introduced v1.3.2). v1.4.0 adds **network** as an orthogonal class, declared separately in the master.md privilege map. Cross-skill-pattern #2's "at most one concentrated privilege per skill" evolves into "at most one privilege per operation class" — the skill now lists two classes with independent mitigations.
+2. **Python subprocess extractor** — new file `skills/genesis-drop-zone/scripts/extract_with_citations.py`. Invoked via `Bash` from the SKILL.md dispatch using the Python portability pattern established by `session-post-processor` (`command -v python || command -v python3 || command -v py`). The script reads drop-zone inputs (cwd + attached file paths + dropped text) on stdin / argv, calls the Anthropic Messages API with `citations: {enabled: true}` and `cache_control: {type: "ephemeral", ttl: "1h"}`, and emits the 9-field extraction schema plus per-field `source_citation` on stdout as a single JSON object.
+3. **Model selection** — default `claude-opus-4-7` per R8 `v2_promptor_fusion_landscape_2026-04-17.md § Stage 2` (Opus for extraction, Sonnet 4.6 as cost fallback). User override via environment variable `GENESIS_DROP_ZONE_MODEL=claude-sonnet-4-6` (documented in `## Citations API — signal + dispatch (v1.4.0) § Environment variables` below). No hardcoded secondary model in v1.4.0 — a single active model per invocation.
+4. **Explicit 1h cache TTL** — extractor always passes `cache_control: {type: "ephemeral", ttl: "1h"}` on the document block. Mandated by R8 § Stage 2 ("Explicit `ttl: 1h` is now mandatory — don't rely on defaults"). Never relies on the 5-minute default.
+5. **Mirror enhancement — per-field citation annotations** — when a citation is available (i.e. the source was plain text or PDF), the mirror row suffixes the value with `[page N]` (PDF) or `[lines X-Y]` (plain-text doc) in parentheses-free form. When no citation is available (image-only drop, inline-typed text with no attachment, or fallback path fired), the row renders without annotation — v1.3.3 parity. Annotation is ASCII-safe: brackets `[` `]`, digits, dash, space only.
+6. **Frontmatter schema extension** — `drop_zone_intent.md` frontmatter gains an **optional** nested key per semantic field: `<field>_source_citation` (e.g. `idea_summary_source_citation`). Structure: YAML mapping with `type` (one of `pdf_page_range`, `text_char_range`, `none`), `document_index` (integer), `start` (integer), `end` (integer), `cited_text_preview` (string ≤ 80 chars, truncated with `...`). When no citation applies, the key is **omitted** (not `null`) to keep files written by content-less / fallback paths byte-identical to v1.3.3. `schema_version` stays at `1` — the addition is purely additive and backward-compatible with Layer B's Step 0.2a parser (dict-based YAML parsers ignore unknown keys naturally).
+7. **Graceful fallback** — four conditions trigger fallback to v1.3.3 in-context extraction: (a) `ANTHROPIC_API_KEY` unset at skill dispatch; (b) extractor exit code non-zero (SDK import failure, API error, rate limit, bad input); (c) extractor exit code zero but JSON parse fails or schema validation fails; (d) extractor stderr signals a specific retry-exhausted state. On fallback, the skill runs the v1.3.3 in-context extraction path exactly as-is and renders the mirror without citation annotations. **No user-facing informational note prints** — fallback is silent. Forensic state goes to stderr via the subprocess stderr stream (harness-visible in verbose sessions, invisible in the default Victor-facing UX).
+8. **Five mitigations for the new privilege class** — bilingual pre-flight (env check at dispatch), subprocess isolation (extractor cannot mutate filesystem beyond its own stdout/stderr), explicit TTL (1h cache, never 5-min default), token-budget logging to stderr (forensic only), silent graceful fallback (no privilege escalation on failure — fallback path has zero new privileges beyond v1.3.3).
+9. **Two new fixtures** — `tests/fixtures/drop_zone_intent_fixture_v1_4_0_fr_with_citations.md` (FR body + 9 FR canonical null tokens in frontmatter + 4 `_source_citation` entries for filled fields) and `tests/fixtures/drop_zone_intent_fixture_v1_4_0_en_with_citations.md` (EN body + 9 FR canonical null tokens in frontmatter + 4 `_source_citation` entries). Both fixtures cover the schema extension for Layer B parser regression. A third fixture `tests/fixtures/drop_zone_intent_fixture_v1_4_0_fallback.md` is byte-identical to a v1.3.3 fixture — proves fallback path writes backward-compat files.
+10. **MINOR semver bump** — v1.3.3 → v1.4.0. Second privilege class (network) is qualitatively different from v1.3.2 disk; first external dependency (`ANTHROPIC_API_KEY`, Anthropic Python SDK); new subprocess surface area (Python extractor). The bump honours the structural weight of the change. Precedent for PATCH (v1.3.2 shipped the *first* privilege at PATCH) does not apply — v1.3.2 was a surface addition within an established tier-3 line; v1.4.0 crosses a tier boundary.
+
+### Out of scope (deferred to v1.4.1+)
+
+- **Layer B citation surfacing** — the `_source_citation` entries written to `drop_zone_intent.md` are persisted by Layer A in v1.4.0 but **not surfaced in Layer B's Step 0.4 intent card or Step 0.5 `bootstrap_intent.md` template**. Layer B Step 0.2a parser ignores unknown keys naturally (zero parser code change). If user pain emerges around wanting to see "Vision came from page 3 of the brief" on the Phase 0 card, v1.4.1 adds the card / bootstrap_intent.md extension additively. Zero Layer B code change in v1.4.0 preserves the v1.3.3 zero-Layer-B-ripple discipline.
+- **Files API (beta) for large PDF uploads** — v1.4.0 uses **inline base64 document blocks** within the Messages API request. The Anthropic Files API beta (header `anthropic-beta: files-api-2025-04-14`) is deferred to v1.4.1 or later. Rationale: inline base64 covers the 32 MB × 600-page PDF limit (the common Victor case); Files API pays off on repeated uploads or cross-session dedup, neither of which v1.4.0 exercises. Deferring keeps the v1.4.0 surface narrow.
+- **Image source citations** — Citations API does not produce `cited_text` for image sources (only plain text and PDF). For image-only drops, per-field `_source_citation` is omitted. No "seen in attachment name" pseudo-citation is synthesized — honest null-visible discipline applied at the citation layer (the field's value still renders, the citation is just absent).
+- **Structured Outputs (Path B)** — the v2 Promptor research documented that Structured Outputs and Citations are mutually exclusive on the same API call (400 if both set). v1.4.0 commits to **Path A (audit-first)** as recommended by R8 § Stage 2. Path B is a v2.x architectural pivot question, not a v1.4.x option.
+- **Contradictions array** — the R8 note on cross-reference prompt pattern (`"For each field, prefer transcript > brief > sketch. Flag conflicts in contradictions[]."`) is not implemented in v1.4.0. Drops are currently one-document-dominant; multi-document conflict surfacing is a v1.5+ consideration.
+- **Chain-of-Verification (CoVe) second pass** — R8 ranks Citations above CoVe as the preferred verification layer. v1.4.0 uses Citations only. CoVe is Haiku-4.5-driven, optional, and R8 recommends skipping unless evals show a specific failure class. Skip by default.
+- Programmatic handoff — auto-invoke `genesis-protocol` without the user typing the slash command. Human-in-the-loop via the accept bridge is the v1.3.2+ pattern.
+- `GH_BROWSER` profile routing wire-up.
+- UX toolkit integration (`@clack/prompts`, Charm Gum, cli-spinners).
+- Completion chime (cross-platform).
+- Error handling refinements for filesystem edge cases (permission-denied / disk-full / symlink on write) — v1.4.0 inherits the v1.3.2 floor ("write succeeds or the harness shows the stack"). API-side errors have their own fallback path per § In scope item 7; filesystem-side errors still bubble.
+- **Bilingual Layer B null-class parsing** — remains a v1.5+ target if real pain emerges.
+- **Three-locale-or-more expansion** — unchanged deferral; `welcome_locale` / `content_locale` stay FR/EN binary until a real non-FR/EN user emerges.
+
+### Rationale for v1.4.0 route
+
+- **MINOR semver is the honest tranche** — v1.3.2 shipped the first concentrated privilege (disk write) at PATCH within a surface-addition cycle. v1.4.0 crosses a qualitatively different threshold: *second* privilege class (network), first external dependency (`ANTHROPIC_API_KEY`, Anthropic Python SDK), first subprocess surface (Python extractor). Forcing PATCH masks architectural weight; MINOR is the clean signal. Running average 8.87 has 0.37 tampon above 8.5 floor — MINOR bump tolerates a slightly narrower pain-driven axis without breaching the streak.
+- **Option 2 (Python subprocess via SDK) vs option 1 (curl) vs option 3 (sub-agent)** — three archi options evaluated at session open:
+  - **curl via Bash**: rejected. Base64-encoded PDFs blow up the Windows / bash command-line length budget (typical 32 MB PDF → ~45 MB base64 → exceeds `MAX_PATH`-derived limits on Windows); shell quoting differs between bash / PowerShell / cmd (cross-OS test matrix too wide); streaming `citations_delta` parsing from curl stderr is non-trivial; secret management via env vars works but forensic logs leak risk is higher in shell than in SDK.
+  - **Python subprocess with anthropic SDK**: selected. SDK handles streaming, retries, base64 encoding, cache_control serialization, and error formatting. Precedent exists — `session-post-processor` ships `run.py` since v0.6.0 with the Python portability pattern (`command -v python || command -v python3 || command -v py`). Introduces one new dependency (`anthropic` Python package) but isolated to the drop-zone extractor script; no impact on other Genesis skills.
+  - **Sub-agent (Agent tool dispatch)**: rejected. The Citations API response-level artefact (`citations[]` with `cited_text` + `document_index` + location) is not exposed to parent context by Claude Code's Agent tool interface; sub-agents emit text, not API response metadata. Would degenerate into prompt-based CoVe (soft citations) rather than API-hard audit-trail. Does not deliver "Path A" as specified by R8.
+- **Second privilege class, not overload of the first** — master.md cross-skill-pattern #2 originally read "at most one concentrated privilege per skill". v1.4.0 refines this to "at most one per operation class". Rationale: disk write and network call are orthogonal operations with orthogonal mitigations (consent card gates disk; pre-flight env check + silent fallback gates network). Overloading one declaration with both would lose the mitigation-one-for-one discipline. The two-class declaration is the reference pattern for any future skill that needs both a disk privilege and a network privilege.
+- **Graceful fallback is silent by design** — the first UX draft considered a bilingual informational note printed before the mirror ("Source attribution unavailable — extracted in-context"). Rejected: introduces R9 noise, distracts Victor from his own content, leaks implementation detail. Citations are additive value; their absence should be invisible at the surface layer. Forensic information stays in stderr where developers can see it during integration testing.
+- **Frontmatter extension is optional-additive, not schema-version-bumping** — `drop_zone_intent.md` schema_version stays at `1`. Layer B's Step 0.2a parser is dict-based YAML parsing — unknown keys are ignored naturally. Bumping schema_version to 2 would force Layer B into a version-branching parser and introduce a real Layer B code change for no semantic value. The "additive and silent" discipline preserves v1.3.3's zero-Layer-B-ripple pattern one version further.
+- **Key omission beats explicit null** — for fields without a citation, the `_source_citation` key is **omitted** from the frontmatter, not written as `null`. Rationale: fallback-path files (no API extraction ran) and API-path files with image-only drops become byte-identical to v1.3.3 files in the null case. Diff noise is minimized; regression on v1.3.3 fixtures by v1.4.0 extractor in fallback mode is literally zero bytes changed. Layer B never sees "citation layer opted in but empty" — the key's presence *is* the signal.
+- **`tests/fixtures/` gains three files, not two** — the extra `_fallback.md` fixture is the explicit regression probe for the fallback-path byte-identity claim above. Without the fallback fixture, a reader has to infer the zero-diff invariant; with it, the property is assertible via `diff`.
+- **Living spec, version-scoped sections (fourth application)** — extending `v2_etape_0_drop_zone.md` with a `## Scope — v1.4.0 Citations API extraction` section preserves the canonical vein-of-truth pattern established at v1.3.1 and reinforced at v1.3.2 / v1.3.3. The version history walks top-to-bottom; readers see what each ship layered on without scavenging commit history.
+
 ## Trigger evaluation gate
 
 The skill is invoked in two ways:
@@ -253,6 +298,129 @@ If the user's first response to the welcome box contains only the trigger phrase
 ### What happens in the modification-loop branch (v1.3.2 consent card)
 
 When the user replies to the consent card with a modification (`garde Type en boulangerie`), the skill re-runs the 9-field extraction with the correction, re-renders the mirror, and re-prints the consent card. `content_locale` is re-evaluated on each extraction; if the correction shifts `langue_detectee`, subsequent surfaces switch locale. Convergence is on the next affirmative or negative response.
+
+## Citations API — signal + dispatch (v1.4.0)
+
+v1.4.0 introduces an optional API-powered extraction path that augments the v1.3.1 in-context extraction with per-field source attribution (`[page N]` for PDF, `[lines X-Y]` for plain-text documents). The path is layered on top of the v1.3.3 locale dispatch — locale and citation are independent concerns, and both flow through the same `phase-0-welcome.md` mirror template.
+
+### Dispatch lifecycle
+
+The skill evaluates **three gates** in order at skill entry (before the welcome box prints):
+
+1. **`is_fresh_context`** — unchanged from v1.3.0 (see § "Trigger evaluation gate"). Controls whether the welcome prints at all.
+2. **`welcome_locale`** — unchanged from v1.3.3 (see § "Runtime locale — signal + dispatch (v1.3.3)"). Controls welcome and zero-content re-prompt rendering.
+3. **`api_extraction_available`** (new in v1.4.0) — a boolean resolved by checking `ANTHROPIC_API_KEY` in the environment at skill dispatch. If unset or empty, the flag is `false` and the skill commits to the v1.3.3 in-context extraction path for the rest of the session. If set, the flag is `true` and the skill commits to the API extraction path subject to runtime error fallback (§ "Fallback triggers" below).
+
+The gate is evaluated **once** at skill entry and is immutable for the session. Rationale: mid-session environment changes are out-of-scope for a conversational skill — the session's energy is committed at entry.
+
+### Python extractor — invocation contract
+
+**Script path**: `skills/genesis-drop-zone/scripts/extract_with_citations.py`
+
+**Runtime**: resolved via the session-post-processor portability pattern at SKILL.md dispatch time:
+
+```bash
+PYTHON=$(command -v python || command -v python3 || command -v py)
+```
+
+If no Python is found on `$PATH`, `api_extraction_available` collapses to `false` at the subprocess launch attempt (pre-flight at skill entry checks env key only, not Python presence — the runtime check happens at the call site and triggers the same fallback).
+
+**Input contract**: the SKILL.md dispatch passes the drop-zone content on the extractor's stdin as a single JSON object with these keys:
+
+| Key | Type | Description |
+|---|---|---|
+| `cwd` | string | Absolute path of the session cwd. Used only for resolving relative attachment paths. Not written to. |
+| `attachments` | array of strings | Absolute or cwd-relative paths of files the user dropped (PDFs, text documents, images). Empty array when no attachments. |
+| `typed_text` | string | The user's inline typed content from the first content turn. Empty string if user only attached files. |
+| `content_locale_hint` | string | `FR`, `EN`, or `mixte` — the *pre-v1.4.0 in-context best guess* at `langue_detectee`, passed as hint only. The extractor performs its own detection and may override. |
+| `model` | string | Model ID to invoke. Default `claude-opus-4-7`. Overridable via `GENESIS_DROP_ZONE_MODEL` env var (see § Environment variables). |
+
+**Output contract (success, exit code 0)**: single JSON object on stdout, UTF-8, with exactly these keys:
+
+| Key | Type | Description |
+|---|---|---|
+| `schema_version` | integer | Constant `1` (matches `drop_zone_intent.md` frontmatter `schema_version`). |
+| `idea_summary` | string | 9-field extraction output. |
+| `pour_qui` | string | 9-field extraction output. |
+| `type` | string | 9-field extraction output. |
+| `nom` | string | 9-field extraction output. |
+| `attaches` | string | Mirror `Depose` row verbatim — truncated display, may include `+ N autres`. |
+| `langue_detectee` | string | `FR`, `EN`, or `mixte`. |
+| `budget_ou_contrainte` | string | 9-field extraction output. |
+| `prive_ou_public` | string | 9-field extraction output. |
+| `hints_techniques` | string | 9-field extraction output. |
+| `<field>_source_citation` | object or omitted | Per-field citation (see § Citation object shape). Omitted (not null) when no citation applies. |
+| `usage` | object | Token usage mirror (`input_tokens`, `cache_read_input_tokens`, `cache_creation_input_tokens`, `output_tokens`). Informational; SKILL.md dispatch may log to stderr for forensic trail. |
+
+Null-class strings for extracted fields (`"a trouver ensemble"`, `"non mentionne"`, `"non mentionnee"`, `"a affiner — X ou Y"`) follow the v1.3.3 FR canonical contract — the extractor prompt mandates FR canonical regardless of `content_locale_hint`, preserving the Layer B data contract documented in § "Frontmatter data contract unchanged".
+
+**Output contract (failure)**: the extractor emits nothing on stdout and writes a human-readable diagnostic to stderr. Exit codes:
+
+| Exit | Meaning | SKILL.md response |
+|---|---|---|
+| `0` | Success; valid JSON on stdout. | Parse JSON, proceed with citation-annotated mirror. |
+| `2` | `ANTHROPIC_API_KEY` unset at subprocess runtime (rare — pre-flight at skill entry usually catches this). | Fallback to in-context extraction. |
+| `3` | SDK import error (Python `anthropic` package not installed). | Fallback. |
+| `4` | API error (4xx / 5xx not 429) — bad request, invalid model, auth failure. | Fallback. |
+| `5` | Rate limit (429) — the subprocess handled SDK retries and exhausted the budget. | Fallback. |
+| `6` | Bad input (malformed JSON on stdin, missing required key). | Fallback. Should never happen in practice — SKILL.md dispatch controls the input shape. |
+| `7` | Output JSON shape invalid (post-API schema check failed). | Fallback. |
+| any other | Unknown error. | Fallback. |
+
+All fallback paths are **silent to the user**. The skill renders the v1.3.3 in-context mirror with no visible indication that the API path was attempted. Forensic state is subprocess stderr; the SKILL.md dispatch copies stderr to the harness-visible stderr for developer inspection in verbose sessions.
+
+### Fallback triggers
+
+The SKILL.md dispatch commits to the fallback path under any of:
+
+1. `api_extraction_available` is `false` at skill entry (pre-flight env check negative).
+2. Python runtime unresolvable at subprocess launch.
+3. Subprocess exit code ≠ 0.
+4. Subprocess exit code `0` but stdout is not valid UTF-8 JSON, or is JSON but fails the output-shape check (missing required keys, wrong types).
+
+The fallback path is exactly v1.3.3's in-context extraction — no conditional branching, no "degraded citation" mode, no visible difference in the mirror beyond the absence of `[page N]` / `[lines X-Y]` annotations.
+
+### Citation object shape
+
+Per-field citation when available (attached text or PDF, and the API returned a citation for the field):
+
+```yaml
+idea_summary_source_citation:
+  type: pdf_page_range      # pdf_page_range | text_char_range
+  document_index: 0          # zero-based index into the extractor's `documents` array
+  start: 1                   # 1-indexed page for PDF; 0-indexed char offset for text
+  end: 1                     # inclusive
+  cited_text_preview: "boulangerie artisanale avec livraison matin frais..."  # <= 80 chars + ellipsis if truncated
+```
+
+Rendered in the mirror as:
+
+```
+   Idee          boulangerie artisanale pour livraison matin [page 1]
+```
+
+For `text_char_range` citations, the annotation becomes `[lines X-Y]` where `X` and `Y` are derived from the `start` / `end` character offsets via `\n` counting (1-indexed, inclusive). Image-only drops never produce citations — the field renders without annotation.
+
+**Truncation rule interaction with citations**: the mirror truncation rule (row value ≤ 60 chars after the label, truncate at 57 + `...`) applies to the value *before* the annotation. The annotation adds 8–14 characters and may push the row over 60 chars — this is the only exception to the truncation rule. Rationale: truncating the annotation would hide the audit-trail, which is the whole point of v1.4.0. Annotated rows may reach 75 characters in the worst case; still fits within 80-col terminals.
+
+### Environment variables
+
+| Variable | Default | Effect |
+|---|---|---|
+| `ANTHROPIC_API_KEY` | unset → fallback | Presence unlocks API extraction. |
+| `GENESIS_DROP_ZONE_MODEL` | `claude-opus-4-7` | Override active model. Accepts any Messages-API-compatible model ID. No validation beyond SDK's own. |
+| `GENESIS_DROP_ZONE_CACHE_TTL` | `1h` | Override cache TTL. Accepts `5m` or `1h` per Anthropic's cache TTL grammar. Never defaulted to `5m` by omission (R8 § Stage 2 mandate). |
+| `GENESIS_DROP_ZONE_VERBOSE` | unset | If set to `1`, the extractor emits detailed stderr tracing (token counts per phase, retry attempts, cache hit/miss). Default is minimal stderr (one line per call). |
+
+### Interaction with the modification loop
+
+When the user replies to the consent card with a modification, the skill re-runs the 9-field extraction. v1.4.0 re-invokes the extractor subprocess on each modification loop iteration — **citations are re-computed**. Cache is a significant economy here: the document block stays in the 1h TTL cache across iterations; only the extraction text prompt varies. Typical modification-loop re-run costs ~0.1× of the first call per R8 § Stage 2 cache economics.
+
+If `api_extraction_available` flipped `false` mid-session (e.g. user revoked the env var externally — out-of-scope but possible), the subprocess would hit exit code `2` and the modification loop would complete via fallback. The re-print consent card would not indicate the path change.
+
+### Zero Layer B ripple preserved
+
+As with v1.3.3, v1.4.0 touches **zero Layer B files**. The Layer B Step 0.2a parser (dict-based YAML parsing) silently ignores the new `<field>_source_citation` keys when the v1.4.0 extension is written into `drop_zone_intent.md`. Layer B v1.4.1+ may add card / template surfacing of the citations additively, but v1.4.0 itself guarantees byte-level backward compatibility on the fallback path (fallback produces v1.3.3-identical files) and semantic backward compatibility on the API path (additional keys, no removed keys, no schema_version bump).
 
 ## Welcome body — FR primary + EN mirror
 
@@ -901,15 +1069,23 @@ This pattern is load-bearing for the v2 conversational surface. Future sessions 
 
 ## Concentrated privilege declaration
 
-Per master.md's concentrated-privilege map discipline (cross-skill-pattern #2): every Genesis skill has **at most one** concentrated privilege — one operation that writes outside its own scope or touches something the user cannot easily undo.
+Per master.md's concentrated-privilege map discipline (cross-skill-pattern #2): every Genesis skill has **at most one concentrated privilege per operation class** (refinement introduced in v1.4.0 — previously "at most one concentrated privilege per skill"; see § "v1.4.0 refinement to cross-skill-pattern #2" below).
 
-**`genesis-drop-zone` in v1.3.0: none.**
-**`genesis-drop-zone` in v1.3.1: still `none`.**
-**`genesis-drop-zone` in v1.3.2: writes `drop_zone_intent.md` to cwd after the user accepts a bilingual consent card, halt-on-existing, no `mkdir`, no path resolution beyond cwd.**
+**`genesis-drop-zone` across versions**:
+
+| Version | Disk class | Network class |
+|---|---|---|
+| v1.3.0 | `none` | `none` |
+| v1.3.1 | `none` | `none` |
+| v1.3.2 | writes `drop_zone_intent.md` to cwd after consent, halt-on-existing, no `mkdir` | `none` |
+| v1.3.3 | unchanged from v1.3.2 (runtime locale dispatch only) | `none` |
+| **v1.4.0** | **unchanged from v1.3.2** (additive frontmatter keys only; same write, same halt, same path) | **subprocess → Anthropic Messages API for Citations extraction, pre-flight env check, silent graceful fallback, 1h cache TTL explicit** |
 
 Precedent for v1.3.0 / v1.3.1: `journal-system` declared `none` in the map. The welcome + acknowledgement + bridge slice writes nothing, runs no subprocess, makes no network call. Claude reads user-attached files via its native multimodal context — that is a harness-level capability, not a skill privilege. v1.3.1 extended acknowledgement into a structured 9-field mirror via the same in-context multimodal path — no disk write, no subprocess, no network call, no Anthropic API invocation.
 
-v1.3.2 breaks that `none` streak with the minimum viable concentrated privilege — **one file, one path, one operation**. Mitigations:
+### Disk class mitigations (unchanged since v1.3.2)
+
+v1.3.2 broke the `none` streak with the minimum viable concentrated privilege — **one file, one path, one operation**. Mitigations remain the canonical five:
 
 - **Bilingual consent card** (§ "Consent card — template + flow") is the single gate. The user sees the absolute target path with an arrow marker before any write can proceed. Modifications route back through mirror re-render + consent re-print, never through silent field changes.
 - **Halt-on-existing** (§ "Halt branch — file already exists") covers the only unexpected state — an existing `drop_zone_intent.md` at cwd. Halt + remediation, never overwrite, never timestamp-suffix fallback, never second consent for the destructive path.
@@ -917,9 +1093,34 @@ v1.3.2 breaks that `none` streak with the minimum viable concentrated privilege 
 - **Atomic write pattern** — temp file + rename, post-write size verification, failure surfaces bilingually without half-written remnants.
 - **Match pepite-flagging's per-target consent floor** — this precedent was already set for Layer A privileges in the master.md map. v1.3.2 honours it on the first real Layer A write.
 
-This declaration is the **precedent that all future Étape 1 / Étape 2 / Étape 3 Layer A privileges will be measured against**. Widening the privilege surface in a later ship (subdir writes, `mkdir`, multi-file writes, API calls) requires the same pattern — declare privilege for code that exists, never speculate, always carry mitigations one-for-one with the privilege.
+This declaration is the **precedent that all future Étape 1 / Étape 2 / Étape 3 Layer A privileges will be measured against**. Widening the privilege surface in a later ship (subdir writes, `mkdir`, multi-file writes) requires the same pattern — declare privilege for code that exists, never speculate, always carry mitigations one-for-one with the privilege.
 
-**Forward note (non-binding)**: v1.3.3+ may add a second privilege to `genesis-drop-zone` — an external Anthropic API call for Path A Citations extraction (audit-trail via `cited_text` + `document_index`). That would be a different privilege class from v1.3.2's write (network rather than disk), so the map entry would extend to list both. Cross-skill-pattern #2's "at most one" convention is about privilege *operations per skill*; a second privilege with a distinct class and its own mitigation is acceptable if the anti-Frankenstein gate clears. The decision to add it or defer further is made when the downstream reader for API-hard citations surfaces.
+### Network class mitigations (new in v1.4.0)
+
+v1.4.0 adds the second privilege class — an external Anthropic API call via Python subprocess. The class is orthogonal to the disk class: different operation surface (network, not filesystem), different failure modes (network errors, rate limits, billing), different consent model (silent opt-in via `ANTHROPIC_API_KEY` presence, silent fallback on absence). The five mitigations ship one-for-one with the privilege:
+
+- **Pre-flight env check at skill entry** — `ANTHROPIC_API_KEY` unset → skill commits to the v1.3.3 in-context extraction path before the welcome box prints. No subprocess launch, no network call, no privilege actually exercised. `api_extraction_available = false` for the rest of the session. See § "Citations API — signal + dispatch (v1.4.0) / Dispatch lifecycle".
+- **Subprocess isolation** — the extractor runs as a separate Python process. It cannot mutate the session filesystem beyond its own stdout/stderr streams; the SKILL.md dispatch is the only place where the subprocess output is read, validated, and consumed. If the subprocess misbehaves (bad JSON, invalid schema), the output is discarded and fallback fires.
+- **Explicit 1h cache TTL always** — the extractor hardcodes `cache_control: {type: "ephemeral", ttl: "1h"}` on the document block per R8 § Stage 2 mandate. The env override `GENESIS_DROP_ZONE_CACHE_TTL` accepts `5m` or `1h`; the SDK default (5-minute) is never reached by omission.
+- **Token-budget logging to stderr** — every successful extraction logs `input_tokens`, `cache_read_input_tokens`, `cache_creation_input_tokens`, `output_tokens` as a single stderr line (with `GENESIS_DROP_ZONE_VERBOSE=1` enabling full per-phase tracing). Forensic only — invisible to the Victor-facing UX, visible to developers during integration testing and cost-trending.
+- **Silent graceful fallback** — any fallback trigger (env unset, Python unresolvable, subprocess exit ≠ 0, stdout not valid JSON, schema check fails) commits to the v1.3.3 in-context extraction path. The mirror renders v1.3.3-identical output (no `[page N]` / `[lines X-Y]` annotations). No user-facing informational note prints. The privilege never escalates on failure — fallback inherits zero new privileges beyond v1.3.3.
+
+### v1.4.0 refinement to cross-skill-pattern #2
+
+Pre-v1.4.0 read: *"at most one concentrated privilege per skill"*. The v1.3.2 → v1.4.0 trajectory revealed an edge the original formulation did not handle: a single skill can legitimately need **operations from different classes** (disk write AND network call), each with its own independent consent model and mitigations.
+
+Refinement: *"at most one concentrated privilege per operation class, per skill"*. A class is a coarse category of privilege operations: `disk` (any write outside the skill's own scope), `network` (any external HTTP/API call), `subprocess` (any fork/exec outside the harness), `user-input` (any interactive prompt that changes external state on response), etc.
+
+Multi-class privilege declarations are acceptable when each class:
+
+1. Ships with its own consent model (explicit like v1.3.2's bilingual card, or implicit like v1.4.0's env presence + silent fallback).
+2. Carries its own five mitigations, one-for-one with the privilege operation.
+3. Is independently disableable (the user can opt out of one class without losing the other — v1.4.0 users without `ANTHROPIC_API_KEY` still get v1.3.2 disk writes intact).
+4. Has its own failure mode that never escalates privilege on the other class.
+
+The v1.3.3 / v1.4.0 `## Concentrated privilege` tracking in SKILL.md now renders as a per-class table rather than a single paragraph. master.md's cross-skill-pattern #2 map carries the updated formulation.
+
+This declaration is the **precedent that any future multi-class privilege in Genesis will be measured against**. A hypothetical Étape 2 skill that needs both a disk write (save a refined brief) and a network call (invoke an external code-generator API) would declare both classes explicitly with their own gates and mitigations, not collapse them into one. Anti-Frankenstein gate stays tight: a skill that accretes a third class should trigger a hard review — at that point the skill probably needs splitting.
 
 ## 1:1 mirror map with SKILL.md
 
@@ -932,7 +1133,9 @@ Cross-skill-pattern #1: when a skill is a faithful implementation of a canonical
 | Scope — v1.3.1 extraction | `## Scope / In scope (v1.3.1)` sub-block (in/out bullets, copied verbatim) | Mirrored |
 | Scope — v1.3.2 write + Layer B handoff | `## Scope / In scope (v1.3.2)` sub-block (in/out bullets, copied verbatim) | Mirrored |
 | Scope — v1.3.3 runtime locale rendering | `## Scope / In scope (v1.3.3)` sub-block (in/out bullets, copied verbatim) | Mirrored |
+| Scope — v1.4.0 Citations API extraction | `## Scope / In scope (v1.4.0)` sub-block (in/out bullets, copied verbatim) | Mirrored |
 | Runtime locale — signal + dispatch (v1.3.3) | `## Locale dispatch (v1.3.3)` (two-variable table + render-target map) | Mirrored |
+| Citations API — signal + dispatch (v1.4.0) | `## Citations API dispatch (v1.4.0)` (three-gate lifecycle + extractor contract + fallback triggers + env vars) | Mirrored |
 | Trigger evaluation gate | `## Trigger` + `## Context guard` (two sections in SKILL.md for dispatch clarity) | Mirrored |
 | Welcome body | `## Phase 0 — welcome` with pointer to `phase-0-welcome.md` (no duplicated template text in SKILL.md) | Mirrored (pointer) |
 | Mirror screen — template & reveal | `## Phase 0 — mirror` (pattern description only; full template lives in `phase-0-welcome.md`) | Mirrored (pattern) |
@@ -944,8 +1147,8 @@ Cross-skill-pattern #1: when a skill is a faithful implementation of a canonical
 | Halt branch — file already exists (v1.3.2) | `## Phase 0 — halt branch` with pointer to `phase-0-welcome.md § Halt message (v1.3.2)` | Mirrored (pointer) |
 | Bridge messages — accept and decline (v1.3.2) | `## Phase 0 — bridges (v1.3.2)` with pointer to `phase-0-welcome.md § Accept/Decline bridges (v1.3.2)` | Mirrored (pointer) |
 | Layer B integration — genesis-protocol Phase 0 (v1.3.2) | `## Phase 0 — handoff to genesis-protocol` (precedence rule + field mapping + forward note) | Mirrored (precedence + mapping) |
-| Concentrated privilege declaration | `## Concentrated privilege` (verbatim v1.3.0 none + v1.3.1 none + v1.3.2 write declaration + mitigations) | Mirrored |
-| Deferred to v1.3.4+ | `## Deferred scope` (verbatim bullet list, updated) | Mirrored |
+| Concentrated privilege declaration | `## Concentrated privilege` (per-class table v1.3.0-v1.4.0 + disk-class mitigations + network-class mitigations + cross-skill-pattern #2 refinement) | Mirrored |
+| Deferred to v1.4.1+ | `## Deferred scope` (verbatim bullet list, updated) | Mirrored |
 | Problem statement | — | **Spec-only** (design rationale) |
 | UX canon backing | — | **Spec-only** (design rationale) |
 | R9 language policy applied | — | **Spec-only** (tier map across artefacts, dev-internal) |
@@ -955,6 +1158,7 @@ Cross-skill-pattern #1: when a skill is a faithful implementation of a canonical
 | Rationale for v1.3.1 route | — | **Spec-only** (design decision log) |
 | Rationale for v1.3.2 route | — | **Spec-only** (design decision log) |
 | Rationale for v1.3.3 route | — | **Spec-only** (design decision log) |
+| Rationale for v1.4.0 route | — | **Spec-only** (design decision log) |
 
 Rule of thumb for the drift-check gate: **every row tagged `Mirrored` must show section-for-section correspondence; every row tagged `Spec-only` is an expected asymmetry** and is not flagged during review. SKILL.md is the dispatch surface; spec is the design record.
 
@@ -996,18 +1200,34 @@ The v1.3.2 `drop_zone_intent.md` file introduces a **new tier blending**: the fr
 
 **v1.3.3 refinement to the tier blending**: the body is now locale-detected (body = FR when content is FR, EN when content is EN) while the frontmatter **null-class tokens** stay FR canonical regardless of `content_locale`. This split (body = locale-detected human echo; frontmatter = FR canonical data contract) is intentional: the frontmatter contract is parsed by Layer B, and a stable FR canonical token set means Layer B does not grow a bilingual parsing branch. Bilingual frontmatter null-class tokens are a v1.4+ consideration if a concrete pain point emerges. Extracted user strings in the frontmatter (e.g. `idea_summary`) naturally follow the user's language — they echo what the user wrote. Only the three synthetic null-class strings are normatively FR canonical.
 
-## Deferred to v1.3.4+
+**v1.4.0 additions to the tier table** (additive to the v1.3.3 rows above):
 
-Ordered by rough priority, non-binding, revisit at each session boundary. Items closed across the v1.3.x cycle so far: the `bootstrap_intent.md` file write and Layer B handoff (both closed in v1.3.2), and **runtime locale detection** (closed in v1.3.3 — welcome + mirror + consent card + halt + bridges + body prose + body mirror echo all dispatch on `welcome_locale` / `content_locale`). This list reflects what remains.
+| Artefact | Tier | Language |
+|---|---|---|
+| `skills/genesis-drop-zone/scripts/extract_with_citations.py` — code, comments, docstrings, log lines | Dev-layer Python runtime | English only (snake_case, standard R9 tier-1) |
+| Extraction prompt string inside `extract_with_citations.py` (the system / user text sent to the API) | Dev-layer prompt — not shown to Victor | English only. The prompt instructs the API to respect the null-class FR canonical tokens in its output strings, but the prompt *text* is English. |
+| Subprocess stderr logs (token usage lines, error diagnostics) | Forensic / developer-facing | English only (never rendered to Victor). |
+| Citation annotations in the mirror (`[page N]`, `[lines X-Y]`) | User-facing runtime | Language-neutral ASCII — brackets + digits + dash. No FR/EN branching. |
+| `drop_zone_intent.md` frontmatter `<field>_source_citation` nested keys | Dev-layer data contract | English keys (`type`, `document_index`, `start`, `end`, `cited_text_preview`); `cited_text_preview` value echoes source text verbatim (any language). |
 
-1. **Path A Citations upgrade** — replace v1.3.1's in-context extraction with an Anthropic API call enabling `citations: {enabled: true}` per `document` block. Surfaces `cited_text` + `document_index` for each extracted field, so the mirror can optionally show source attribution (`[page 1 du brief]`) with API-hard traceability. Introduces the first "external API call" privilege for `genesis-drop-zone` (a second privilege class on top of v1.3.2's disk write, with its own mitigations — `ANTHROPIC_API_KEY` presence check, token-budget awareness, graceful fallback to in-context extraction). Downstream reader is now in place as of v1.3.2 so the privilege ship is no longer speculative. **v1.3.4 candidate.**
-2. **Programmatic handoff** — auto-invoke `genesis-protocol` without the user typing `/genesis-protocol` after the accept bridge. Requires a harness-level skill-to-skill invocation mechanism that is not 2026-04 Claude Code ready. Human-in-the-loop via the accept bridge's instruction is the v1.3.2 pattern; the programmatic path can ship when the harness supports it without changing the bridge text semantics.
-3. `GH_BROWSER` profile routing wire-up — read Chrome profile map from Layer 0, export `GH_BROWSER` before any `gh` invocation in the downstream LAYER B.
-4. UX toolkit integration — `@clack/prompts` structural skeleton, Charm Gum for select prompts, cli-spinners for the `◐` animation.
-5. Completion chime (cross-platform) — macOS `afplay`, Windows `[console]::beep`, Linux `paplay`. Honours the "rising interval" convention per vision doc § "The sound of Genesis".
-6. Error handling refinements — permission-denied / disk-full / symlink-pointing-to-directory edge cases currently let `OSError` bubble up naturally. v1.3.4+ adds halt + remediation if any of these produces real user pain in v1.3.2–1.3.3 usage. v1.3.2's floor is "write succeeds or harness shows the stack".
-7. **Bilingual Layer B null-class parsing** — if `drop_zone_intent.md` frontmatter null-class tokens ever carry EN canonical variants alongside FR canonical, Layer B's Step 0.2a parser grows a bilingual branch. **v1.4+** target, not v1.3.x.
-8. **Three-locale-or-more expansion** — if Genesis ships beyond FR + EN (e.g. ES, DE), `welcome_locale` and `content_locale` become n-way enums. Minor, deferred until a real non-FR/EN user emerges.
+The Python extractor stays entirely English because it is developer-facing code — its strings never reach Victor's terminal directly. Citation annotations in the mirror are language-neutral by design (brackets + digits are universal) so `content_locale` dispatch does not branch them.
+
+## Deferred to v1.4.1+
+
+Ordered by rough priority, non-binding, revisit at each session boundary. Items closed across the v1.3.x / v1.4.0 cycle so far: the `bootstrap_intent.md` file write and Layer B handoff (both closed in v1.3.2); **runtime locale detection** (closed in v1.3.3 — welcome + mirror + consent card + halt + bridges + body prose + body mirror echo all dispatch on `welcome_locale` / `content_locale`); **Path A Citations API extraction** (closed in v1.4.0 — second privilege class with graceful fallback, `source_citation` frontmatter extension, mirror annotations). This list reflects what remains.
+
+1. **Layer B citation surfacing** — Layer B Step 0.4 intent card and Step 0.5 `bootstrap_intent.md` template could optionally display the citation annotations alongside the parsed fields ("Vision: ... [page 3 of the brief]"). v1.4.0 writes the citations into `drop_zone_intent.md` but Layer B does not render them. Ship v1.4.1 when / if user pain emerges around wanting the audit-trail visible on the Phase 0 card.
+2. **Files API (beta) adoption** — v1.4.0 uses inline base64 document blocks. The Anthropic Files API beta (`anthropic-beta: files-api-2025-04-14`) enables dedup across sessions and larger file limits. Useful for users who drop the same brief multiple times or exceed the 32 MB × 600-page inline limit. Ship when a concrete user hits the limit or the cost trend justifies the complexity.
+3. **Programmatic handoff** — auto-invoke `genesis-protocol` without the user typing `/genesis-protocol` after the accept bridge. Requires a harness-level skill-to-skill invocation mechanism that is not 2026-04 Claude Code ready. Human-in-the-loop via the accept bridge's instruction is the v1.3.2 pattern; the programmatic path can ship when the harness supports it without changing the bridge text semantics.
+4. `GH_BROWSER` profile routing wire-up — read Chrome profile map from Layer 0, export `GH_BROWSER` before any `gh` invocation in the downstream LAYER B.
+5. UX toolkit integration — `@clack/prompts` structural skeleton, Charm Gum for select prompts, cli-spinners for the `◐` animation. With R9 closed (v1.3.3) and citations shipped (v1.4.0), the surface is complete — polish can land without re-fragmenting it.
+6. Completion chime (cross-platform) — macOS `afplay`, Windows `[console]::beep`, Linux `paplay`. Honours the "rising interval" convention per vision doc § "The sound of Genesis".
+7. Error handling refinements — permission-denied / disk-full / symlink-pointing-to-directory edge cases currently let `OSError` bubble up naturally. v1.4.1+ adds halt + remediation if any of these produces real user pain in v1.3.2–1.4.0 usage. v1.3.2's floor is "write succeeds or harness shows the stack".
+8. **Contradictions surfacing** — when multiple documents dropped, cross-reference conflicts could populate a `contradictions[]` array (per R8 Stage 2 recommendation). v1.5+ if multi-document drops become common.
+9. **Chain-of-Verification (CoVe) second pass** — Haiku 4.5 verification of Citations output. R8 ranks Citations above CoVe and recommends skipping unless evals show failure. Skip until evals demand.
+10. **Bilingual Layer B null-class parsing** — if `drop_zone_intent.md` frontmatter null-class tokens ever carry EN canonical variants alongside FR canonical, Layer B's Step 0.2a parser grows a bilingual branch. v1.5+ target.
+11. **Three-locale-or-more expansion** — if Genesis ships beyond FR + EN (e.g. ES, DE), `welcome_locale` and `content_locale` become n-way enums. Minor, deferred until a real non-FR/EN user emerges.
+12. **Structured Outputs (Path B) alternative** — v2 architectural pivot question. Would require dropping Citations (API incompatibility). Not considered until Path A evals expose a concrete shortfall.
 
 ## References (R8 inline citations consolidated)
 
@@ -1025,6 +1245,11 @@ External sources cited (resolved inside the R8 entry above):
 - MIT Technology Review 2026-04-15 "Building trust in the AI era with privacy-led UX" — relationship-language privacy framing.
 - Ably "Token streaming for AI UX" 2026 — SSE token-streaming pattern for loading state transformation.
 - Anthropic Claude API docs — Files API (beta header `files-api-2025-04-14`), PDF support (32 MB, 600 pages/req).
+- Anthropic Messages API docs — Citations (`citations: {enabled: true}` per document block, `cited_text` not billed, streams via `citations_delta`), Prompt Caching (explicit `cache_control: {type: "ephemeral", ttl: "1h"}` required since the March 2026 default-TTL tightening).
+
+### New R8 stack entry required for v1.4.0 ship
+
+`anthropic-python` SDK version pin — `stack/anthropic-python_2026-04-18.md` (TTL 1 day per stack convention). The v1.4.0 extractor takes a dependency on the `anthropic` Python SDK's Messages API + cache_control + Citations surface. Pinning the version at ship time (and refreshing the stack entry at each session open per R8) guards against upstream breaking changes. Documented as a ship-blocker check in the plan.
 
 ## Verification scenarios
 
@@ -1085,14 +1310,36 @@ All v1.3.0 + v1.3.1 regression guarantees preserved. The v1.3.2 Layer B parser s
 | 26 | R9 audit of v1.3.3 additions — grep `phase-0-welcome.md` for the newly-authored EN zero-content re-prompt `I'm listening — drop or write whatever you want to share.`. | Exact EN string present exactly once. FR companion `Je t'écoute — dépose ou écris ce que tu veux me partager.` still present exactly once. |
 | 27 | Layer B regression — run Step 0.2a against the EN fixture from #25 (frontmatter has FR canonical null tokens alongside EN body). | Parser succeeds unchanged from v1.3.2 behaviour. Null-class detection matches on `"a trouver ensemble"`, `"non mentionne"`, `"non mentionnee"`, `"a affiner — ..."` exactly as before. Body content is cosmetic — not parsed by Layer B. Confirms v1.3.3 zero-Layer-B-ripple. |
 
+### v1.3.3 regression set for v1.4.0
+
+All v1.3.0 + v1.3.1 + v1.3.2 regression guarantees preserved. v1.4.0 does not touch any of the locale dispatch surfaces or the v1.3.2 write flow — the extraction *source* changes (API vs in-context) but the mirror template / consent card / halt / bridges / body render pipeline is untouched. Scenarios #20-#27 remain valid regression probes. The v1.3.3 fixture `drop_zone_intent_fixture_v1_3_3_en.md` stays byte-identical to what v1.4.0 writes on the fallback path (no API key, or API failure), verified directly by scenario #31 below.
+
+### v1.4.0 new scenarios
+
+| # | Scenario | Expected |
+|---|---|---|
+| 28 | Fresh empty dir, `ANTHROPIC_API_KEY` set, user drops a PDF brief. | Pre-flight at skill entry sets `api_extraction_available = true`. Python subprocess launches after the mirror trigger. Subprocess exits 0 with valid JSON on stdout. Mirror renders 9 rows with `[page N]` annotations on fields that received PDF-sourced citations (typical: `idea_summary`, `type`, `pour_qui`, maybe `budget_ou_contrainte`). Rows without citations render v1.3.3-identical (no annotation). Consent card prints in `content_locale`. On accept, `drop_zone_intent.md` is written with optional `<field>_source_citation` nested keys populated per § "Citation object shape". Accept bridge prints. |
+| 29 | Fresh empty dir, `ANTHROPIC_API_KEY` unset, user drops a PDF brief. | Pre-flight at skill entry sets `api_extraction_available = false`. No subprocess launch. Skill runs v1.3.3 in-context extraction path exactly. Mirror renders 9 rows with NO annotations on any row (v1.3.3 parity). No user-facing note indicates the fallback fired. `drop_zone_intent.md` is written with NO `_source_citation` keys — byte-identical to a v1.3.3 fixture. Verified by `diff drop_zone_intent.md tests/fixtures/drop_zone_intent_fixture_v1_4_0_fallback.md` returning zero changes (modulo `created_at` and absolute path fields). |
+| 30 | Fresh empty dir, `ANTHROPIC_API_KEY` set, user types inline text only (no attachment). | Pre-flight passes. Subprocess launches with empty `attachments` array and populated `typed_text`. API call uses a single `custom content` document block (typed text). Citations return `text_char_range` style. Mirror renders with `[lines X-Y]` annotations per field. Written `drop_zone_intent.md` carries `type: text_char_range` in `_source_citation` entries. |
+| 31 | Fresh empty dir, `ANTHROPIC_API_KEY` set, user drops image only (e.g. `logo.png`) with no text and no PDF. | Pre-flight passes. Subprocess launches. API call contains an image block (no `document` block). Citations API returns no citations (images are not citeable sources). Mirror renders without `[page N]` / `[lines X-Y]` annotations — rows render v1.3.3-parity. Written `drop_zone_intent.md` has NO `_source_citation` keys for any field (key omission, not explicit null). |
+| 32 | Fresh empty dir, `ANTHROPIC_API_KEY` set to a deliberately invalid value (`sk-ant-api03-invalidvalue`), user drops content. | Pre-flight passes (env check is presence-only, not validity). Subprocess launches, API returns 401. Extractor exits with code 4. SKILL.md dispatch routes to fallback path. Mirror renders v1.3.3-parity (no annotations). Written `drop_zone_intent.md` has no `_source_citation` keys. Harness stderr contains the extractor's diagnostic about 401. |
+| 33 | Fresh empty dir, `ANTHROPIC_API_KEY` set, Python runtime's `anthropic` package deliberately not installed (simulated via renaming site-packages). | Pre-flight passes. Subprocess launches; `import anthropic` raises ImportError. Extractor catches, emits diagnostic to stderr (`"anthropic package not installed — run: pip install anthropic>=X.Y"`), exits code 3. SKILL.md dispatch routes to fallback. Mirror renders v1.3.3-parity. |
+| 34 | Fresh empty dir, `ANTHROPIC_API_KEY` set, API deliberately returns HTTP 429 after the SDK's internal retry budget exhausts (simulate via overriding sleep multipliers or testing against a rate-limited key). | Extractor exits code 5. Fallback fires. v1.3.3-parity mirror. |
+| 35 | Modification-loop across an API extraction — user drops content, mirror renders with citations, replies `"garde Type en boulangerie"`. | Subprocess re-invoked with the modification applied in the extraction prompt. 1h cache hits on the document block (cache_read_input_tokens > 0 in usage stats, verified via subprocess stderr). Re-rendered mirror shows updated `Type` row with annotation (`[page N]` if the source carries it). Consent card re-prints in `content_locale`. |
+| 36 | R9 audit of the Python extractor — grep `skills/genesis-drop-zone/scripts/extract_with_citations.py` for French strings. | Zero non-ASCII French-specific strings in code / comments / docstrings / log lines. The extraction prompt contains the string `"a trouver ensemble"` (and the other three FR canonical null-class tokens) as LITERAL values to instruct the API output — these are dev-layer prompt content, not French prose. Allowed per R9 tier-1 (dev layer can quote data-layer strings). |
+| 37 | Schema round-trip — take a fixture with `_source_citation` entries (v1.4.0 API-path write), run Layer B Step 0.2a against it. | Parser reads the 9 semantic fields and 4 metadata fields. Unknown `<field>_source_citation` keys are silently ignored (dict-based YAML parsing, behaviour unchanged). Step 0.4 intent card renders identically to v1.3.3. Step 0.5 `bootstrap_intent.md` output identical to v1.3.3 output for the same fixture modulo the `_source_citation` keys (which Layer B never reads). Zero Layer B ripple confirmed. |
+| 38 | Fallback-path byte-identity — compare v1.4.0 fallback-written `drop_zone_intent.md` to v1.3.3 fixture. | `diff` reports zero differences modulo `created_at` timestamp and `skill_version` (`1.4.0` vs `1.3.3`). Null-class tokens identical (FR canonical). Body content identical. No `_source_citation` keys in either. |
+| 39 | Annotated row truncation interaction — synthetic case where value + annotation exceeds 60 chars. | Value truncates at 57 chars + `...` per v1.3.1 rule. Annotation `[page N]` appended after the ellipsis. Example: `Idee          boulangerie artisanale pour livraison matin tre... [page 1]`. Total row length may exceed 60 but stays within 80-col terminal. This is the single documented exception to the 60-char rule per § "Citations API — signal + dispatch (v1.4.0) / Truncation rule interaction". |
+
 ### Ship gates
 
 - **v1.3.0 (original)**: #1, #3, #6 mandatory. #2, #4 strongly recommended. #5 documented.
 - **v1.3.1 (original)**: #7, #9, #12 mandatory. Regression on v1.3.0 #3 + #6 mandatory. #8 strongly recommended. #10, #11 documented non-blocking.
 - **v1.3.2 (previous)**: #13, #14, #15, #18 mandatory. #16, #19 strongly recommended. Regression on v1.3.1 #3, #6, #9, #12 mandatory. #17 documented non-blocking.
-- **v1.3.3 (this ship)**: **#20, #21, #25, #26, #27 mandatory** — welcome+content divergence (bidirectional) + EN body write + R9 audit on new EN re-prompt + Layer B zero-ripple regression. **Strongly recommended**: #22 (mixte tiebreaker), #23 (slash graceful degradation), #24 (zero-content locale). **Regression on v1.3.2 mandatory**: #15 (halt-on-existing — now must render in detected `content_locale`), #16 (modification loop — `content_locale` re-evaluation), #17 (R9 audit of the written file — FR canonical null tokens preserved in frontmatter). **Regression on v1.3.1 mandatory**: #9 (zero-content branch — now has bilingual re-prompt pair). **Documented non-blocking**: #10 updated to reflect v1.3.3 closure (EN content now renders EN mirror; scenario #10's v1.3.1 expectation is superseded).
+- **v1.3.3 (previous)**: #20, #21, #25, #26, #27 mandatory. #22, #23, #24 strongly recommended. Regression on v1.3.2 #15, #16, #17 mandatory. Regression on v1.3.1 #9 mandatory. #10 updated / non-blocking.
+- **v1.4.0 (this ship)**: **#29, #32, #33, #36, #37, #38 mandatory** — fallback path silent / identity (#29, #38), auth-error graceful fallback (#32), SDK-missing graceful fallback (#33), R9 audit of extractor code (#36), Layer B parser zero-ripple on extended schema (#37). **Strongly recommended**: #28 (happy-path PDF with citations), #30 (text-only inline with `text_char_range`), #31 (image-only, no citations). **Documented non-blocking**: #34 (rate-limit simulation — hard to reproduce offline), #35 (modification-loop cache hit — cache-token assertion depends on live API), #39 (annotation truncation — edge case, synthetic). **Regression on v1.3.3 mandatory**: #20, #25, #27 (locale dispatch + EN body write + Layer B zero-ripple). **Regression on v1.3.2 mandatory**: #13 (write flow happy path on fallback path). **Regression on v1.3.1 mandatory**: #7 (mirror render on in-context path).
 
-**Scenario #1 / #13 / #18 / #20 / #21 runtime replay note**: runtime replay of scenarios driven by a fresh Claude Code process in an empty directory (including v1.3.3's #20, #21, #23, #24 which exercise the locale dispatch live) is not executable from inside a running session. Artefact-level verification remains the ship gate — template parseability per locale variant, dispatch coherence, fixture inspection, Layer B parser regression on the new EN fixture. A consistent −0.2 Pain-driven deduction applies per replay-deferred scenario and rolls forward until runtime replay happens, continuing the v1.3.1 / v1.3.2 convention.
+**Scenario #1 / #13 / #18 / #20 / #21 / #28 / #29 / #30 / #31 / #32 runtime replay note**: runtime replay of scenarios driven by a fresh Claude Code process in an empty directory (including v1.4.0's #28-#35 which exercise live API + subprocess launch) is not executable from inside a running session. Artefact-level verification remains the ship gate — Python module importability (`python -c "import skills.genesis-drop-zone.scripts.extract_with_citations"`), SKILL.md dispatch-logic walkthrough, fixture byte-identity via `diff`, JSON-schema validation of new fixtures, Layer B parser regression on the extended fixture. A consistent −0.2 Pain-driven deduction applies per replay-deferred scenario and rolls forward until runtime replay happens, continuing the v1.3.1 → v1.3.3 convention.
 
 ## Rationale for v1.3.2 route
 
@@ -1115,6 +1362,20 @@ All v1.3.0 + v1.3.1 regression guarantees preserved. The v1.3.2 Layer B parser s
 - **One new bilingual pair only** — v1.3.3 authors exactly one new runtime string pair (the EN zero-content re-prompt). All other EN variants already existed since v1.3.0 / v1.3.1 / v1.3.2. The small surface area is a feature: the ship is narrow, the anti-Frankenstein gate clears cleanly, the reviewer pass is fast.
 - **No new privilege class** — v1.3.3 touches zero privilege map entries. `genesis-drop-zone` stays at v1.3.2's single write privilege. Runtime locale rendering is a read-layer-only change; no disk write beyond what v1.3.2 already authorized, no API call, no subprocess. Clean scope.
 - **Living spec, version-scoped sections (third application)** — extending `v2_etape_0_drop_zone.md` with a `## Scope — v1.3.3 runtime locale rendering` section preserves the canonical vein-of-truth pattern established at v1.3.1 and reinforced at v1.3.2. Readers walk the version-scoped sections top-to-bottom to see what each ship layered on — third consecutive application of the pattern.
+
+## Rationale for v1.4.0 route
+
+- **Second privilege class = MINOR bump** — v1.4.0 is the first Genesis ship to cross from PATCH to MINOR since v1.3.0 opened the v1.3.x conversational-layer line. The structural weight comes from three stacked novelties: second privilege class (network, orthogonal to v1.3.2's disk); first external dependency (`ANTHROPIC_API_KEY`, Anthropic Python SDK); first subprocess invocation in `genesis-drop-zone`. Each alone might deserve a PATCH within a generous semver reading; together they deserve a MINOR. The 0.37 tampon above the 8.5 running-average floor absorbs a MINOR ship with ≥ 8.5 self-rating comfortably.
+- **Python subprocess over curl or sub-agent** — selected at brainstorm (see § "Rationale for v1.4.0 route" in the Scope v1.4.0 section for the three-way table). curl loses on base64-PDF command-line limits and cross-OS quoting; sub-agent does not deliver Citations API response-level artefacts. Python subprocess reuses the `session-post-processor` run.py portability pattern, isolates the new dependency in a single file, and is byte-identical to Genesis's existing pattern for external Python invocation.
+- **Silent graceful fallback over visible degradation** — the earliest draft considered a bilingual note ("Source attribution unavailable — extracted in-context") to explain the absence of citations when the fallback path fires. Rejected: users without the API key would see the note on every session. The note would leak implementation detail into a Victor-facing surface and contaminate R9 tier 3. Silent fallback keeps the UX clean; forensic state goes to stderr.
+- **Additive frontmatter, not schema version bump** — v1.4.0 adds optional `<field>_source_citation` keys. Schema version stays at `1`. Dict-based YAML parsing makes Layer B Step 0.2a silently ignore unknown keys. A version bump would force Layer B to branch on version (parser code change, regression surface), delivering zero semantic value on Layer A's side. The additive pattern preserves v1.3.3's zero-Layer-B-ripple one version further.
+- **Key omission over explicit null** — when no citation applies, the `_source_citation` key is omitted from the frontmatter rather than written as `null`. Rationale: fallback-path files become byte-identical to v1.3.3 files; the regression probe `diff drop_zone_intent.md tests/fixtures/drop_zone_intent_fixture_v1_3_3_en.md` returns zero differences modulo `created_at` + `skill_version`. Explicit `null` would add noise without semantic value.
+- **Three fixtures, not two** — `_fr_with_citations.md`, `_en_with_citations.md`, `_fallback.md`. The fallback fixture is the explicit regression probe for byte-identity with v1.3.3. Without it, a reader must infer the invariant; with it, the property is assertible via `diff`.
+- **1h cache TTL explicit, 5m never** — R8 § Stage 2 warns that Anthropic silently tightened the default TTL from 1h to 5m around March 2026. The extractor hardcodes the 1h TTL and never relies on defaults. The env override `GENESIS_DROP_ZONE_CACHE_TTL` accepts `5m` or `1h` for experimentation but the default path matches the R8 recommendation.
+- **Model default `claude-opus-4-7`, override env** — R8 § Stage 2 recommends Opus for extraction quality, Sonnet 4.6 as cost fallback. v1.4.0 defaults to Opus; users can override via `GENESIS_DROP_ZONE_MODEL` to Sonnet or any future model. No hardcoded model-chaining logic (Opus-then-Sonnet-on-failure) — single active model per invocation, keeps the extractor's control flow flat.
+- **Image-only drops produce no citations — honest null-visible discipline at the citation layer** — Citations API does not cite images. The v1.4.0 design does not synthesize a pseudo-citation like "seen in attachment.png" — the field's value still renders (Claude extracted it via vision), the citation is just absent. Same honesty principle as the null-class `a trouver ensemble` / `non mentionne` tokens, applied one level deeper.
+- **Cross-skill-pattern #2 refinement ("at most one per operation class") is precedent, not one-off** — the refinement to master.md's pattern is a permanent evolution, not a v1.4.0 exception. Future skills with legitimate multi-class needs (e.g. Étape 2 creation skill with disk write + external API) will follow the same multi-class declaration. Anti-Frankenstein gate stays tight: a skill accreting a third class is a signal that the skill probably needs splitting.
+- **Living spec, version-scoped sections (fourth application)** — extending `v2_etape_0_drop_zone.md` with a `## Scope — v1.4.0 Citations API extraction` section preserves the canonical vein-of-truth pattern established across the v1.3.x cycle. Four consecutive version-scoped scope sections (v1.3.0, v1.3.1, v1.3.2, v1.3.3) give the pattern load-bearing status — v1.4.0 is the fifth instantiation and demonstrates the pattern extends cleanly across the PATCH/MINOR boundary.
 
 ## Relation to the vision doc
 
