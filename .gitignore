@@ -44,6 +44,9 @@ venv/
 # Genesis-specific — R2.5 forensic snapshots stay LOCAL ONLY
 .claude/worktrees/
 
+# Brainstorming skill visual companion — mockups persist but not tracked
+.superpowers/
+
 # Build artefacts
 dist/
 build/
