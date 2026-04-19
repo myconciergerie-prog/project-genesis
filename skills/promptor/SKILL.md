@@ -55,6 +55,14 @@ Layer 0 cache via the convention documented in the spec.
 The full canonical XML lives in `references/template.md`. Read it in Phase 2 ;
 this `SKILL.md` is the gate for Phase 1.
 
+**v1.6.1 gate additions (in `references/template.md`)** — Part A now gates sampling
+params by model (Opus 4.7+ uses `effort` + `thinking: adaptive`, not `temperature`).
+Part B adds explicit `cache_control` placement directive (4,096-token minimum on
+Opus 4.7) and mandatory `ServerName:tool_name` MCP reference form. Phase 1 Q2
+acquires `effort` + `thinking` + `max_tokens` (not `temperature`). Phase 1 Q1
+metrics softened to task-adaptive. Grounds are in
+`.claude/docs/superpowers/research/sota/anthropic-prompt-engineering_2026-04-19.md`.
+
 ## Adaptation discipline
 
 When adapting the template for a specific use case :
