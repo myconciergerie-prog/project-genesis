@@ -146,6 +146,10 @@ The skill is invoked in two ways.
 
 **Invoke only when the user is starting from nothing.** If the user is already mid-task, mid-feature, or troubleshooting an existing project and happens to utter a trigger phrase in passing, do not invoke. The context guard below is a second layer of protection but the primary filter is this intent evaluation — the skill is for fresh-start moments, not casual mentions.
 
+### Phase 0.0 — Auth pre-flight (v2.0.0+)
+
+Before printing the welcome box (Phase 0.1), invoke the `phase-auth-preflight` skill to verify Claude Code is authed via Max subscription. If `phase-auth-preflight` returns pass, proceed to Phase 0.1. If it halts (auth missing, claude binary missing, or auth-status corrupt), do NOT print the welcome box — the auth-preflight halt-card is the user-facing output for this turn. Control returns to `genesis-drop-zone` only on the next user-launched session after the user has run `claude auth login`.
+
 ## Context guard
 
 Before printing the welcome box, evaluate `is_fresh_context`. It is `true` if **all three** of the following hold:
