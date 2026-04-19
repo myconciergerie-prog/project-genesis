@@ -8,6 +8,85 @@ Every version bump includes a **5-axis self-rating block** per R10.3 discipline,
 
 ---
 
+## [1.6.2] — 2026-04-19 — "runtime dogfood (PATCH)"
+
+**PATCH originally scoped as v1.5.2 back-insert.** Plan-reviewer surfaced `plugin.json` already at 1.6.1 (semver reality) — retitled forward-increment. Runtime dogfood automated via `claude -p --plugin-dir <worktree>` subprocess calls from the driver session (~$3.19 / 7.6 min for 8 runs including Path-B isolation attempt). H1-H4 formally unable-to-test due to a cluster of 5 frictions, the most important of which (F5 SPDX-comment-before-frontmatter) is a universal Genesis-owned load-failure bug affecting every new marketplace install. Honest rating drops below 9.0 ; **streak ≥ 9.0 at 3 consecutive breaks with this ship** per Layer 0 honesty discipline.
+
+### Added
+
+- `skills/genesis-drop-zone/tests/runtime_dogfood_v1_6_2.md` — reusable 5-section runbook (Pre-flight with 3 isolation paths post-F5 / Per-fixture spawn+trigger+observe / Redaction rules / Re-run guidance / Source of truth). Updated post-Path-B with F1+F4+F5 isolation requirements for v1.6.3 consumers.
+- `skills/genesis-drop-zone/tests/runtime_dogfood_evidence_v1_6_2.md` — session-specific evidence log with 5 per-fixture observations + H1-H5 table + friction triage (F1/F2/F3/F4/F5) + Path-B addendum + cost summary.
+- `C:/tmp/genesis-v1.6.2-alexandre/` fixture (5 artefacts : config.txt + catalogue_fenetres_fr.md + specs_usine_pl.md + voice_memo_alexandre.txt + photo_facade_client.jpg 5985 bytes JFIF via Pillow). Multi-language FR/PL mixed-media drop mirroring Alexandre window-sales use case — catalogue RAL 9005/7016/9010 + MOQ 8 pièces Poznań + Uw 0.8-1.3 + EN 14351-1 / ISO 9001 PL-QC-9042.
+- `memory/master.md` pattern #4 depth-update on sixth data-point — Layer A-only runtime-evidence session with zero Layer B ripple per AC10 ; same ripple class as v1.5.1 sixth, work differs (runtime vs paper-trace) but ripple identical ; per v1.6.1 precedent (pattern #1 depth on fourth, no new ordinal), same-ripple-class extension = depth update, not new ordinal.
+
+### Changed
+
+- `.claude-plugin/plugin.json` version `1.6.1 → 1.6.2`.
+
+### Removed
+
+- None.
+
+### Preserved (explicit non-change)
+
+- All 8 skills' SKILL.md files — zero edits (F5 fix deferred to v1.6.3 per hybrid-gate class-B + common-root-cause clustering with F1 + F4).
+- All Layer A (`skills/genesis-drop-zone/SKILL.md` + `phase-0-welcome.md` + `scripts/`) untouched. Only `tests/` subtree added (runbook + evidence log).
+- Layer B skills — zero edits (AC10 grep pipeline = 0 verified at Phase A pre-commit, Phase B post-commit, and post-Path-B-finding commit).
+- `skills/genesis-drop-zone/scripts/extract_with_citations.py` — NG3 boundary preserved (grep = 0).
+- Schema version, dependency set, subprocess surface, network surface — zero change.
+
+### Frictions surfaced (hybrid gate triage)
+
+- **F1 (class B, methodology)** — `claude --plugin-dir <path>` does NOT shadow a same-named stale cached install. Even `plugin disable` + `plugin uninstall` + `rm -rf cache/` leaves a user-scope skills directory (F4) shadowing the load.
+- **F2 (class B, methodology)** — `-p` single-shot cannot exercise multi-turn skill flows (Phase 0.1 → 0.5). v1.6.3+ needs either manual interactive or scripted `--input-format stream-json`.
+- **F3 (class C, insight)** — freelance Claude matches arbitration quality on rich multi-source drops (alexandre_windows : extracted catalogue + specs_pl + voice_memo into coherent consent card covering Product / Pain / Pricing / Factory). Skill's value-add over freelance needs explicit characterization. v2 design conversation.
+- **F4 (class B, structural — Claude Code CLI)** — user has 6 Genesis skills at `~/.claude/skills/` personal-scope, shadowing plugin installs entirely.
+- **F5 (class B, structural — Genesis-owned, universal)** — every SKILL.md (all 8) starts with `<!-- SPDX-License-Identifier: MIT -->` before the YAML `---` frontmatter delimiter. Claude Code's parser reports "No frontmatter block found" for ALL 8. Fresh marketplace installs would load zero Genesis skills. Latent since v1.3.0, masked by user's F4 shadow install. **v1.6.3 P0 fix** : move SPDX comment after closing `---` OR remove from SKILL.md per R10.5 scope-narrowing (keep SPDX only on source-code files `.py` / `.ts` not plugin manifests).
+
+### Hypothesis outcomes
+
+| H | Prediction | Outcome |
+|---|---|---|
+| H1 | Skill engine dispatches `/genesis-drop-zone` on verbatim trigger phrase in all 5 fixture cwds | **UNABLE-TO-TEST** — F5 root cause + F4 shadow prevent genuine isolation. 5 natural-phrase runs all freelanced. |
+| H2 | Phase 0.4 arbitration on alexandre_windows renders `arbitrated_fields` list non-empty | **UNABLE-TO-TEST** formally ; indirect evidence — freelance synthesized coherent multi-source arbitration. |
+| H3 | Phase 0.5 Path 2a consent renders on empty-divergences fixture | **UNABLE-TO-TEST** |
+| H4 | Fixture scenario_halt_no_key renders EXIT_NO_KEY halt card | **UNABLE-TO-TEST** |
+| H5 | Zero Layer B ripple | **CONFIRMED** (AC10 grep = 0 at all checkpoints) |
+
+### Self-rating — v1.6.2 (honest post-feat, per Layer 0 `feedback_honest_self_rating_post_feat.md`)
+
+| Axis | Projected | Honest | Delta | Notes |
+|---|---|---|---|---|
+| Pain-driven | 9.4 | 8.8 | −0.6 | Formal H1-H4 deferred ; F5 discovery IS substantial load-bearing pain-reduction but doesn't match the projected form. |
+| Prose cleanliness | 9.0 | 9.0 | 0.0 | No prose rewrites ; evidence log + runbook cleanly structured. |
+| Best-at-date | 9.0 | 9.0 | 0.0 | No new R8 commissioned ; existing R8 still valid. |
+| Self-contained | 9.2 | 8.9 | −0.3 | Scope expanded (into evidence log, not feat commits) to accommodate F4 + F5 additional findings discovered during Path-B isolation attempt. |
+| Anti-Frankenstein | 9.1 | 9.1 | 0.0 | 5 frictions found, 5 classified cleanly per hybrid gate, 0 preemptive fixes. 1:1 evidence-to-hypothesis integrity maintained. |
+| **Mean** | **9.14** | **8.96** | **−0.18** | **Streak ≥ 9.0 BREAKS** (was 3 consecutive : v1.5.1 9.12 / v1.6.0 9.02 / v1.6.1 9.18). |
+
+**Running average post-v1.6.2 honest** : (8.90 × 18 + 8.96) / 19 = 169.16 / 19 ≈ **8.90 (flat).** 19 tagged ratings total.
+
+### Discipline evidence
+
+- **Autonomous subprocess automation** — user asked "automatise moi tout ça pour faire intervenir qu'au phase le nécessitant" after manual 5-session spawn was too heavy. Driver session switched to `claude -p --plugin-dir <worktree> --output-format=json` subprocess calls with env-var management (`env -u ANTHROPIC_API_KEY` for halt-no-key fixture). 5 fixture runs + 2 controls captured without manual session-spawning.
+- **Path B isolation attempt post-honest-ship-option** — user voted Path B (uninstall + re-test) over Path A (ship-as-is) to pursue cleaner evidence. Path B surfaced F4 + F5 which Option A would have missed. Reviewer-driven scope expansion discipline applied correctly (additional findings went into evidence log as separate commit `cc00427` feat-runtime-amend, not into amend or scope-creep).
+- **Class-A-adjacent deferral** — F5 is structurally a load-failure bug (not privilege violation, therefore not strict class A) but with massive blast radius (every new marketplace install). Per hybrid-gate class-B + common-root-cause clustering (F1+F4+F5 all plugin-loading methodology), deferred to v1.6.3 unified P0 fix rather than rushed in v1.6.2.
+- **Honest streak break** — v1.5.1 + v1.6.0 + v1.6.1 formed a 3-consecutive ≥ 9.0 streak. v1.6.2 honest at 8.96 breaks it. Per Layer 0 `feedback_honest_self_rating_post_feat.md`, willingness to break streak ≥ 0.2 honest-deduction is the discipline ; this case clears the bar cleanly (projected 9.14 → honest 8.96, delta −0.18).
+
+### Layer 0 sync (Phase D)
+
+Skipped this ship. The `gh auth switch` + GH_TOKEN env-prefix pattern was **proactively** applied at Phase C (not reactively discovered) — the pattern is now habitual, no Layer 0 amplification needed this session. If proactive application continues in v1.6.3 sessions, no Layer 0 touch required.
+
+### Follow-up candidates (for v1.6.3+)
+
+- **v1.6.3 P0** : fix F5 — move SPDX comment after frontmatter OR scope-narrow R10.5 to exclude SKILL.md. Mechanical change across 8 files. Bundled with F1 + F4 runbook hardening.
+- **v1.6.3 / v1.6.4** : re-run runtime dogfood against isolated v1.6.3 plugin load (Path B with F5 fix). Should recover true H1-H4 evidence.
+- **v1.6.3+** : F2 multi-turn scripted via `--input-format stream-json`.
+- **v2 design conversation** : F3 product-positioning — when does invoking the skill beat freelance Claude?
+- **v1.6.x+** : Skill-tool plugin-installed runtime evidence for promptor (was originally named v1.6.2 in v1.6.1 resume — bumped to v1.6.3 or later).
+
+---
+
 ## [1.6.1] — 2026-04-19 — "runtime auto-discovery + Anthropic prompt-eng SOTA grounding (PATCH)"
 
 **PATCH closing the two priced-in axis caps of v1.6.0.** v1.6.0 shipped at honest 9.02/10 with Best-at-date 8.7 (no R8 entry backing template choices) and Pain-driven 9.2 (H1 skill auto-discovery paper-trace only). v1.6.1 closes both in one PATCH via (a) 326+ line SOTA R8 entry commissioned ahead of spec (42+ citations, canonical Anthropic migration guide primary for 4.7 sampling-removal claim), (b) 5 surgical template patches (3 critical + 2 polish) mapped 1:1 to R8 findings, (c) fresh Claude Code session in sibling Aurum cwd confirming the Layer 0 pépite + binding-rule surface fires cleanly on trigger phrases. Pinning decision landed AC#7 Option A (non-pinned) with runtime-validated marker on the binding rule.
