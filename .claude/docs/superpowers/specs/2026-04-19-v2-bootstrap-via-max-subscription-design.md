@@ -161,12 +161,23 @@ Today : Victor must already have Claude Code installed AND know to run `/genesis
 
 v2's Phase anthropic_auth covers steps 1-3 partially when run from inside Claude Code ; v3 makes the same flow available outside Claude Code as a turnkey installer. **v2 design must keep the Phase anthropic_auth logic factorable into a standalone shell script.**
 
-### V3.2 BYOAI multi-provider
+### V3.2 BYOAI multi-provider — staged rollout, Anthropic-first
 
-Phase anthropic_auth → Phase **auth** with a provider dispatcher. Detect which provider the user wants (Anthropic / OpenAI / Gemini / Bedrock / Vertex / others) ; route to the provider-specific auth check (`claude auth status` for Anthropic ; `gcloud auth list` for Google ; etc.). The user already has all of these accounts (per Layer 0 user profile "Available AI stack").
+**Strategic decision (captured 2026-04-19 per user input)** : Anthropic-first by design. Claude is optimized for the patterns Genesis uses (prompt engineering already solid via `promptor` skill v1.6.0+). BYOAI implementation is staged, not v2/v3.0 scope.
 
-**v2 design discipline** :
-- Skill / phase / function naming uses `auth` not `claude_auth` whenever the logic is provider-agnostic.
+| Version | Scope BYOAI |
+|---|---|
+| v2 (CLI) | Anthropic-only. No provider param in skill code (Claude Code handles its own model). |
+| v3.0 (web) | Anthropic-only **shipped**. Landing page UI : provider connector picker (user can SEE OpenAI / Gemini / others as visible-but-disabled options) + lazy-load architecture (model not initialized until auth-to-provider callback confirms). Architecture : provider param threaded through skill code, only Anthropic implementation present. |
+| v3.x | Gemini = 2nd provider. Validates per-provider promptor pattern + lazy-load works end-to-end. |
+| v3.y | OpenAI / others. |
+
+**Per-provider promptor pattern (v3.x onwards)** : each AI gets its own `promptor-<provider>` skill. v1.6.0's `promptor` skill is renamed to `promptor-anthropic` when v3.x ships the second provider. Each promptor encapsulates : prompt patterns specific to the provider, system prompt format (Anthropic XML vs OpenAI / Gemini JSON / message-array variants), tool-use schema, model selection logic (e.g. claude-sonnet-4-6 vs gemini-3.1-pro vs gpt-4-turbo).
+
+**Lazy-load discipline (web mode only, v3.0+)** : the model is NOT initialized until the auth-to-provider callback confirms. On the landing page : (1) user picks provider (UI interactive), (2) clicks "auth", (3) modal / redirect for OAuth, (4) auth callback returns success, (5) **only now** the backend selects the appropriate model + initializes the runtime. Avoids paying inference cost / loading model state for users who abandon mid-auth. v2 CLI does NOT apply this rule (Claude Code controls its own model lifecycle independently).
+
+**v2 design discipline (load-bearing TODAY for the staging to work later)** :
+- Skill / phase / function naming uses `auth` not `claude_auth` whenever the logic is provider-agnostic. v2's `phase-auth-preflight` skill is concretely Anthropic-only, but its internal function signatures must accept a `provider` parameter (default `"anthropic"`) so v3.x can drop in OpenAI / Gemini variants without skill restructure.
 - `Phase anthropic_auth` is the v2 *concrete instance* of a future generic `Phase auth`. The phase's outputs (pass / halt-card / install-card) should not carry Anthropic-specific data structures that would block a Gemini variant.
 - The remediation card content is templated with provider-specific variables (provider name, auth command, install command, billing model description) ; in v2 only the Anthropic template ships.
 
