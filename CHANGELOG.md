@@ -8,6 +8,60 @@ Every version bump includes a **5-axis self-rating block** per R10.3 discipline,
 
 ---
 
+## [1.6.3] — 2026-04-19 — "F5 fix SPDX frontmatter break (PATCH)"
+
+**Surgical hotfix** for v1.6.2 F5 finding — universal Genesis-owned load-failure bug, latent since v1.3.0, masked by user's `~/.claude/skills/` personal-scope shadow. Every new marketplace install was loading zero Genesis skills until this ship.
+
+### Fixed
+
+- **F5 primary** — 8 SKILL.md files (`genesis-drop-zone`, `genesis-protocol`, `journal-system`, `pepite-flagging`, `phase-5-5-auth-preflight`, `phase-minus-one`, `promptor`, `session-post-processor`) : `<!-- SPDX-License-Identifier: MIT -->` relocated from file top to trailing HTML comment at file end. Claude Code's frontmatter parser requires `---` at line 1 ; leading comment silently dropped all skill metadata. Python binary-mode read/write preserved CRLF per Layer 0 `gotcha_crlf_preservation_git_bash_windows`.
+- **F5 collateral (revealed once frontmatter became visible)** — `skills/pepite-flagging/SKILL.md` description wrapped in single-quotes. Was unquoted YAML flow scalar with embedded `"<title>"` double-quote characters that failed YAML parse (invisible under F5 but emergent once F5 fixed).
+
+### Changed
+
+- `skills/genesis-protocol/rules/v1_rules.md § R10.2` — amended with explicit exception for YAML-frontmatter Markdown files. New rule : SKILL.md and any Markdown file starting with a `---` frontmatter block consumed by a strict parser MUST place SPDX as trailing HTML comment, not leading. Prevents regression.
+- `.claude-plugin/plugin.json` version `1.6.2 → 1.6.3`.
+
+### Verification
+
+- **`claude plugin validate`** on worktree : ✔ Validation passed (was 8 "No frontmatter block found" errors + 1 YAML parse error pre-fix).
+- **Runtime dispatch test** via `claude -p --plugin-dir <worktree> --output-format=json` : all 8 skills surface under `project-genesis:` namespace with verbatim descriptions rendered (was 6 pre-fix, missing `genesis-drop-zone` and `promptor`). This is the first time since v1.3.0 that the plugin load-path has been runtime-verified-clean.
+- **CRLF preservation** : Python binary read/write, git commit shows no line-ending churn on unchanged bytes.
+
+### Blast radius
+
+Every Claude Code user installing `project-genesis` via marketplace, `--plugin-dir`, or `claude plugin install` from v1.3.0 through v1.6.2 was receiving a plugin that silently loaded zero skills. The current session's user was masked from noticing because they had manually copied 6 (of 8) skills to `~/.claude/skills/` personal-scope early in the project's life. Fresh users had no such workaround.
+
+### Frictions closed vs deferred
+
+- **F5 CLOSED** — this ship.
+- **F1 (--plugin-dir same-name cache shadow)** — Claude Code CLI behaviour, not Genesis fault. Runbook documented it in v1.6.2. No Genesis-side fix.
+- **F4 (user-scope personal-skills shadow)** — same as F1 (Claude Code CLI). Runbook documents it.
+- **F2 (-p single-shot multi-turn limit)** — not addressed ; requires stream-json scripting or interactive sessions. Defer v1.6.x+.
+- **F3 (freelance vs skill value-add)** — v2 design conversation.
+
+### Self-rating — v1.6.3 (honest post-feat)
+
+| Axis | Projected | Honest | Delta | Notes |
+|---|---|---|---|---|
+| Pain-driven | 9.5 | 9.6 | +0.1 | v1.6.2's biggest finding fixed surgically ; every new marketplace user unblocked. Discovered + fixed + regression-guarded + verified runtime in one ship. |
+| Prose cleanliness | 9.2 | 9.2 | 0.0 | Commit message dense, rule amendment clear. |
+| Best-at-date | 9.0 | 9.0 | 0.0 | No new R8 needed ; fix applied SOTA YAML scalar best practice (single-quote wrap for flow scalars with special chars). |
+| Self-contained | 9.4 | 9.4 | 0.0 | Scope tight ; only SKILL.md + 1 rule doc + plugin.json. Zero ripple to any other surface. |
+| Anti-Frankenstein | 9.3 | 9.3 | 0.0 | Mechanical 8-file edit + 1 rule doc + 1 collateral YAML fix discovered in-scope. No preemptive over-engineering. |
+| **Mean** | **9.28** | **9.30** | **+0.02** | **Streak ≥ 9.0 restarts at 1** after v1.6.2's honest break. |
+
+**Running average post-v1.6.3 honest** : (8.90 × 19 + 9.30) / 20 = 178.40 / 20 ≈ **8.92 (+0.02)**. 20 tagged ratings total.
+
+### Discipline evidence
+
+- **Hotfix shape honored** — F5 was a known bug with clear mechanical fix. No spec + plan + reviewer loop for v1.6.3 ; feat commit IS the spec (what changed, why, how validated). Single PR, single squash merge, single tag. Appropriate process-to-work matching per Layer 0 skill-type-aware discipline.
+- **Collateral-fix discipline** — pepite-flagging YAML parse error was not in original v1.6.2 F5 scope but emerged ONCE F5 was fixed (frontmatter now visible → parser ran → YAML scalar issue surfaced). In-scope per the "if fixing F5 reveals a cascading issue, fix it here" discipline.
+- **Rule amendment** — R10.2 update prevents future regression. The exception rule is specific (YAML-frontmatter Markdown files consumed by strict parsers) ; does not over-generalize to remove SPDX discipline elsewhere.
+- **Session-ending honesty** — this ship lands immediately after user flagged my v1.5.2→v1.6.2 retitle rationalization as wasted tokens. Direct accountability loop : failure → acknowledgement → memory save → immediate execution of the right thing. The v1.6.3 ship itself is the correction proof.
+
+---
+
 ## [1.6.2] — 2026-04-19 — "runtime dogfood (PATCH)"
 
 **PATCH originally scoped as v1.5.2 back-insert.** Plan-reviewer surfaced `plugin.json` already at 1.6.1 (semver reality) — retitled forward-increment. Runtime dogfood automated via `claude -p --plugin-dir <worktree>` subprocess calls from the driver session (~$3.19 / 7.6 min for 8 runs including Path-B isolation attempt). H1-H4 formally unable-to-test due to a cluster of 5 frictions, the most important of which (F5 SPDX-comment-before-frontmatter) is a universal Genesis-owned load-failure bug affecting every new marketplace install. Honest rating drops below 9.0 ; **streak ≥ 9.0 at 3 consecutive breaks with this ship** per Layer 0 honesty discipline.
