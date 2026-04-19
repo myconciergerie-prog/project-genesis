@@ -1,7 +1,5 @@
 {
-  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "project-genesis-marketplace",
-  "description": "Project Genesis — bootstrap any project with a 7-phase protocol",
   "owner": {
     "name": "myconciergerie-prog",
     "email": "myconciergerie@gmail.com"
