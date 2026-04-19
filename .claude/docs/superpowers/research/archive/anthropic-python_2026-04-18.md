@@ -9,6 +9,8 @@ expires_at: 2026-04-19
 confidence: medium
 ---
 
+> **v2 retirement note (2026-04-19)** : Genesis v2.0.0 retired the subprocess that pinned this dependency. Entry preserved for cross-project reference (other projects on this machine that use the anthropic SDK directly remain valid consumers).
+
 # Anthropic Python SDK — stack pin
 
 ## Purpose
