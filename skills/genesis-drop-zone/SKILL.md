@@ -69,6 +69,37 @@ Genesis v1 is an engineer's protocol that speaks to engineers. The v2 vision add
 9. **MINOR semver bump** — v1.3.3 → v1.4.0. Second privilege class + first external dependency (`ANTHROPIC_API_KEY`, Anthropic Python SDK) + first subprocess invocation in `genesis-drop-zone` justify the tranche.
 10. **R8 stack entry** — `stack/anthropic-python_2026-04-18.md` pins the SDK version at ship time (TTL 1 day per stack convention).
 
+### In scope (v1.5.0)
+
+1. **API requirement — fallback removed** — v1.4.0's silent graceful fallback to in-context extraction is **retired**. The extractor exit codes 2-7 now signal halt-with-remediation to the SKILL.md dispatch layer, not in-context fallback. Anti-Frankenstein retroactive — v1.4.0's fallback was preemptive, never pain-driven validated. Confirmed by R8 research `sota/anthropic-auth-and-oauth-status_2026-04-19.md`: no first-party OAuth path for Messages API in April 2026; halt-with-remediation is the only ToS-clean contract.
+2. **Divergence detection — two triggers, one arbitration phase**:
+   - **Intra-drop**: extractor's augmented prompt emits `divergences[]` array per the v1.5.0 system prompt contract. Each item flags two sources disagreeing on the same semantic field within the same drop session.
+   - **Cross-session (Phase 0.4)**: when `drop_zone_intent.md` already exists at cwd at skill entry, a new in-context (Claude, not Python) phase compares the existing snapshot against the new extraction using the four-class diff — Completion / Retirement / Divergence / Unchanged.
+   - Both trigger types feed the same Phase 0.5 arbitration card. Flag-never-resolve principle (KARMA + EMNLP knowledge-conflicts SOTA): LLM detects, human arbitrates.
+3. **Phase 0.5 Arbitration — consolidated bilingual card** — when one or more divergences are detected (intra-drop and/or cross-session), a new arbitration card prints before any write. Lists each divergent field with candidate values + sources + tag (`[intra-drop]` or `[cross-session]`). Victor responds in one consolidated turn (e.g. `"2,1,2"` to pick value 2 for divergence 1, value 1 for divergence 2, value 2 for divergence 3, OR `"autre 3: <value>"` to override divergence 3 with a free-form value).
+4. **Archive pattern — `drop_zone_intent_history/` directory** — when a re-run produces a new snapshot:
+   - Existing `drop_zone_intent.md` moved to `drop_zone_intent_history/v<N>_<ISO8601-Z-timestamp>.md`
+   - Archived file gains frontmatter additions: `status: deprecated`, `archived_at`, `superseded_by: ../drop_zone_intent.md`, `supersession_reason: <"intra-drop arbitration" | "cross-session re-extraction" | "user re-run no divergence">`
+   - New snapshot written with incremented `snapshot_version` and `supersedes_snapshot: ./drop_zone_intent_history/v<N>_<ts>.md` pointer
+5. **Three additive frontmatter keys** (schema_version stays at `1`, additive only):
+   - `snapshot_version: <int>` — counter starting at 1 on first write, incremented on each supersession
+   - `arbitrated_fields: [<field_name>, ...]` — list of field names that went through Phase 0.5 arbitration (empty `[]` if no arbitration; absent key signals v1.4.x legacy)
+   - `supersedes_snapshot: "./drop_zone_intent_history/v<N>_<ts>.md"` — relative pointer to archived predecessor (absent on first write)
+6. **Layer B opt-in `⚖` marker rendering** — Phase 0 Step 0.4 intent card and Step 0.5 `bootstrap_intent.md` template render a `⚖` marker suffix on each row whose semantic field name appears in `arbitrated_fields`. Marker positioned after the value + citation + origin tag, before EOL. Absent when `arbitrated_fields` is empty or the key is not present (v1.4.x legacy).
+7. **Halt-with-remediation card — bilingual FR/EN pair** — printed on any of: `ANTHROPIC_API_KEY` unset, anthropic SDK missing, API status / network / rate-limit / output-invalid errors. Card content includes (a) bilingual title, (b) why-paragraph (subscription ≠ API per R8 research), (c) numbered remediation with Console deep-link + OS-specific persistent one-liners (`setx` Windows / `.zshenv` POSIX), (d) optional escape-hatches mention (`ANTHROPIC_AUTH_TOKEN`, `apiKeyHelper`), (e) future-proofing note about `CLAUDE_CODE_SUBPROCESS_ENV_SCRUB`. R9 tier-3 paired authoring. Verbatim FR + EN templates per failure class in `phase-0-welcome.md`.
+8. **Completion vs retirement — asymmetric arbitration triggers** for Phase 0.4 cross-session detection:
+   - **Completion** (`current == null-class`, `new != null-class`) → informative log, no arbitration (additive)
+   - **Retirement** (`current != null-class`, `new == null-class`) → arbitration required ("keep existing or accept retirement?"), because silent retirement of populated field is destructive
+   - **Divergence** (both populated, different) → arbitration required (canonical case)
+   - **Unchanged** (both equal, byte-wise) → no action
+9. **Victor-exit safety — no mid-flow state change** — if Victor exits (ctrl+c) or abandons mid-arbitration (Phase 0.5), the existing `drop_zone_intent.md` (if any) remains byte-identical, no archive is created, no new write occurs. Arbitration fully precedes write; no partial state on disk.
+10. **Six-commit rhythm preservation — eighth consecutive application** (spec + spec polish + plan + plan polish + feat + chore).
+11. **Living-spec pattern — seventh consecutive version-scoped section** in `v2_etape_0_drop_zone.md`.
+
+### Out of scope (deferred to v1.5.1+)
+
+(See spec § "Scope — v1.5.0 / Out of scope" for full list. Items unchanged from v1.4.2 deferred list, renumbered as v1.5.1+: Layer B expandable archive diff, retry policy on 5xx transient errors, archive retention policy, concurrent re-runs protection, import of archived snapshot, cross-project memory flow, event log alongside snapshot, `cited_text_preview` inline surfacing / hyperlink citations / Files API / programmatic handoff / GH_BROWSER / UX toolkit / chime / bilingual Layer B null-class parsing / three-locale expansion / Structured Outputs Path B pivot.)
+
 ### Out of scope (deferred to v1.4.1+)
 
 - **Layer B citation surfacing** — the `_source_citation` entries are persisted at Layer A in v1.4.0 but not displayed in Layer B's Step 0.4 card or Step 0.5 `bootstrap_intent.md` template. Additive v1.4.1 if pain emerges.
@@ -289,6 +320,104 @@ If `ANTHROPIC_API_KEY` is revoked mid-session (user unsets externally — out-of
 
 v1.4.0 touches **zero Layer B files**. Layer B's `phase-0-seed-loading.md` Step 0.2a parser is dict-based YAML parsing — unknown `<field>_source_citation` keys are silently ignored. `schema_version` stays at `1`. Fallback-path files are byte-identical to v1.3.3 files modulo `skill_version`. API-path files carry the additional keys without removing or renaming any existing key, without bumping schema_version. Layer B v1.4.1+ may add card / template surfacing of the citations additively if real user pain emerges.
 
+## Living memory dispatch (v1.5.0)
+
+v1.5.0 turns `genesis-drop-zone` into a living memory with intra-drop divergence detection, cross-session supersession, and explicit halt-with-remediation when the API is unavailable. Four orthogonal additions on top of the v1.4.0 Citations API dispatch:
+
+### Phase 0.4 — Cross-session divergence detection
+
+After the extractor returns its JSON output, the dispatch layer checks whether `drop_zone_intent.md` already exists at cwd.
+
+**If absent**: this is a first write. Skip Phase 0.4 entirely, proceed to Phase 0.5 with whatever intra-drop divergences the extractor surfaced (may be empty).
+
+**If present**: read the existing snapshot's frontmatter, then run the four-class diff against the new extraction. For each of the 9 semantic fields:
+
+| Class | Trigger | Action |
+|---|---|---|
+| Unchanged | byte-wise equality of trimmed values | no action |
+| Completion | current is null-class token, new is real value | log to stderr `[phase-0.4] field=<name> COMPLETION current=null new="<value>"`; no arbitration |
+| Retirement | current is real value, new is null-class token | append cross-session divergence: `{field, candidate_values: [current, new], sources: ["existing snapshot", "new extraction"]}` (forces Victor to arbitrate retirement) |
+| Divergence | both populated, byte-wise different | append cross-session divergence with same shape as Retirement |
+
+Tag each cross-session divergence with `[cross-session]` for the arbitration card; intra-drop divergences from the extractor are tagged `[intra-drop]`. Both lists are concatenated into the consolidated card payload.
+
+**Null-class token recognition** uses string equality against the four canonical FR tokens (`a trouver ensemble`, `non mentionne`, `non mentionnee`, `a affiner — X ou Y` pattern with em-dash U+2014). Locale-detected variants are NOT in the contract — frontmatter null tokens stay FR canonical regardless of `content_locale` per v1.3.3's data contract.
+
+### Phase 0.5 — Arbitration consolidated card
+
+If the consolidated divergences list (intra-drop + cross-session) is empty, skip Phase 0.5 entirely. Proceed to write/archive operations with the new extraction values verbatim.
+
+If non-empty, render the bilingual arbitration card. The card prints in `content_locale` per v1.3.3 dispatch (FR if `content_locale=FR`, EN if `content_locale=EN`, FR fallback if `mixte`). Both bilingual variants are paired-authored in `phase-0-welcome.md` per R9 tier-3 — see § "Arbitration card — FR variant" / "EN variant" in that file.
+
+**Victor's response** is parsed:
+- Comma-separated indices `"i,j,k,..."` where each value is `1..len(divergence.candidate_values)` for that divergence: pick the corresponding candidate.
+- `"autre N: <value>"` for any N: override divergence #N with the free-form value (string).
+- `"abort"` (or any natural-language abort signal): exit cleanly. Existing `drop_zone_intent.md` (if any) byte-identical. No archive. No new write.
+- Malformed response → re-prompt with parse-error hint, do not write.
+
+After successful arbitration, the resolved values replace the extractor's raw values for the affected fields. The list of arbitrated field names is recorded in `arbitrated_fields` for the new snapshot's frontmatter.
+
+### Archive write — supersession chain
+
+Once arbitration resolves (or is skipped because no divergences), the dispatch layer performs the write/archive operation atomically (in dispatch terms — Genesis is single-writer):
+
+**If `drop_zone_intent.md` exists** (re-run path):
+
+1. Read its current `snapshot_version` (default 1 if absent — v1.4.x legacy compat).
+2. Construct archive filename: `drop_zone_intent_history/v<N>_<ISO8601-Z>.md` where N = current snapshot_version, timestamp is `datetime.now(UTC).strftime('%Y%m%dT%H%M%SZ')`.
+3. Read current `drop_zone_intent.md`, augment its frontmatter:
+   - `status: deprecated`
+   - `archived_at: <ISO8601-Z timestamp>`
+   - `superseded_by: ../drop_zone_intent.md`
+   - `supersession_reason: <"intra-drop arbitration" | "cross-session re-extraction" | "user re-run no divergence">`
+4. Write augmented content to the archive path (creating `drop_zone_intent_history/` directory if absent).
+5. Construct new snapshot frontmatter from extractor output + arbitration results:
+   - `schema_version: 1` (unchanged)
+   - 9 semantic fields (arbitrated values where applicable)
+   - 4 metadata keys (`created_at` = current ISO8601-Z, `skill: genesis-drop-zone`, `skill_version: 1.5.0`)
+   - `<field>_source_citation` for each field with citation (v1.4.0 logic preserved)
+   - `snapshot_version: <N+1>`
+   - `arbitrated_fields: [<list>]` (empty `[]` if no arbitration occurred this round)
+   - `supersedes_snapshot: ./drop_zone_intent_history/v<N>_<ts>.md`
+6. Overwrite `drop_zone_intent.md` with the new snapshot.
+
+**If `drop_zone_intent.md` does NOT exist** (first write path):
+
+1. Construct snapshot frontmatter as above with `snapshot_version: 1`, `arbitrated_fields: <list or []>`, omit `supersedes_snapshot` key entirely (not first-write semantics).
+2. Write `drop_zone_intent.md`.
+
+**Failure semantics**:
+- Disk error during archive move (permission, disk-full): halt with error message, do NOT proceed to overwrite. Existing `drop_zone_intent.md` byte-identical.
+- Disk error during new snapshot write after successful archive: halt with error message including the archive filename so Victor can manually restore. v1.5.0 accepts this small window as the tradeoff for not implementing fsync-then-rename atomic-write semantics. v1.5.1+ may add fsync if the window matters in practice.
+
+### Halt-with-remediation card
+
+When the extractor exits with code 2-7, the dispatch layer renders the bilingual halt card (paired-authored in `phase-0-welcome.md`). The card content names the failure class explicitly so Victor knows what to fix.
+
+**Why an API key (and not a Claude Max subscription)** — Anthropic intentionally separates two billing surfaces and identities:
+
+- **Claude Max ($200/mo subscription)** covers `claude.ai` web app + Claude Desktop + Claude Code CLI inference. Pays for human-driven Claude conversations.
+- **API key** (`sk-ant-...` from `console.anthropic.com`) bills per-token to a workspace. Pays for programmatic Messages API / Citations / Files calls — including the Genesis drop-zone Citations extractor subprocess.
+
+The two are intentionally distinct — research-confirmed `.claude/docs/superpowers/research/sota/anthropic-auth-and-oauth-status_2026-04-19.md`. Even on April 19, 2026, no public OAuth path lets a third-party app (including Genesis) use a subscription identity for Messages API. The halt card surfaces this honestly rather than degrading silently.
+
+Per-failure-class card content (full bilingual templates in `phase-0-welcome.md`):
+
+| Exit code | Card title (FR / EN) | Remediation summary |
+|---|---|---|
+| 2 EXIT_NO_KEY | Genesis nécessite une clé API Anthropic / Genesis requires an Anthropic API key | Console deep-link, `setx`/`.zshenv` persistent one-liners, escape hatches, env-scrub warning |
+| 3 EXIT_SDK_MISSING | SDK Anthropic non installé / Anthropic SDK not installed | `pip install anthropic` (or `uv pip install` / `pipx`), relaunch, re-invoke |
+| 4 EXIT_API_ERROR | Erreur API Anthropic / Anthropic API error | https://status.anthropic.com check, retry, set `GENESIS_DROP_ZONE_VERBOSE=1` for diagnostic logs |
+| 5 EXIT_RATE_LIMIT | Limite de débit Anthropic dépassée / Anthropic rate limit exceeded | Wait 60s + retry, check workspace usage at https://console.anthropic.com/settings/billing |
+| 6 EXIT_BAD_INPUT | Erreur interne extracteur / Internal extractor error | File issue at https://github.com/myconciergerie-prog/project-genesis/issues with stderr log |
+| 7 EXIT_OUTPUT_INVALID | Sortie API invalide / Invalid API output | Retry, switch model via `GENESIS_DROP_ZONE_MODEL` env var, check Anthropic Console message logs |
+
+**Footer note** (always rendered, both languages): "the Claude Code (Max) subscription does NOT grant API access. The Anthropic API key is a separate product, billed per-token at the workspace level — see https://console.anthropic.com/settings/keys".
+
+The card prints in `content_locale` order. After printing, the dispatch layer halts (no fallback, no retry, no in-context degradation). Victor fixes the cause and re-runs `/genesis-drop-zone`.
+
+**Future-proofing note**: a future Claude Code release may default `CLAUDE_CODE_SUBPROCESS_ENV_SCRUB=1`, scrubbing `ANTHROPIC_API_KEY` from subprocess env at extractor invocation time. To survive that change, the env var MUST be set at the **OS / shell profile level** (`setx` Windows / `.zshenv` POSIX), NOT just in the current Claude Code session.
+
 ## Phase 0 — welcome
 
 Print the welcome ASCII box from `phase-0-welcome.md`. Locale dispatch: use the FR variant when `welcome_locale = FR`, the EN variant when `welcome_locale = EN` (see `## Locale dispatch (v1.3.3)` above). Do not inline the template here — it lives in the phase body file so bilingual audit greps have a single target.
@@ -489,6 +618,7 @@ v1.4.0 refines cross-skill-pattern #2 from *"at most one concentrated privilege 
 | v1.3.2 | writes `drop_zone_intent.md` to cwd after consent, halt-on-existing, no `mkdir` | `none` |
 | v1.3.3 | unchanged from v1.3.2 (runtime locale dispatch only) | `none` |
 | **v1.4.0** | **unchanged from v1.3.2** (additive frontmatter keys only — same write, same halt, same path) | **subprocess → Anthropic Messages API for Citations extraction, pre-flight env check, silent graceful fallback, 1h cache TTL explicit** |
+| **v1.5.0** | **EXTENDED**: writes `drop_zone_intent.md` to cwd after consent (v1.3.2 preserved as first-write path), writes `drop_zone_intent_history/v<N>_<ts>.md` archive entries on supersession, overwrites `drop_zone_intent.md` with new snapshot after archive. Mitigations extended (see § Disk class mitigations v1.5.0 below). | **subprocess unchanged** (Anthropic Messages API, pre-flight env check, 1h TTL explicit, token-budget logging). **Fallback RETIRED** — exit codes 2-7 now route to halt-with-remediation card; no in-context degradation. Anti-Frankenstein retroactive per R8 `sota/anthropic-auth-and-oauth-status_2026-04-19.md`. |
 
 ### Disk class mitigations (unchanged since v1.3.2)
 
@@ -500,7 +630,19 @@ v1.3.2 broke the `none` streak with the minimum viable concentrated privilege �
 - **Post-write verification** — `test -s` confirms the file exists and has non-zero size before the accept bridge prints.
 - **Per-target consent floor match with `pepite-flagging`** — the precedent for Layer A privileges.
 
-### Network class mitigations (new in v1.4.0)
+### Disk class mitigations (extended in v1.5.0)
+
+v1.5.0 extends the disk class to cover archive + supersession writes. The five mitigations are augmented, not replaced:
+
+- **Arbitration card consent gates the write/archive operation** — Phase 0.5 arbitration card (when divergences detected) is the consent surface for any operation that overwrites or supersedes an existing snapshot. No write happens until Victor responds. Empty divergences → write proceeds without an explicit consent gate (parity with v1.3.2 first-write path).
+- **`drop_zone_intent_history/` directory created without `mkdir -p` magic** — only as a sibling of `drop_zone_intent.md` at cwd, never as an arbitrary path. Creation is conditional (only when needed for an archive write). No path traversal, no symlink-following beyond what cwd already grants.
+- **ISO8601 UTC timestamp guarantees archive filename uniqueness** — `v<N>_<YYYY-MM-DDTHH-MM-SS>Z.md` collision-resistant by construction (single-writer + per-second resolution).
+- **Victor-exit safety = no partial state on disk** — arbitration fully precedes any write. If Victor abandons mid-card (ctrl+c, abort, malformed response), existing `drop_zone_intent.md` byte-identical, no archive created.
+- **Bidirectional supersession traceability** — new snapshot has `supersedes_snapshot: ./drop_zone_intent_history/v<N>_<ts>.md`; archived predecessor has `superseded_by: ../drop_zone_intent.md`. Forensic auditability without the cost of a full event log (deferred per spec § Out of scope).
+
+### Network class mitigations (new in v1.4.0; v1.5.0 retires fallback)
+
+**v1.5.0 update**: the **silent graceful fallback** mitigation listed below is **RETIRED**. Exit codes 2-7 now route to the halt-with-remediation card (§ Living memory dispatch v1.5.0 above). The other four mitigations (pre-flight env check, subprocess isolation, explicit TTL, token-budget logging) remain canonical. Anti-Frankenstein retroactive — fallback was preemptive, never pain-driven validated; R8 research `sota/anthropic-auth-and-oauth-status_2026-04-19.md` confirmed no first-party OAuth path for Messages API in April 2026 means halt-with-remediation is the only ToS-clean contract.
 
 v1.4.0 adds the second class with its own orthogonal consent model and five mitigations:
 

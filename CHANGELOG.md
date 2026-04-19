@@ -8,6 +8,52 @@ Every version bump includes a **5-axis self-rating block** per R10.3 discipline,
 
 ---
 
+## [1.5.0] — 2026-04-19 — "genesis-drop-zone living memory + arbitration (MINOR)"
+
+**genesis-drop-zone living memory** — first MINOR bump on the v1.5.x line. Closes Friction #3 (reconciliation policy not codified) + absorbs Friction #1 + #2 (multi-source seed shape) from the 2026-04-18 v1.4.1 dogfood. **Anti-Frankenstein retroactive**: v1.4.0's silent graceful fallback retired on user challenge ("pourquoi pas d'API ?") in favour of explicit halt-with-remediation card. R8 research `sota/anthropic-auth-and-oauth-status_2026-04-19.md` confirms no first-party OAuth path for Messages API in April 2026 → halt-with-remediation is the only ToS-clean contract.
+
+### Added
+
+- `genesis-drop-zone` Phase 0.4 — cross-session divergence detection (in-context, four-class diff: Completion / Retirement / Divergence / Unchanged) when `drop_zone_intent.md` already exists at cwd
+- `genesis-drop-zone` Phase 0.5 — consolidated bilingual arbitration card (intra-drop + cross-session divergences in one Victor turn)
+- `drop_zone_intent_history/v<N>_<ISO8601-Z>.md` archive directory with bidirectional supersession pointers (`supersedes_snapshot` on new + `superseded_by` on archived)
+- 3 additive frontmatter keys: `snapshot_version`, `arbitrated_fields`, `supersedes_snapshot` (schema_version stays at 1, additive only)
+- 14 new bilingual variants (R9 tier-3 paired-authored): 1 arbitration FR + 1 arbitration EN + 6 halt-with-remediation FR + 6 halt-with-remediation EN
+- Layer B `⚖` marker rendering on `genesis-protocol` Phase 0 Step 0.4 card + Step 0.5 `bootstrap_intent.md` template — opt-in, additive, zero parser change
+- Extractor `divergences[]` JSON output — extractor flags intra-drop semantic conflicts; consumed by Phase 0.5
+- Extractor `_shape_divergences()` validator — flag-never-resolve principle (drops malformed divergences with stderr warning, doesn't fail extraction)
+- New regression fixture `tests/fixtures/drop_zone_intent_fixture_v1_5_0_arbitrated.md`
+- New R8 entry `sota/anthropic-auth-and-oauth-status_2026-04-19.md` (universal scope candidate post-ship)
+- master.md cross-skill-pattern #4 fifth data-point: "Layer B opt-in additive rendering of revision-state metadata"
+- master.md cross-skill-pattern #2 v1.5.0 disk class extension narrative
+
+### Changed
+
+- `genesis-drop-zone` extractor exit codes 2-7 now signal halt-with-remediation to SKILL.md dispatch (no fallback to v1.3.3 in-context extraction)
+- `genesis-drop-zone` halt-on-existing (v1.3.2 behaviour) replaced by archive-and-supersede flow when re-run path detected
+- master.md privilege map — disk class extended (write + archive + overwrite); network class fallback retired
+- `.claude-plugin/plugin.json` version `1.4.2 → 1.5.0`
+- Halt-with-remediation card content upgraded with 5 substantive additions per R8 research: subscription≠API explanation paragraph, Console deep-link with Claude Code role hint, OS-specific PERSISTENT one-liners (`setx` Windows / `.zshenv` POSIX), escape hatches (`ANTHROPIC_AUTH_TOKEN` / `apiKeyHelper`), `CLAUDE_CODE_SUBPROCESS_ENV_SCRUB` future-proofing warning
+
+### Removed
+
+- v1.4.0 silent graceful fallback path in `extract_with_citations.py` (anti-Frankenstein retroactive — preemptive feature, never pain-driven validated; R8-confirmed only ToS-clean contract is halt-with-remediation)
+
+### Self-rating — v1.5.0
+
+| Axis | Score | Notes |
+|---|---|---|
+| Pain-driven | 9.4 | Closes Friction #3 + #1 + #2 from real dogfood; anti-Frankenstein retroactive on fallback driven by user challenge mid-session |
+| Prose cleanliness | 9.1 | 1:1 mirror discipline preserved (SKILL.md + phase-0-welcome.md + spec triple-mirror); 14 new bilingual pairs paired-authored from day 1 |
+| Best-at-date | 9.3 | KARMA + EMNLP knowledge-conflicts + Cleanlab TLM + Kurrent SOTA references applied; living-memory R8 entry grounds 12 design choices; OAuth research grounds halt-with-remediation contract |
+| Self-contained | 9.2 | Zero ripple to phase-minus-one / 5.5 / journal / post-processor / pepite; only intentional Layer B Step 0.4+0.5 touches per cross-skill-pattern #4; schema_version preserved at 1 (additive only) |
+| Anti-Frankenstein | 9.4 | Fallback retirement = anti-Frankenstein retroactive (textbook case); 7 deferred items in spec § Out of scope all pain-driven gates; archive retention + retry policy + concurrent locks all deferred to v1.5.1+ |
+| **Average** | **9.28** | **12th consecutive ship ≥ 9.0** |
+
+Running average post-v1.5.0: ≈ **8.95/10** (+0.03 vs v1.4.2 running 8.92).
+
+---
+
 ## [1.4.2] — 2026-04-19 — "marketplace unblock (PATCH — `genesis-protocol` install-path resolution + skill-local R8 bundle)"
 
 Focused PATCH closing two dogfood-observed BLOCKERS from the 2026-04-18 v1.4.1 stress test. Makes `genesis-protocol` self-sufficient for Phase 1 rules seed + Phase 2 R8 cache seed across all install modes (dogfood / `--plugin-dir` / personal-scope / marketplace). **Zero Layer A ripple** — `skills/genesis-drop-zone/**` byte-identical across v1.4.1 → v1.4.2. **Zero schema bump, zero new privilege, zero new bilingual pair, zero cross-skill-pattern change.** Pure plumbing fix + distribution bundle completion.

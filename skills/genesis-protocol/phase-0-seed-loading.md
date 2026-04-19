@@ -136,21 +136,21 @@ Render a structured card showing everything Phase 0 parsed. Use the following te
 📋 Parsed intent — Phase 0
 
 Target folder          : <absolute path>
-Project name           : <value or [missing]> (<origin>)<citation>
-Project slug           : <derived or [pending name]><citation>
-Vision                 : <value or [missing]> (<origin>)<citation>
-Stack hints            : <value or [none]> (<origin>)<citation>
+Project name           : <value or [missing]> (<origin>)<citation><arbitrated_marker>
+Project slug           : <derived or [pending name]><citation><arbitrated_marker>
+Vision                 : <value or [missing]> (<origin>)<citation><arbitrated_marker>
+Stack hints            : <value or [none]> (<origin>)<citation><arbitrated_marker>
 License                : <value or MIT (default)>
-Is-a-plugin            : <yes | no | [missing]> (<origin>)<citation>
+Is-a-plugin            : <yes | no | [missing]> (<origin>)<citation><arbitrated_marker>
 Plan tier              : <Max | Pro | Team | Free | [missing]>
 Scope locks            : <list or [none]>
 Mixed media            : <file list or [none]>
 
 Additional context from drop zone:
-  Target audience      : <pour_qui value><citation>
-  Language detected    : <FR | EN | mixte><citation>
-  Budget / constraint  : <value or non mentionne><citation>
-  Visibility           : <value or non mentionnee><citation>
+  Target audience      : <pour_qui value><citation><arbitrated_marker>
+  Language detected    : <FR | EN | mixte><citation><arbitrated_marker>
+  Budget / constraint  : <value or non mentionne><citation><arbitrated_marker>
+  Visibility           : <value or non mentionnee><citation><arbitrated_marker>
 
 Gaps to fill before Phase 1:
   - <gap 1>
@@ -189,6 +189,32 @@ Propagated citations honour the principle that a deterministically-derived value
 - `text_char_range` → ` [lines X-Y]` (1-indexed, inclusive; line-count via `\n` counting on source text)
 
 Language-neutral ASCII. Identical rendering across FR / EN / mixte locales.
+
+#### Arbitrated-field marker (v1.5.0)
+
+**Added in v1.5.0.** The `<arbitrated_marker>` placeholder renders a `⚖` suffix on rows whose semantic field name is present in the `arbitrated_fields` array of `drop_zone_intent.md` frontmatter. When the array is empty, or the key is absent (v1.4.x legacy snapshots), the placeholder expands to the empty string (no leading space, no marker).
+
+Marker positioning per row: `<value> (<origin>)<citation> ⚖` — marker is the rightmost element on the line, immediately after the citation suffix (which itself is immediately after the origin tag). When citation is absent, marker still positions immediately after origin: `<value> (<origin>) ⚖`.
+
+Field-to-row mapping for marker rendering — same propagation rules as the v1.4.1 citation map:
+
+| Card row | Source semantic field name (in `arbitrated_fields`) | Render `⚖` if |
+|---|---|---|
+| Project name | `nom` | `arbitrated_fields` contains `nom` |
+| Project slug | `nom` | propagated — same condition as Project name |
+| Vision | `idea_summary` | `arbitrated_fields` contains `idea_summary` |
+| Stack hints | `hints_techniques` | contains `hints_techniques` |
+| Is-a-plugin | `type` | propagated — contains `type` |
+| Target audience | `pour_qui` | contains `pour_qui` |
+| Language detected | `langue_detectee` | contains `langue_detectee` |
+| Budget / constraint | `budget_ou_contrainte` | contains `budget_ou_contrainte` |
+| Visibility | `prive_ou_public` | contains `prive_ou_public` |
+
+Rows in § "Rows explicitly NOT annotated" (Target folder, License, Plan tier, Scope locks, Gaps to fill, Mixed media) carry no Layer A semantic source and therefore receive no `⚖` marker even when `arbitrated_fields` is non-empty.
+
+The marker is purely informational — it tells the human reviewer that this value went through Phase 0.5 arbitration during Layer A. Layer B does not consume the marker for any decision logic; it does not read the archived predecessor; it does not surface diffs. The "show me what changed" expansion is a v1.5.1+ deferred item (per spec § Out of scope).
+
+**Backwards compatibility**: Layer B reading a v1.4.x `drop_zone_intent.md` (no `arbitrated_fields` key in frontmatter) renders zero markers — the dict YAML parser returns no key, the conditional collapses to empty string. The `<arbitrated_marker>` placeholder is safely additive. Cross-skill-pattern #4 fifth data-point.
 
 #### Rows explicitly NOT annotated
 
@@ -234,13 +260,13 @@ phase: 0
 
 | Field | Value | Source |
 |---|---|---|
-| Project name | <value><citation> | config.txt / drop_zone_intent.md / user edit |
-| Slug | <value><citation> | config.txt / derived |
-| Vision | <one-paragraph><citation> | config.txt / drop_zone_intent.md |
+| Project name | <value><citation><arbitrated_marker> | config.txt / drop_zone_intent.md / user edit |
+| Slug | <value><citation><arbitrated_marker> | config.txt / derived |
+| Vision | <one-paragraph><citation><arbitrated_marker> | config.txt / drop_zone_intent.md |
 | License | <value> | config.txt / default |
-| Is-a-plugin | <yes|no><citation> | config.txt / drop_zone_intent.md / user edit |
+| Is-a-plugin | <yes|no><citation><arbitrated_marker> | config.txt / drop_zone_intent.md / user edit |
 | Plan tier | <value> | config.txt / user edit |
-| Stack hints | <list><citation> | config.txt / drop_zone_intent.md |
+| Stack hints | <list><citation><arbitrated_marker> | config.txt / drop_zone_intent.md |
 | Scope locks | <list> | config.txt / user edit |
 | Mixed media | <file list> | folder scan |
 
@@ -254,10 +280,10 @@ phase: 0
 
 | Field | Value |
 |---|---|
-| Target audience (pour qui) | <value or "a trouver ensemble"><citation> |
-| Language detected | <FR / EN / mixte><citation> |
-| Budget or constraint | <value or "non mentionne"><citation> |
-| Visibility (private / public) | <value or "non mentionnee"><citation> |
+| Target audience (pour qui) | <value or "a trouver ensemble"><citation><arbitrated_marker> |
+| Language detected | <FR / EN / mixte><citation><arbitrated_marker> |
+| Budget or constraint | <value or "non mentionne"><citation><arbitrated_marker> |
+| Visibility (private / public) | <value or "non mentionnee"><citation><arbitrated_marker> |
 
 Source: `drop_zone_intent.md` written by `genesis-drop-zone` v<version> at <ISO timestamp>.
 
@@ -269,6 +295,8 @@ Source: `drop_zone_intent.md` written by `genesis-drop-zone` v<version> at <ISO 
 When the seed source was `drop_zone_intent.md`, the `## Raw config.txt` section is retained in the template but rendered as `n/a — seeded from drop_zone_intent.md`. This preserves the file's section structure across both seed paths and makes the seed source explicit to any future reader.
 
 **Citation suffix inside `Value` columns (v1.4.1)**: the `<citation>` placeholder in the `## Fields` and `## Conversational context from drop zone` tables renders the same inline `[page N]` / `[pages N-M]` / `[lines X-Y]` suffix as Step 0.4's card (citation-source mapping + annotation format documented in § "Step 0.4 / Citation suffix on card rows (v1.4.1)" above). When the seed source was `config.txt` (legacy bootstrap, no `drop_zone_intent.md`), no citation suffixes render — the `## Fields` table matches v1.3.2 layout verbatim, and the `## Conversational context from drop zone` section is omitted entirely (no Layer A seed → no section). The `Mixed media` row is deliberately unadorned even when `attaches_source_citation` is preserved, per the honest-provenance rule in § "Rows explicitly NOT annotated".
+
+**Arbitrated-field marker inside `Value` columns (v1.5.0)**: the `<arbitrated_marker>` placeholder renders the `⚖` suffix per the same rules as Step 0.4's card (mapping table + visibility logic documented in § "Step 0.4 / Arbitrated-field marker (v1.5.0)" above). Placeholder is positioned after the citation suffix per the same canonical ordering: `<value><citation><arbitrated_marker>`. When `arbitrated_fields` is absent (v1.4.x legacy) or empty, no marker renders. Cross-skill-pattern #4 fifth data-point — Layer B opt-in additive rendering of revision-state metadata; parser mechanics unchanged.
 
 After the file is written, Phase 0 is complete. Control returns to the orchestrator which advances to Phase 1.
 
