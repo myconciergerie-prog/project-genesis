@@ -372,6 +372,19 @@ Every source file (`.py`, `.md`, `.sh`, `.ps1`, `.yaml`, `.yml`, `.js`, `.ts`) c
 - JavaScript / TypeScript: `// SPDX-License-Identifier: MIT`
 - JSON (no comments supported): coverage via manifest-level `license` field in `plugin.json`, `package.json`, etc.
 
+**Exception for YAML-frontmatter Markdown files** (`skills/*/SKILL.md`, any Markdown file starting with a `---` frontmatter block consumed by a strict parser like Claude Code's skill-discovery loader) : the SPDX comment MUST be placed as a **trailing HTML comment** at the end of the file, NOT at the top. Claude Code's frontmatter parser requires the `---` delimiter at line 1 ; a leading `<!-- SPDX -->` comment breaks frontmatter parsing and silently drops all skill metadata (load-failure empirical F5 of v1.6.2 runtime dogfood, fixed v1.6.3). License attribution is preserved at file tail :
+
+```markdown
+---
+name: ...
+description: ...
+---
+
+(skill body ...)
+
+<!-- SPDX-License-Identifier: MIT -->
+```
+
 `LICENSE` at repo root holds the full MIT text. The SPDX + LICENSE combination is the canonical 2026 approach per Linux Foundation guidance, surfaced in research `sota/spdx-headers_2026-04-14.md`.
 
 ### R10.3 Self-rating at every version bump

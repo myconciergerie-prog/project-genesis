@@ -1,4 +1,3 @@
-<!-- SPDX-License-Identifier: MIT -->
 ---
 name: phase-minus-one
 description: Dependencies Pre-flight for first-time Genesis users — detect the current dev stack, show a gap report, let the user pick a mode (detailed / semi-auto / auto), run installs via the OS package manager, batch sign-ins and restarts, verify the stack, and offer optional multi-LLM / multi-device bonuses. Core Phase -1 of the Genesis 7-phase protocol.
@@ -125,3 +124,4 @@ Phase -1 is complete when:
 - `detect.sh` re-run (Phase -1.6) confirms every approved item is healthy or recorded as fallback.
 - The user has not said `pause`.
 - Control is handed back to the Genesis protocol for Phase 0.
+<!-- SPDX-License-Identifier: MIT -->

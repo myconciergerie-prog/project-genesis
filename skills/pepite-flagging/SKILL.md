@@ -1,7 +1,6 @@
-<!-- SPDX-License-Identifier: MIT -->
 ---
 name: pepite-flagging
-description: Watch for high-leverage discoveries during research operations (WebSearch, WebFetch, sub-agent exploration, reading external docs) and raise a red-light flag when at least two of the six trigger criteria are met. Create a pépite entry in `memory/pepites/`, surface a 🔴 card at the next natural boundary, wait for user choice (extract / seed / propagate / dismiss), and write pointer files to sibling projects only on explicit consent. Manual-invoke fallback: `/pepite-flag "<title>"` forces an entry when Claude missed the auto-detection.
+description: 'Watch for high-leverage discoveries during research operations (WebSearch, WebFetch, sub-agent exploration, reading external docs) and raise a red-light flag when at least two of the six trigger criteria are met. Create a pépite entry in `memory/pepites/`, surface a 🔴 card at the next natural boundary, wait for user choice (extract / seed / propagate / dismiss), and write pointer files to sibling projects only on explicit consent. Manual-invoke fallback: `/pepite-flag "<title>"` forces an entry when Claude missed the auto-detection.'
 ---
 
 # Pépite flagging
@@ -139,3 +138,4 @@ If a future session wants to add a feature to this skill, the first question is:
 ---
 
 *The pépite system is the seventh memory type in the Genesis stack, after user/feedback/project/reference/themes/journal. It is the first memory type whose primary job is cross-project propagation — a stepping stone toward Meta-Memory Layer 3 before the full Path B session happens.*
+<!-- SPDX-License-Identifier: MIT -->

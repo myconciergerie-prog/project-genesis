@@ -1,4 +1,3 @@
-<!-- SPDX-License-Identifier: MIT -->
 ---
 name: journal-system
 description: Stratified thought capture — recognise French/English trigger phrases ("ouvre une pensée", "reprends la pensée", "enregistre dans journal", "enrichis", "clôture"), create or extend dated journal entries under memory/journal/, and gate any amplification on explicit user consent per the Layer 0 journal system spec (6th memory type, not auto-loaded, re-read intentionally).
@@ -107,3 +106,4 @@ Full rationale + examples in `amplification-rules.md`.
 - **Auto-classification by keywords** — tags live in `keywords:` frontmatter, but no auto-tagger runs. The user adds keywords explicitly or Claude infers them with consent on entry creation.
 - **Full-text search across entries** — use `grep` / `ripgrep` directly on `memory/journal/` when needed. This skill does not ship its own search.
 - **Journal-driven behaviour change** — entries never direct Claude's future actions the way `feedback` or `project` memories do. They are read on demand, not at session open.
+<!-- SPDX-License-Identifier: MIT -->
