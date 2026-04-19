@@ -13,7 +13,9 @@
 
 **Spec**: `.claude/docs/superpowers/specs/v2_etape_0_drop_zone.md` § "Scope — v1.5.0 Living drop zone memory" (lines 256-303, APPROVED 3 review iterations on parent commit `59a7640`)
 
-**R8 reference**: `.claude/docs/superpowers/research/sota/living-memory-and-supersession-patterns_2026-04-18.md` (308 lines, 7 SOTA findings grounding 12 design choices, expires 2026-04-25)
+**R8 references**:
+- `.claude/docs/superpowers/research/sota/living-memory-and-supersession-patterns_2026-04-18.md` (308 lines, 7 SOTA findings grounding 12 design choices, expires 2026-04-25) — primary spec ground
+- `.claude/docs/superpowers/research/sota/anthropic-auth-and-oauth-status_2026-04-19.md` (added 2026-04-19 plan-polish-2 ; expires 2026-04-26) — confirms **no first-party OAuth path for Messages API in April 2026**, justifies halt-with-remediation as the only ToS-clean contract for v1.5.0, drives 5 content upgrades to the remediation card (subscription≠API, Console deep-link, OS one-liners, escape hatches, env-scrub warning)
 
 **Pain source**: `memory/project/dogfood_v1.4.1_stress_2026-04-18/stress_test_report.md` Friction #3 + #1 + #2
 
@@ -466,27 +468,50 @@ Once arbitration resolves (or skipped because no divergences), the dispatch laye
 - Disk error during new snapshot write after successful archive: halt with error message including the archive filename so Victor can manually restore. Existing `drop_zone_intent.md` is GONE in this case (worst case) — but the archive contains the previous content with augmented frontmatter for restore. v1.5.0 accepts this small window as the tradeoff for not implementing fsync-then-rename atomic-write semantics (Python `os.replace` provides POSIX rename atomicity on the new write but not on the archive move; Windows behaviour aligned via Python 3.x `os.replace`). v1.5.1+ may add fsync if the window matters in practice.
 ```
 
-- [ ] **Step 3.6: Add halt-with-remediation card section**
+- [ ] **Step 3.6: Add halt-with-remediation card section (upgraded per 2026-04-19 R8 research)**
 
-After the archive write logic, insert:
+After the archive write logic, insert. **Upgraded content per `sota/anthropic-auth-and-oauth-status_2026-04-19.md`** — 5 content additions vs initial v1.5.0 spec § In scope item 7: subscription≠API explanation, Console deep-link, OS-specific one-liners, escape hatches, env-scrub warning.
 
 ```markdown
 ### Halt-with-remediation card (v1.5.0)
 
-When the extractor exits with code 2-7, the dispatch layer renders the bilingual halt card (paired-authored in `phase-0-welcome.md`). The card content names the failure class explicitly so Victor knows what to fix:
+When the extractor exits with code 2-7, the dispatch layer renders the bilingual halt card (paired-authored in `phase-0-welcome.md`). The card content names the failure class explicitly so Victor knows what to fix.
+
+**Why an API key (and not a Claude Max subscription)** — Anthropic intentionally separates two billing surfaces and identities:
+
+- **Claude Max ($200/mo subscription)** covers `claude.ai` web app + Claude Desktop + Claude Code CLI inference. Pays for human-driven Claude conversations.
+- **API key** (`sk-ant-...` from `console.anthropic.com`) bills per-token to a workspace. Pays for programmatic Messages API / Citations / Files calls — including the Genesis drop-zone Citations extractor subprocess.
+
+The two are intentionally distinct — research-confirmed [`sota/anthropic-auth-and-oauth-status_2026-04-19.md`]. Even on April 19, 2026, no public OAuth path lets a third-party app (including Genesis) use a subscription identity for Messages API. The halt card surfaces this honestly rather than degrading silently.
+
+Per-failure-class card content:
 
 | Exit code | Card title (FR + EN) | Remediation |
 |---|---|---|
-| 2 EXIT_NO_KEY | Genesis nécessite une clé API Anthropic / Genesis requires an Anthropic API key | Set `ANTHROPIC_API_KEY` env var, relaunch Claude Code |
-| 3 EXIT_SDK_MISSING | SDK Anthropic non installé / Anthropic SDK not installed | `pip install anthropic` (or `uv pip install anthropic`), relaunch |
-| 4 EXIT_API_ERROR | Erreur API Anthropic / Anthropic API error | Check Anthropic console for incident; retry in a few minutes |
-| 5 EXIT_RATE_LIMIT | Limite de débit Anthropic dépassée / Anthropic rate limit exceeded | Wait and retry; check workspace usage in Anthropic console |
-| 6 EXIT_BAD_INPUT | Erreur interne extracteur (input invalide) / Internal extractor error (invalid input) | Internal Genesis bug — please file an issue with the stderr log |
-| 7 EXIT_OUTPUT_INVALID | Sortie API invalide / Invalid API output | Retry; if persistent, switch model via `GENESIS_DROP_ZONE_MODEL` env var |
+| 2 EXIT_NO_KEY | Genesis nécessite une clé API Anthropic / Genesis requires an Anthropic API key | (See full FR + EN body templates in `phase-0-welcome.md` — includes Console deep-link, OS-specific one-liners, escape hatches, env-scrub warning.) |
+| 3 EXIT_SDK_MISSING | SDK Anthropic non installé / Anthropic SDK not installed | `pip install anthropic` (or `uv pip install anthropic` / `pipx install anthropic` per Python tooling preference), then relaunch Claude Code in this folder, then re-invoke `/genesis-drop-zone`. |
+| 4 EXIT_API_ERROR | Erreur API Anthropic / Anthropic API error | Check Anthropic Console status page for incidents (https://status.anthropic.com); retry in a few minutes. If persistent, set `GENESIS_DROP_ZONE_VERBOSE=1` and re-run for stderr diagnostic logs. |
+| 5 EXIT_RATE_LIMIT | Limite de débit Anthropic dépassée / Anthropic rate limit exceeded | Wait 60s and retry; check workspace usage at https://console.anthropic.com/settings/billing. If you're on a free tier, request a tier upgrade. The Citations extraction is a single API call (cached 1h via cache_control) — repeated rate-limit triggers signal workspace-wide usage. |
+| 6 EXIT_BAD_INPUT | Erreur interne extracteur (input invalide) / Internal extractor error (invalid input) | Internal Genesis bug — please file an issue at https://github.com/myconciergerie-prog/project-genesis/issues with the stderr log. The extractor expected a payload shape the SKILL.md dispatcher should always produce — divergence indicates a controller-side regression. |
+| 7 EXIT_OUTPUT_INVALID | Sortie API invalide / Invalid API output | Retry once; if persistent, switch model via `GENESIS_DROP_ZONE_MODEL` env var (e.g. `GENESIS_DROP_ZONE_MODEL=claude-sonnet-4-6`). Anthropic Console message logs may show the raw response — useful for diagnosis. |
 
-All cards include a footer note: "Note: la souscription Claude Code (Max) ne donne PAS accès à l'API. La clé API Anthropic est un produit séparé — voir https://console.anthropic.com / Note: the Claude Code (Max) subscription does NOT grant API access. The Anthropic API key is a separate product — see https://console.anthropic.com".
+**Footer note (always rendered, both languages)**:
+
+```
+Note : la souscription Claude Code (Max) ne donne PAS acces a l'API.
+La cle API Anthropic est un produit separe, factures au token et a la
+ressource (workspace), independant de l'abonnement souscription.
+Voir : https://console.anthropic.com/settings/keys
+
+Note: the Claude Code (Max) subscription does NOT grant API access.
+The Anthropic API key is a separate product, billed per-token at the
+workspace level, independent of the subscription tier. See:
+https://console.anthropic.com/settings/keys
+```
 
 The card prints in `content_locale` order — if `content_locale=FR`, FR top + EN bottom; if EN, EN top + FR bottom; if `mixte`, FR top + EN bottom. After printing, the dispatch layer halts (no fallback, no retry, no in-context degradation). Victor fixes the cause and re-runs `/genesis-drop-zone`.
+
+**Future-proofing note**: a future Claude Code release may default `CLAUDE_CODE_SUBPROCESS_ENV_SCRUB=1`, scrubbing `ANTHROPIC_API_KEY` from subprocess env at extractor invocation time. To survive that change, the env var MUST be set at the **OS / shell profile level** (see `setx` / `.zshenv` instructions in the EXIT_NO_KEY full body template in `phase-0-welcome.md`), NOT just in the current Claude Code session. This is a one-time setup; the env var persists across all Claude Code sessions afterwards.
 ```
 
 - [ ] **Step 3.7: Update Out-of-scope mirror section to renumber v1.5.1+**
@@ -582,9 +607,11 @@ Or "abort" to exit without changes.
 ```
 ```
 
-- [ ] **Step 4.5: Add halt-with-remediation card FR template (one per exit-code class)**
+- [ ] **Step 4.5: Add halt-with-remediation card FR template (upgraded per 2026-04-19 R8 research, one per exit-code class)**
 
-Insert under v1.5.0 halt-with-remediation subsection. Body includes 6 cards (one per exit code 2-7), each in FR. Example for EXIT_NO_KEY:
+Insert under v1.5.0 halt-with-remediation subsection. Body includes 6 cards (one per exit code 2-7), each in FR.
+
+**Upgraded EXIT_NO_KEY template** (upgrades per `sota/anthropic-auth-and-oauth-status_2026-04-19.md`: subscription≠API explanation, Console deep-link with role hint, OS-specific persistent one-liners using `setx` for Windows + `.zshenv` reference for POSIX persistence, escape hatches mention, env-scrub future-proofing warning):
 
 ```markdown
 ### Halt-with-remediation card — FR variant (EXIT_NO_KEY = 2)
@@ -595,24 +622,68 @@ Insert under v1.5.0 halt-with-remediation subsection. Body includes 6 cards (one
 L'extracteur Citations a besoin d'une cle API Anthropic
 configuree dans la variable d'environnement ANTHROPIC_API_KEY.
 
+Pourquoi une cle API et pas mon abonnement Claude Max ?
+  L'abonnement Claude Max paye claude.ai + Claude Desktop +
+  Claude Code CLI (inference). La cle API Anthropic est un
+  produit SEPARE, facture au token au niveau workspace, et
+  active programmatic Messages API + Citations + Files. Les
+  deux sont volontairement distincts (architecture Anthropic
+  avril 2026, voir https://console.anthropic.com/settings/keys).
+
 Remediation :
-  1. Recupere une cle sur https://console.anthropic.com
-  2. Configure la variable d'environnement :
-       (PowerShell)  $env:ANTHROPIC_API_KEY = "<ta-cle>"
-       (bash)        export ANTHROPIC_API_KEY="<ta-cle>"
-  3. Relance Claude Code dans ce dossier
+
+  1. Recupere une cle sur https://console.anthropic.com/settings/keys
+     - Cliquer "Create Key" -> nommer "genesis-drop-zone"
+     - Role : "Claude Code" (ou "Developer" si "Claude Code"
+       n'est pas propose dans ton workspace)
+     - Copier la valeur sk-ant-... commencant par sk-ant-
+
+  2. Configure la variable d'environnement de facon PERSISTANTE
+     (pas seulement la session courante) :
+
+     Windows (PowerShell elevee, persistant systeme) :
+       setx ANTHROPIC_API_KEY "sk-ant-..."
+
+     POSIX (bash/zsh, ajouter au profile shell) :
+       echo 'export ANTHROPIC_API_KEY="sk-ant-..."' >> ~/.zshenv
+       (ou ~/.bashrc selon ton shell)
+
+     Ne PAS utiliser uniquement `$env:ANTHROPIC_API_KEY = "..."`
+     dans la session Claude Code en cours : un futur release
+     Claude Code peut activer `CLAUDE_CODE_SUBPROCESS_ENV_SCRUB`
+     par defaut, qui retirerait la variable des subprocess.
+     setx / .zshenv survivent a ce changement.
+
+  3. Relance Claude Code dans ce dossier (close + reopen)
+
   4. Reinvoque /genesis-drop-zone
+
+Echapatoires (avance, optionnels) :
+  - LLM gateway / proxy : utiliser ANTHROPIC_AUTH_TOKEN au lieu
+    de ANTHROPIC_API_KEY (voir docs Anthropic)
+  - Secrets rotatifs (vault, AWS Secrets Manager) : configurer
+    apiKeyHelper dans ~/.anthropic/config (voir docs Anthropic)
 
 Note : la souscription Claude Code (Max) ne donne PAS acces a
 l'API. La cle API Anthropic est un produit separe.
 ```
 ```
 
-(Repeat for EXIT_SDK_MISSING, EXIT_API_ERROR, EXIT_RATE_LIMIT, EXIT_BAD_INPUT, EXIT_OUTPUT_INVALID — each with its own remediation text.)
+**For the 5 remaining exit codes (EXIT_SDK_MISSING, EXIT_API_ERROR, EXIT_RATE_LIMIT, EXIT_BAD_INPUT, EXIT_OUTPUT_INVALID)**, follow the same canonical structure but use the per-code remediation content from Task 3.6 SKILL.md table. Each card body:
 
-- [ ] **Step 4.6: Add halt-with-remediation card EN templates**
+1. Brief diagnostic title (e.g. "SDK Anthropic non installe")
+2. One-paragraph explanation of what failed
+3. Remediation steps (numbered, exact commands)
+4. Optional escape hatches if applicable
+5. Footer note (subscription ≠ API — same paragraph for all 6 cards, ensuring consistency)
 
-Mirror the 6 FR cards to EN, paired-authored. Example for EXIT_NO_KEY:
+The bilingual pair count delta verification (Task 10.4 expects +14) accounts for: 1 arbitration FR + 1 arbitration EN + 6 halt-FR + 6 halt-EN = 14 new bilingual variants. Verify per Task 10.4 before commit.
+
+- [ ] **Step 4.6: Add halt-with-remediation card EN templates (upgraded paired with Step 4.5 FR)**
+
+Mirror the 6 FR cards to EN, paired-authored.
+
+**Upgraded EXIT_NO_KEY EN template** (1:1 mirror of the FR Step 4.5 EXIT_NO_KEY card):
 
 ```markdown
 ### Halt-with-remediation card — EN variant (EXIT_NO_KEY = 2)
@@ -623,18 +694,55 @@ Mirror the 6 FR cards to EN, paired-authored. Example for EXIT_NO_KEY:
 The Citations extractor needs an Anthropic API key configured
 in the ANTHROPIC_API_KEY environment variable.
 
+Why an API key and not my Claude Max subscription?
+  Your Claude Max subscription pays for claude.ai + Claude
+  Desktop + Claude Code CLI (inference). The Anthropic API
+  key is a SEPARATE product, billed per-token at the
+  workspace level, and unlocks programmatic Messages API +
+  Citations + Files. The two are intentionally distinct
+  (Anthropic architecture, April 2026 — see
+  https://console.anthropic.com/settings/keys).
+
 Remediation:
-  1. Get a key at https://console.anthropic.com
-  2. Set the environment variable:
-       (PowerShell)  $env:ANTHROPIC_API_KEY = "<your-key>"
-       (bash)        export ANTHROPIC_API_KEY="<your-key>"
-  3. Relaunch Claude Code in this folder
+
+  1. Get a key at https://console.anthropic.com/settings/keys
+     - Click "Create Key" -> name it "genesis-drop-zone"
+     - Role: "Claude Code" (or "Developer" if "Claude Code"
+       is not offered in your workspace)
+     - Copy the sk-ant-... value beginning with sk-ant-
+
+  2. Set the environment variable PERSISTENTLY (not just the
+     current session):
+
+     Windows (PowerShell elevated, system-wide persistent):
+       setx ANTHROPIC_API_KEY "sk-ant-..."
+
+     POSIX (bash/zsh, add to shell profile):
+       echo 'export ANTHROPIC_API_KEY="sk-ant-..."' >> ~/.zshenv
+       (or ~/.bashrc depending on your shell)
+
+     Do NOT use only `$env:ANTHROPIC_API_KEY = "..."` in the
+     current Claude Code session: a future Claude Code release
+     may default-enable `CLAUDE_CODE_SUBPROCESS_ENV_SCRUB`,
+     which would strip the variable from subprocesses.
+     setx / .zshenv survive that change.
+
+  3. Relaunch Claude Code in this folder (close + reopen)
+
   4. Re-invoke /genesis-drop-zone
+
+Escape hatches (advanced, optional):
+  - LLM gateway / proxy: use ANTHROPIC_AUTH_TOKEN instead of
+    ANTHROPIC_API_KEY (see Anthropic docs)
+  - Rotating secrets (vault, AWS Secrets Manager): configure
+    apiKeyHelper in ~/.anthropic/config (see Anthropic docs)
 
 Note: the Claude Code (Max) subscription does NOT grant API
 access. The Anthropic API key is a separate product.
 ```
 ```
+
+**For the 5 remaining EN exit-code cards**, mirror the corresponding FR cards from Step 4.5. Same structure: title + why-paragraph + numbered remediation + optional escape hatches + footer note. Paired-authored discipline R9 tier-3 — every FR card has a 1:1 EN mirror written in the same plan-polish iteration.
 
 - [ ] **Step 4.7: Add archive frontmatter examples (FR + EN locale-neutral — frontmatter keys are always English)**
 
