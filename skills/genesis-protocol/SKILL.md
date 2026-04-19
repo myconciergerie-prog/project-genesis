@@ -1,4 +1,3 @@
-<!-- SPDX-License-Identifier: MIT -->
 ---
 name: genesis-protocol
 description: Orchestrate the 7-phase Project Genesis protocol end-to-end on a fresh project folder — dependencies pre-flight, seed loading from config.txt + mixed media, rules and memory architecture setup, research cache initialization, git repo + SSH identity, project-specific seeds, auth pre-flight, first commit + PR + merge + tag, and resume prompt for the next session. Composes the five shipped Genesis skills (phase-minus-one, phase-5-5-auth-preflight, journal-system, session-post-processor, pepite-flagging) into a single conductor; never reimplements any of them.
@@ -264,3 +263,4 @@ At that point the downstream project is ready for its first real session. The re
 The five sibling skills cover the individual phases. `genesis-protocol` is the piece that turns them into a protocol — the compositional glue that makes Genesis a product rather than a collection of utilities. Shipping the orchestrator closes the recursive loop: Genesis can now bootstrap a new project using the same skills it used to bootstrap itself. Every friction that surfaces during the first downstream bootstrap will inform v1.1, exactly the same dogfood pattern that took Genesis from v0.1 scaffold to v0.7 five-skill shipment.
 
 The anti-Frankenstein inflection point is reached when the orchestrator lands cleanly without needing a single new skill, a single runtime, or a single hook. Composition is the ceiling.
+<!-- SPDX-License-Identifier: MIT -->

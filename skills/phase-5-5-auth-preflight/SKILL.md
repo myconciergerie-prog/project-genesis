@@ -1,4 +1,3 @@
-<!-- SPDX-License-Identifier: MIT -->
 ---
 name: phase-5-5-auth-preflight
 description: Auth Pre-flight for Genesis downstream projects — walks the user through dedicated SSH keygen + fine-grained GitHub PAT creation + empty-repo creation, then runs the canonical three-probe pre-flight (SSH, PAT user, repo existence) as the explicit exit condition before Phase 5 starts writing. Every copy-paste value lives in its own isolated fenced block. Reads Phase -1 stack state to decide automated vs paste-back branches.
@@ -143,3 +142,4 @@ Phase 5.5 is complete when:
 - The three probes (SSH, PAT user, repo existence) all returned green on the last run.
 - `.env.local` contains `GH_TOKEN=<pat>` and is gitignored.
 - Control is handed back to the Genesis protocol for Phase 5.
+<!-- SPDX-License-Identifier: MIT -->

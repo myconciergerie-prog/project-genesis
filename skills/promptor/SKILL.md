@@ -1,4 +1,3 @@
-<!-- SPDX-License-Identifier: MIT -->
 ---
 name: promptor
 description: 'Production-grade system-prompt template for the Anthropic ecosystem (Claude Opus 4.7 1M + MCP protocol). Two-phase operating mode (standby acquisition + creation), structured output (inference params + XML payload + edge cases + env vars), KV-cache optimized. Invoke when the user asks (verbatim binding-rule triggers) - "aide-moi à écrire / drafter / rédiger un prompt pour [Claude / opus / sonnet / haiku / claude api / anthropic]" - "architecture / architecte un prompt production-grade pour [use case]" - "optimise ce prompt pour KV cache / Context Caching / cache_control / prompt caching" - "reverse-engineere / reverse-engineer un prompt optimal pour [tâche stricte]" - or implicitly when about to write/modify any LLM prompt destined for an Anthropic-first project (extractor system prompts, agent personas, structured-output coercion). Audience: senior AI engineers, ML architects, researchers — peer-to-peer staff-engineer tone, density over clarity. Skip when audience is non-technical, prompt is trivial one-shot, or context is non-Anthropic.'
@@ -86,3 +85,4 @@ This skill is canonical. The Layer 0 pépite at
 is a synced cache, kept in lock-step via the manual sync convention documented in
 the v1.6.0 spec. If you find drift between the two, the skill wins ; update the
 pépite to match.
+<!-- SPDX-License-Identifier: MIT -->

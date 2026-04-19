@@ -1,4 +1,3 @@
-<!-- SPDX-License-Identifier: MIT -->
 ---
 name: session-post-processor
 description: Parse the current Claude Code session's JSONL transcript, redact secrets (GitHub PATs, SSH private keys, API tokens, `.env.local` content), and emit a readable Markdown archive under `memory/project/sessions/YYYY-MM-DD_<slug>.md`. Halt-on-leak verification gate. Manual-invoke only — never wire to a `SessionEnd` hook until the manual mode has been dogfooded across at least three real sessions.
@@ -155,3 +154,4 @@ Only after all three pass cleanly is hook wiring permitted. This is the anti-Fra
 - **Token usage dashboards** — token counts go in frontmatter behind a flag, not in a user-facing dashboard.
 - **Automatic anonymisation of file paths** — paths are not secrets and are left in place (they are already local-only). Only credentials and keys are redacted.
 - **Retroactive re-processing** — the skill operates on the current session only. Batch re-processing of old JSONL files is deferred.
+<!-- SPDX-License-Identifier: MIT -->
