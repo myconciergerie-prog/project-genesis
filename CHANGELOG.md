@@ -39,18 +39,30 @@ Every version bump includes a **5-axis self-rating block** per R10.3 discipline,
 
 - v1.4.0 silent graceful fallback path in `extract_with_citations.py` (anti-Frankenstein retroactive — preemptive feature, never pain-driven validated; R8-confirmed only ToS-clean contract is halt-with-remediation)
 
-### Self-rating — v1.5.0
+### Self-rating — v1.5.0 (honest re-evaluation post-feat, in chore)
+
+**Initial projection was 9.28/10 — corrected down to 8.62 in chore commit after honest critique surfaced 3 substantive issues.**
 
 | Axis | Score | Notes |
 |---|---|---|
-| Pain-driven | 9.4 | Closes Friction #3 + #1 + #2 from real dogfood; anti-Frankenstein retroactive on fallback driven by user challenge mid-session |
-| Prose cleanliness | 9.1 | 1:1 mirror discipline preserved (SKILL.md + phase-0-welcome.md + spec triple-mirror); 14 new bilingual pairs paired-authored from day 1 |
-| Best-at-date | 9.3 | KARMA + EMNLP knowledge-conflicts + Cleanlab TLM + Kurrent SOTA references applied; living-memory R8 entry grounds 12 design choices; OAuth research grounds halt-with-remediation contract |
-| Self-contained | 9.2 | Zero ripple to phase-minus-one / 5.5 / journal / post-processor / pepite; only intentional Layer B Step 0.4+0.5 touches per cross-skill-pattern #4; schema_version preserved at 1 (additive only) |
-| Anti-Frankenstein | 9.4 | Fallback retirement = anti-Frankenstein retroactive (textbook case); 7 deferred items in spec § Out of scope all pain-driven gates; archive retention + retry policy + concurrent locks all deferred to v1.5.1+ |
-| **Average** | **9.28** | **12th consecutive ship ≥ 9.0** |
+| Pain-driven | 8.5 | Friction #3 closed ✓ ; but 4 sub-features shipped beyond strict #3 (Phase 0.4 detection + arbitration card + archive chain + ⚖ marker). Only #3 had documented dogfood pain; the other 3 are composition-justified extensions that have never been runtime-validated. |
+| Prose cleanliness | 8.7 | 1:1 mirror discipline preserved across spec/SKILL/phase-0-welcome triple ✓ ; SKILL.md grew ~25% (49KB → ~58KB approaching the saturation pattern observed on user-level CLAUDE.md); halt-with-remediation cards have repetitive boilerplate across 6 exit codes |
+| Best-at-date | 9.2 | R8 well-applied (KARMA + EMNLP + Cleanlab TLM + Kurrent SOTA cited); OAuth research grounds halt-with-remediation contract directly (R8 entry `sota/anthropic-auth-and-oauth-status_2026-04-19.md` ships in same branch) |
+| Self-contained | 9.0 | Zero ripple to phase-minus-one / 5.5 / journal / post-processor / pepite ; only intentional Layer B Step 0.4+0.5 touches ; schema_version=1 preserved (additive only) |
+| Anti-Frankenstein | 7.5 | Fallback retirement = textbook anti-Frankenstein retroactive ✓ ; BUT shipping 6 halt-with-remediation cards × 2 languages = 12 cards is enumeration-of-exit-codes, NOT pain-driven. Real user pain hits EXIT_NO_KEY (1 card) + EXIT_SDK_MISSING (1 card). EXIT_BAD_INPUT + EXIT_OUTPUT_INVALID are extractor-internal failure modes that hit 0% of real users. **Honest verdict: Frankenstein-lite preemption I committed mid-execution.** |
+| **Average** | **8.62** | **Streak ≥ 9.0 BREAKS at 11 consecutive** (v1.2.1 → v1.4.2). v1.5.0 = first sub-9.0 since v1.2.1. |
 
-Running average post-v1.5.0: ≈ **8.95/10** (+0.03 vs v1.4.2 running 8.92).
+Running average post-v1.5.0 honest: ≈ **8.86/10** (vs +0.03 projection that assumed 9.28 → actually -0.06 vs v1.4.2 running 8.92).
+
+### Honesty correction narrative
+
+After PR merge + tag, honest critique pass surfaced three substantive issues that the optimistic 9.28 projection ignored:
+
+1. **Zero runtime validation of Phase 0.4 + Phase 0.5 + archive write + halt cards** — the verification probes (Task 10) check static structure (grep, JSON parse) but the in-context dispatch logic lives only in SKILL.md prose. Per Layer 0 `discipline_periodic_dogfood_checkpoint.md`, this is a known gap requiring v1.5.1 dogfood gate.
+2. **6-halt-cards enumeration is Frankenstein-lite preemption** — only 2 cards (EXIT_NO_KEY + EXIT_SDK_MISSING) address real user-facing pain. v1.5.1 candidate: collapse 4 internal-failure cards into 1 generic "internal error → stderr + issue template".
+3. **Phase 0.5 arbitration card relationship to v1.3.2 consent card is ambiguous** in SKILL.md — does Phase 0.5 subsume consent, or render in series? Bug latent at first runtime execution. v1.5.1 candidate: add 1 paragraph clarification.
+
+These three v1.5.1 candidates are flagged in the resume prompt for next session.
 
 ---
 
