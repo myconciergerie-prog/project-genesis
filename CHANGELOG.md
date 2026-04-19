@@ -8,6 +8,72 @@ Every version bump includes a **5-axis self-rating block** per R10.3 discipline,
 
 ---
 
+## [2.0.0] — 2026-04-19 — "Bootstrap via Max subscription, drop subprocess Citations (MAJOR)"
+
+**Architectural shift.** Drops v1.4.0's subprocess Citations API path + anthropic Python SDK + ANTHROPIC_API_KEY dependency. Bootstrap leverages the Max subscription that Claude Code already holds at session open via `claude auth login`. New skill `phase-auth-preflight` runs `claude auth status` JSON probe as Phase 0.0 / Step 0.0 pre-flight before both Layer A `genesis-drop-zone` and Layer B `genesis-protocol`. v1.5.0's halt-with-remediation card retired. Backward-compatible at data contract level (`drop_zone_intent.md` files written by v1.4.0+ remain parseable, citation keys deprecated v2.x).
+
+### Added
+
+- **`skills/phase-auth-preflight/`** — 9th Genesis skill, separate skill (option D-2 locked) for present-day reuse across Layer A + Layer B entry points. SKILL.md (Decision tree 5-row routing + bilingual Remediation card) + install-manifest.yaml + 4 fixtures + runtime_evidence_v2_0_0.md runbook (1 LIVE TEST + 4 DOC-ONLY pending v3.0 test harness wrapper). Concentrated privilege class : **`subprocess`** with 5 mitigations (read-only commands ; no auth-mutating side effects ; no env writes ; no file writes ; JSON-parse-with-fallback).
+- **Phase 0.0 / Step 0.0 invocations** wired into both Layer A (`genesis-drop-zone § Phase 0.0` between Trigger and Context guard) AND Layer B (`genesis-protocol/phase-0-seed-loading.md § Step 0.0` before Step 0.1 ; flow heading updated `five steps → six steps (Step 0.0 added v2.0.0+)`).
+- **`tests/fixtures/drop_zone_intent_fixture_v2_arbitrated.md`** — v2 schema fixture (replaces archived v1_5_0_arbitrated). Same revision-state metadata, no citation keys.
+- **`tests/fixtures/.archive/ARCHIVE.md`** + **`skills/genesis-drop-zone/.archive/v1_5_0_halt_card_content.md`** (forensic preservation).
+- **`memory/master.md § "What v3 vision is"`** — captures (a) external installer surface, (b) BYOAI staging Anthropic-first, (c) Lovable-style hosted SaaS at concrete domain `genesis.myconciergerie.fr` (auto-hosted Supabase on VPS OVH + GitHub creation + subdomain free/paid tiers), (d) **7 dev disciplines load-bearing on every v2 PR**.
+- **Cross-skill-pattern #2 v2 entry** — total at v2.0.0 : 9 skills, 7 with privilege classes, 2 with `none`.
+- **Cross-skill-pattern #4 ninth ordinal** — architectural REMOVAL preserves zero-ripple under key-omission regime. Distinct from v1.5.1 sixth ordinal (PATCH-prose-cleanup). Ninth was reserved for "genuinely new ripple mode" — fulfilled.
+
+### Changed
+
+- **`genesis-drop-zone/SKILL.md`** : v1.4.0 + v1.5.0 In Scope sections annotated `RETIRED in v2.0.0` (content preserved forensically) + new `### In scope (v2.0.0)` 5-item changelog + privilege table + intro prose reverted to disk-class only.
+- **`genesis-protocol/phase-0-seed-loading.md § "Citation preservation (v1.4.1)"`** annotated `DEPRECATED v2.x`. Parser preservation logic stays for backward-compat with v1.4.x/v1.5.x files until v3.0+ removal (per master.md design discipline #4 — v3 web mode may re-introduce keys server-side).
+- **`.claude-plugin/plugin.json`** version `1.6.3 → 2.0.0` (MAJOR).
+- **`.claude/docs/superpowers/research/INDEX.md`** — `anthropic-python_2026-04-18.md` row removed from Active table, added to Archive section with v2-retirement note.
+
+### Removed
+
+- **`skills/genesis-drop-zone/scripts/extract_with_citations.py`** (414 lines deleted).
+- **`skills/genesis-drop-zone/scripts/`** directory.
+- 3 `tests/fixtures/drop_zone_intent_fixture_v1_4_0_*_with_citations.md` + `v1_5_0_arbitrated.md` → moved to `.archive/`.
+- `.claude/docs/superpowers/research/stack/anthropic-python_2026-04-18.md` → moved to `archive/`.
+
+### Fixed (collateral)
+
+- **`.claude-plugin/marketplace.json`** — removed `$schema` + `description` root keys breaking `claude plugin validate` on Claude CLI v2.1.113 (stricter validator). Pre-existing breakage surfaced by SD-1 implementer ; restored AC1 in dedicated `fix(v2-collateral)` commit `0f69522`.
+
+### Verification
+
+- **`claude plugin validate <worktree>`** : ✔ Validation passed (one cosmetic warning about `metadata.description` — flagged as F6 follow-up for v2.0.1).
+- **9 skills surface** confirmed via `claude -p --plugin-dir <worktree>` probe.
+- **AC10 zero-ripple** : 10 grep matches in `phase-0-seed-loading.md` are PRESERVATION DOCS for parser backward-compat (per spec § 4 + Q-C reco) — annotated DEPRECATED v2.x. Zero subprocess code references, zero deleted-script imports.
+- **Schema backward compat** : `schema_version` stays at `1`. No migration required.
+
+### Frame-release lesson captured
+
+User input "il faut revoir la connexion via subscription pas via api" surfaced an R8 cache anchoring failure : Claude reasoned 3 turns inside the R8 framing (`anthropic-auth-and-oauth-status_2026-04-19.md` was scoped to "subprocess access to Messages API") instead of zooming out to question the underlying assumption (drop the subprocess that creates the OAuth-bridge problem). Lesson captured as auto-memory feedback : `~/.claude/projects/C--Dev-Claude-cowork-project-genesis/memory/feedback_r8_anchoring_vs_user_intent.md`. Candidate Layer 0 promotion if pattern recurs cross-project.
+
+### Self-rating — v2.0.0 (honest post-feat)
+
+| Axis | Projected | Honest | Delta | Notes |
+|---|---|---|---|---|
+| Pain-driven | 9.6 | 9.5 | −0.1 | Closes v1.5.0 halt-card UX wall as intended ; minor : the architectural REMOVAL is real value but the win is largely deferred-felt (next user who invokes `/genesis-drop-zone` won't hit the halt-card). |
+| Prose | 9.0 | 9.0 | 0.0 | Spec + plan + retire annotations + privilege table updates all coherent. Pattern #2 + #4 narrative appends read naturally with prior "reserved for ninth" sentence. |
+| Best-at-date | 9.2 | 9.2 | 0.0 | R8-anchored ; uses canonical `claude auth login` flow per Anthropic CLI v2.1.113 docs. |
+| Self-contained | 9.0 | 8.8 | −0.2 | Touched 1 collateral file outside spec scope (marketplace.json $schema/description removal — pre-existing CLI validator regression, not v2 fault). Minor scope leak but defensible (AC1 was failing without it). |
+| Anti-Frankenstein | 9.4 | 9.5 | +0.1 | Net REMOVAL : 414-line script deleted, 3 fixtures archived, halt-card retired, privilege reverted to disk-only. Added : 1 new skill, 1 v2 fixture, doc annotations. Net code shrunk. R10.4 anti-speculative gate respected (BYOAI deferred to v3.x). |
+| **Mean** | **9.24** | **9.20** | **−0.04** | **Streak ≥ 9.0 advances to 2** (v1.6.3 honest 9.30 + v2.0.0 honest 9.20). |
+
+**Running average post-v2.0.0 honest** : (8.92 × 20 + 9.20) / 21 = 187.60 / 21 ≈ **8.93 (+0.01)**. 21 tagged ratings total.
+
+### Discipline evidence
+
+- **Brainstorming-first** — full brainstorming flow (Q1-Q3 clarifying questions + spec doc + 2 spec-reviewer dispatches + 2 spec-extend rounds capturing user vision additions including genesis.myconciergerie.fr concretization + BYOAI staging) before any code touched.
+- **Honest pace check** — user explicitly flagged "tu es mauvais aujourd'hui que se passe t il" mid-session after Claude took 3 turns to release the R8 framing anchor. Acknowledged directly + saved feedback memory + applied frame-release immediately.
+- **Subagent-driven implementation** — 8 SD- tasks (one implementer subagent per task on sonnet model) + spot-verification by controller. Final task SD-7 plugin.json bump done inline (trivial 1-line change).
+- **Granular commits per pattern #3** — 15 commits in feat tranche (4 spec/spec-polish/spec-extend ×2 + 2 plan/plan-polish + 1 collateral fix + 8 SD-1 to SD-8). Squash-merged as `55c0f68` via PR #49.
+- **R2.3.1 observation** — `gh auth switch -u myconciergerie-prog` applied at PR creation time (active account had drifted to `myconciergerieavelizy-cloud`) with `GH_TOKEN=$(gh auth token -u myconciergerie-prog)` env override on PR create. Pattern continues from v1.6.x ships.
+
+---
+
 ## [1.6.3] — 2026-04-19 — "F5 fix SPDX frontmatter break (PATCH)"
 
 **Surgical hotfix** for v1.6.2 F5 finding — universal Genesis-owned load-failure bug, latent since v1.3.0, masked by user's `~/.claude/skills/` personal-scope shadow. Every new marketplace install was loading zero Genesis skills until this ship.
