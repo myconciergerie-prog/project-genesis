@@ -8,6 +8,70 @@ Every version bump includes a **5-axis self-rating block** per R10.3 discipline,
 
 ---
 
+## [1.6.1] — 2026-04-19 — "runtime auto-discovery + Anthropic prompt-eng SOTA grounding (PATCH)"
+
+**PATCH closing the two priced-in axis caps of v1.6.0.** v1.6.0 shipped at honest 9.02/10 with Best-at-date 8.7 (no R8 entry backing template choices) and Pain-driven 9.2 (H1 skill auto-discovery paper-trace only). v1.6.1 closes both in one PATCH via (a) 326+ line SOTA R8 entry commissioned ahead of spec (42+ citations, canonical Anthropic migration guide primary for 4.7 sampling-removal claim), (b) 5 surgical template patches (3 critical + 2 polish) mapped 1:1 to R8 findings, (c) fresh Claude Code session in sibling Aurum cwd confirming the Layer 0 pépite + binding-rule surface fires cleanly on trigger phrases. Pinning decision landed AC#7 Option A (non-pinned) with runtime-validated marker on the binding rule.
+
+### Added
+
+- `research/sota/anthropic-prompt-engineering_2026-04-19.md` — 334-line R8 entry grounding Promptor template against Anthropic April 2026 canon. Confirms 6 of 8 core template choices (XML structure, two-phase gate, static-before-dynamic KV-cache ordering, staff-engineer density, edge-cases enumeration, `{{VAR}}` discipline). Surfaces breaking changes on Opus 4.7 (sampling params removed, extended thinking removed, prefill removed, thinking content omitted by default, new tokenizer, task budgets beta). Provides 5 anti-Frankenstein candidates (all 5 landed as patches C1/C2/C3/L1/L2).
+- `skills/promptor/references/template.md` Part A `**Pour Claude Opus 4.7+**` branch (C1 patch) — omits `temperature`/`top_p`/`top_k`, uses `output_config.effort` + `thinking: {type: "adaptive"}` + `max_tokens ≥ 64k`, `display: "omitted"` default ; legacy 4.6 path retains sampling params.
+- `skills/promptor/references/template.md` Part B cache-breakpoint placement directive (C2 patch) — 4,096-token minimum on Opus 4.7, `usage.cache_creation_input_tokens ≠ 0` verification, max 4 breakpoints per request, canonical `tools → system → messages` ordering.
+- `skills/promptor/references/template.md` Part B MCP `ServerName:tool_name` mandatory form (C3 patch) — cites Anthropic skill-authoring requirement, prevents tool-not-found collisions across multi-server MCP setups.
+- `skills/promptor/SKILL.md` "v1.6.1 gate additions" paragraph pointing to C-patches and R8 grounds file.
+- `tests/runtime_auto_discovery_v1_6_1.md` (116-line runbook) — reproducible procedure for validating skill auto-discovery in sibling-project sessions. Evidence run 1 filled (2026-04-19, Aurum cwd, Layer 0 pépite surface confirmed, Phase 1 acquisition discipline preserved under domain-adaptation).
+- `memory/master.md` pattern #4 eighth data-point — orthogonal meta-skill PATCH zero-ripple (verified via 4 git-diff probes).
+- `memory/master.md` pattern #1 v1.6.0 fourth-data-point depth update — SOTA-validated edits mirrored across skill + synced-cache pépite without schema change.
+
+### Changed
+
+- `skills/promptor/references/template.md` Phase 1 Q2 (L1 patch, 2 locations: plain-text wrapped + XML single-line `<output_template>`) — acquires model + effort + thinking mode + `max_tokens` + MCP config (replaces bare `temperature`).
+- `skills/promptor/references/template.md` Phase 1 Q1 (L2 patch, 2 locations) — metrics task-adaptive (Precision/Recall pour classification/RAG ; taux de réussite end-to-end pour agentique ; latence ; coût/1k tokens) replaces fixed "Precision/Recall, Latence".
+- `.claude/docs/superpowers/research/INDEX.md` — new row for `anthropic-prompt-engineering_2026-04-19.md` (sota, expires 2026-04-26, confidence high).
+- `.claude-plugin/plugin.json` version `1.6.0 → 1.6.1`. No keyword change.
+
+### Removed
+
+- None. All template edits are in-place transforms ; no deletions.
+
+### Preserved (explicit non-change)
+
+- `skills/promptor/SKILL.md` frontmatter `description` verbatim (trigger-phrase pins unchanged since v1.6.0 ; grep-verified).
+- Skill privilege map : `promptor` stays privilege-class `none` (still 2nd none-class skill with `journal-system`).
+- Cross-skill-pattern #1 ordinal count : no new data-point added to pattern #1 ; v1.6.0's fourth data-point gains depth only (SOTA-validation loop closure).
+- All Layer A (`skills/genesis-drop-zone/`) and Layer B (`skills/genesis-protocol/`, `skills/phase-minus-one/`, `skills/phase-5-5-auth-preflight/`, `skills/journal-system/`, `skills/session-post-processor/`, `skills/pepite-flagging/`) skills — zero edits. **Eighth data-point of pattern #4 zero-ripple principle.**
+- Schema version, dependency set, subprocess surface, network surface — zero change.
+
+### Layer 0 sync (Phase D, post-merge, NOT in repo)
+
+- `~/.claude/memory/layer0/pepite_promptor_template_anthropic_prompt_engineering.md` — 5 template patches applied verbatim, synced-cache marker bumped `v1.6.0 @ 2026-04-19` → `v1.6.1 @ 2026-04-19`.
+- `~/.claude/memory/layer0/feedback_invoke_promptor_for_production_anthropic_prompts.md` — § "The rule" Skill-first preference preamble gains "runtime-validated 2026-04-19 v1.6.1 on Layer 0 pépite surface" marker. Pinning decision AC#7 Option A non-pinned with runtime-validation scope explicit (pépite surface validated ; Skill-tool plugin-installed path deferred to v1.6.2+).
+- `~/.claude/memory/layer0/_v1_6_1_layer0_sync_DONE_2026-04-19.md` sentinel written for next-session `test -f` check.
+
+### Discipline evidence
+
+- **SOTA-first ordering** — R8 entry commissioned ahead of spec (Phase 0 research → spec → plan → feat) with canonical Anthropic citation primary, community cross-check secondary. Honest cap 9.3 on Best-at-date (not 9.5) because R8 open question 2 (system-prompt reverse engineering via Simon Willison) stays community-derived — not load-bearing for the 5 template patches, but present in the entry.
+- **Reviewer-driven P2 bundling (a7b0740-style)** — code-quality reviewer flagged one citation-order inconsistency inside the R8 entry (§ "What this challenges" item 1 still led with claudefa.st while TL;DR had been swapped to canonical Anthropic). One-line in-place swap landed as commit `682f522` in the feat branch. Honest Self-contained axis accepts the bundling deduction (-0.2 from projected 9.3 → honest 9.1), matching v1.6.0 `a7b0740` precedent.
+- **Plan-reviewer rigor** — caught 6 P1 pre-Phase-A (Edit-target precision, shell-escape, zero-ripple probe, idempotency coverage, pattern #4 task gap). All 6 fixed before feat execution. Plan-writing discipline acknowledged as the weaker axis on first pass ; Self-contained axis deducted further (9.1 → 9.0) to honor this.
+- **Runtime evidence partial scope** — Layer 0 pépite + binding-rule surface validated in non-Genesis sibling ; Skill-tool plugin-installed path NOT exercised. Honest deduction on Pain-driven (projected 9.4 → honest 9.3).
+
+### Self-rating — v1.6.1 (honest re-evaluation post-feat, per Layer 0 `feedback_honest_self_rating_post_feat.md`)
+
+**Initial projection 9.26/10. Honest post-feat re-evaluation lands at 9.18/10** (-0.08 from projection).
+
+| Axis | Projected | Honest | Notes |
+|---|---|---|---|
+| Pain-driven | 9.4 | **9.3** | Runtime evidence confirmed Layer 0 pépite surface cleanly ; Skill-tool plugin-installed path deferred to v1.6.2+ re-run. Partial H1 closure, not full. |
+| Prose cleanliness | 9.2 | **9.2** | Template patches integrate without voice drift ; R9 language policy respected (French in user-facing template content, English in dev prose). Net-positive delta on clarity via model-gating. |
+| Best-at-date | 9.3 | **9.3** | R8 entry 326+ lines, 42+ citations, canonical Anthropic primary for load-bearing sampling-removal claim (spec-polish + code-reviewer citation-order fix). Cap 9.3 (not 9.5) — R8 open question 2 stays community-derived but not load-bearing. |
+| Self-contained | 9.3 | **9.0** | Two honest deductions : (a) reviewer-driven P2 bundling (a7b0740-style, -0.2 per v1.6.0 precedent) ; (b) plan-reviewer caught 6 P1 vs v1.6.0's 3 P1 — plan-writing discipline weaker on first pass (-0.1). |
+| Anti-Frankenstein | 9.1 | **9.1** | 5 patches map 1:1 to R8 findings. No preemptive enumeration. Runtime runbook strict-scope. |
+| **Mean** | **9.26** | **9.18** | **Streak ≥ 9.0 advances to 3 consecutive** (v1.5.1 = 9.12, v1.6.0 = 9.02, v1.6.1 = 9.18). |
+
+**Running average**: v1.6.0 post-ship running = **8.88** (per `session_v1_6_0_promptor_skill.md` ; 17 tagged ratings from v1.0.0 through v1.6.0). v1.6.1 is the 18th tagged rating. New running = (8.88 × 17 + 9.18) / 18 = 160.14 / 18 ≈ **8.90 (+0.02)**.
+
+---
+
 ## [1.6.0] — 2026-04-19 — "promptor skill (MINOR — orthogonal meta-skill, 8th skill ship)"
 
 **First MINOR on the v1.6.x line.** Promotes the Layer 0 Promptor pépite (`~/.claude/memory/layer0/pepite_promptor_template_anthropic_prompt_engineering.md`) into a standalone Genesis skill at `skills/promptor/`. Skill becomes canonical source of truth ; Layer 0 pépite demoted to synced cache role for sessions outside Genesis-bootstrapped projects. **8th Genesis skill ; 2nd privilege-`none` skill** (joins `journal-system`) ; **first orthogonal meta-skill** (neither Layer A nor Layer B — invocable cross-session/cross-project outside the bootstrap protocol). Net diff dominated by 2 new skill files + 3 plugin-keyword additions ; cross-cutting touches limited to `master.md` (3 pattern data-points + sixth-data-point reconciliation for v1.5.1 missed in PATCH) and `skills/README.md` (preamble update + entry).
