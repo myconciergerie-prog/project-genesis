@@ -8,6 +8,62 @@ Every version bump includes a **5-axis self-rating block** per R10.3 discipline,
 
 ---
 
+## [1.5.1] — 2026-04-19 — "dogfood + Phase 0.5 clarification + halt card collapse (PATCH)"
+
+**PATCH closing v1.5.0's three-gap honesty correction.** Dogfood-first ordering (3 → 1 → 2) is the v1.5.1 discipline upgrade — runtime evidence shapes prose, reversing v1.5.0's preemptive-prose mistake. Dogfood Candidate 3 ran first against 4 fixtures at `C:/tmp/genesis-v1.5.0-dryrun/` (paper-trace method, canonical runtime for prose-only skills), surfacing 7 frictions (2 blocker, 3 structural, 1 polish, 1 deferred). Candidates 1 + 2 prose edits shaped by the findings, including 2 latent bugs (v1.4.0 fallback prose contradicting v1.5.0 retirement in the same file; empty-divergences write path silently skipping v1.3.2 consent card). Code-reviewer caught a third latent collision (v1.3.2 halt-on-existing vs v1.5.0 re-run archive contract) pre-commit; Path 2a/2b bifurcation landed in the same feat.
+
+### Added
+
+- `genesis-drop-zone` SKILL.md gains new subsection `### Consent-card interaction with Phase 0.5 (v1.5.1 clarification)` with three-path contract:
+  - Path 1 (non-empty divergences): Phase 0.5 arbitration card subsumes v1.3.2 consent card. Arbitration response IS consent.
+  - Path 2a (first-write empty divergences): v1.3.2 consent card + v1.3.2 write flow unchanged.
+  - Path 2b (re-run empty divergences): v1.3.2 consent card + § "Archive write — supersession chain" (NOT v1.3.2 write flow, whose halt-on-existing would collide with supersession contract).
+  - Path 3 (halt card, exits 2-7): neither consent nor arbitration renders; halt terminates dispatch pre-write.
+- Victor-exit safety invariant named explicitly across all three paths
+- Dogfood archive `memory/project/dogfood_v1.5.0_2026-04-19/friction_log.md` (194 lines, 7 frictions logged with candidate-mapped severity + hypothesis-bearing analysis)
+- Spec `.claude/docs/superpowers/specs/v1_5_1_dogfood_and_prose.md` with Appendix A pre-registration + blocker taxonomy + timebox-exceeded rule
+- Plan `.claude/docs/superpowers/plans/v1_5_1_dogfood_and_prose.md` with reviewer-P0 loopback rule + H2 coverage protocol + R2.3.1 double pre-flight
+
+### Changed
+
+- `genesis-drop-zone` SKILL.md Phase 0.5 empty-divergences wording — now explicitly routes per write-path (first-write vs re-run)
+- `genesis-drop-zone` halt-card taxonomy collapsed from **12 bilingual variants (6 cards × 2 langs) → 4 variants (2 cards × 2 langs)** per dogfood Friction #4: EXIT_NO_KEY retained distinct; EXIT_SDK_MISSING + EXIT_API_ERROR + EXIT_RATE_LIMIT + EXIT_BAD_INPUT + EXIT_OUTPUT_INVALID merged into one generic internal-error card
+- `genesis-drop-zone` SKILL.md halt table 6 rows → 2 rows
+- `genesis-drop-zone` SKILL.md v1.4.0 fallback prose marked RETIRED across the file (retirement banner on `## Citations API dispatch (v1.4.0)`, exit-code table response column updated, `### Fallback triggers` marked RETIRED v1.5.0, modification-loop paragraph rewritten, v1.4.0 scope items #5 + #6 amended, network class mitigation #5 replaced with "Halt-with-remediation card" description)
+- `.claude-plugin/plugin.json` version `1.5.0 → 1.5.1`
+
+### Removed
+
+- 10 bilingual halt card variants (EXIT_SDK_MISSING FR + EN / EXIT_API_ERROR FR + EN / EXIT_RATE_LIMIT FR + EN / EXIT_BAD_INPUT FR + EN / EXIT_OUTPUT_INVALID FR + EN) from `phase-0-welcome.md` — anti-Frankenstein retroactive part 2 (preemptive enumeration of exit codes, not pain-driven; extractor stderr preserves diagnostic fidelity)
+
+### Preserved (explicit non-change)
+
+- `skills/genesis-drop-zone/scripts/extract_with_citations.py` — zero-line diff. All 6 distinct exit codes preserved. Collapse is at render layer only.
+- `skills/genesis-protocol/**` — zero-line diff. Layer B untouched. Cross-skill-pattern #4 zero-ripple principle sixth data-point.
+- `schema_version: 1` — zero bump. All v1.5.0 frontmatter keys preserved.
+- Zero new privilege class, zero new dependency, zero new bilingual pair (net negative).
+
+### Self-rating — v1.5.1 (honest re-evaluation post-feat, per [A8] spec acceptance + Layer 0 `feedback_honest_self_rating_post_feat.md`)
+
+**Initial projection was 9.24/10. Honest post-feat re-evaluation lands at 9.12/10** — streak ≥ 9.0 RESTARTS at 1 after v1.5.0 broke it at 11.
+
+| Axis | Score | Notes |
+|---|---|---|
+| Pain-driven | 9.4 | All three candidates trace to concrete 2026-04-19 honesty correction. Dogfood surfaced 2 blocker frictions immediately — evidence > speculation. Deduction 0.1 for paper-trace method (not full runtime invocation — acknowledged explicitly in shipped prose). |
+| Prose cleanliness | 9.0 | New subsection crisp, Path 2a/2b bifurcation + collision-rationale documented. Net-negative delta (−274 / +91). Deduction 0.3 for v1.4.0 retirement banners creating "superseded-but-preserved" verbosity that increases SKILL.md cognitive load — cleaner would have been wholesale deletion of retired prose, but preserving historical context was the chosen tradeoff. |
+| Best-at-date | 9.0 | Dogfood-first discipline SOTA-aligned per Layer 0 `discipline_periodic_dogfood_checkpoint.md`. Halt-card collapse is anti-Frankenstein canon. No new R8 research needed. |
+| Self-contained | 9.3 | Zero Layer B ripple ✓ ; zero schema bump ✓ ; zero new dependency ✓ ; zero script change ✓ . Only genesis-drop-zone touched. Deduction 0.2 for scope expansion mid-execution (Candidate 1 grew from "one subsection" to "subsection + v1.4.0 retirement propagation"). |
+| Anti-Frankenstein | 9.0 | Reverses v1.5.0's 12-halt-card Frankenstein-lite (net −10 bilingual variants). Third consecutive anti-Frankenstein retroactive (v1.4.2 legacy fallback drop + v1.5.0 network fallback retirement + v1.5.1 halt cards drop). Deduction 0.2 for landing scope-expansion discipline in the same feat rather than separate PATCH. |
+| **Average** | **9.12** | **New streak ≥ 9.0 starts at 1.** Running avg ≈ 8.87 (+0.01 vs v1.5.0 running 8.86). |
+
+### Discipline evidence
+
+- Dogfood-first ordering successfully reversed preemptive-prose mistake — if Candidates 1+2 had shipped before dogfood, Friction #1 (v1.4.0 contradiction) and Friction #6 (silent-skip consent) would have been missed, and Candidate 2 would have kept `EXIT_SDK_MISSING` distinct on prose-only grounds (H3).
+- Code-reviewer pre-commit pass caught a latent runtime-contract bug (Path 2a/2b bifurcation) that dogfood alone did not surface. Two independent validation gates — dogfood surfaces prose-level ambiguities; reviewer surfaces prose-level-contract collisions. Both needed.
+- Honest self-rating ritual applied between feat and chore commits even though projection (9.24) was ≥ 9.0.
+
+---
+
 ## [1.5.0] — 2026-04-19 — "genesis-drop-zone living memory + arbitration (MINOR)"
 
 **genesis-drop-zone living memory** — first MINOR bump on the v1.5.x line. Closes Friction #3 (reconciliation policy not codified) + absorbs Friction #1 + #2 (multi-source seed shape) from the 2026-04-18 v1.4.1 dogfood. **Anti-Frankenstein retroactive**: v1.4.0's silent graceful fallback retired on user challenge ("pourquoi pas d'API ?") in favour of explicit halt-with-remediation card. R8 research `sota/anthropic-auth-and-oauth-status_2026-04-19.md` confirms no first-party OAuth path for Messages API in April 2026 → halt-with-remediation is the only ToS-clean contract.
