@@ -170,18 +170,30 @@ Phase anthropic_auth → Phase **auth** with a provider dispatcher. Detect which
 - `Phase anthropic_auth` is the v2 *concrete instance* of a future generic `Phase auth`. The phase's outputs (pass / halt-card / install-card) should not carry Anthropic-specific data structures that would block a Gemini variant.
 - The remediation card content is templated with provider-specific variables (provider name, auth command, install command, billing model description) ; in v2 only the Anthropic template ships.
 
-### V3.3 Lovable-style hosted SaaS
+### V3.3 Lovable-style hosted SaaS — concrete entry surface `genesis.myconciergerie.fr`
 
-Genesis becomes a hosted platform :
+Genesis becomes a hosted platform on **`genesis.myconciergerie.fr`** (concrete domain, captured 2026-04-19). User flow :
 
-- **Auto-hosted Supabase** on VPS OVH infrastructure (per Layer 0 `infra_2026-04-18_supabase_vps_ovh_migration.md`). Each Genesis-bootstrapped project gets a Supabase project provisioned automatically.
-- **GitHub repo creation** in bootstrap flow (already partial via Phase 5.5 fine-grained PAT pattern in `phase-5-5-auth-preflight` skill).
-- **Deployment to subdomain** : free tier = `<projectslug>.genesis.platform.tld/` ; paid subscription = `<projectslug>.tld` (own subdomain) + extra features.
+1. Victor (web user, non-technical) opens `https://genesis.myconciergerie.fr` in a browser
+2. Authenticates to the platform via SSO (Google / GitHub OAuth or email-based — NOT to Anthropic)
+3. Uses an in-browser drop zone : drag-and-drop attachment upload (PDF / images / audio) + textarea for typed intent
+4. Backend processes everything **fully remotely** :
+   - Extraction (re-introduces a subprocess server-side, but with platform-paid `ANTHROPIC_API_KEY` against platform's own Console workspace ; per-user metering = platform-internal billing)
+   - Bootstrap (skill code reused from this CLI plugin repo, vendored server-side)
+   - GitHub repo creation (server-side equivalent of Phase 5.5's PAT pattern, using platform's bot account)
+   - Supabase provisioning on VPS OVH infrastructure (per Layer 0 `infra_2026-04-18_supabase_vps_ovh_migration.md`)
+   - Subdomain deployment
 
-**v2 design discipline** :
-- Bootstrap output artefacts (`drop_zone_intent.md`, `bootstrap_intent.md`, generated project files) must NOT hardcode local paths that would break under hosted deployment. Use relative paths or environment-variable-driven path roots.
-- The Genesis CLI plugin remains the *reference implementation* that the v3 hosted platform reuses — not a parallel codebase that diverges.
-- Phase 5.5's PAT-creation logic must be factorable into a server-side equivalent that creates GitHub repos via the platform's bot account when running in hosted mode.
+**Tier model** :
+- Free tier : `<projectslug>.genesis.myconciergerie.fr/`
+- Paid subscription : `<projectslug>.tld` (own subdomain) + extra features
+
+**v2 design discipline (load-bearing — see also master.md § "Design discipline today" rules 1-5)** :
+- Drop zone abstraction input contract = list of `(file_path | blob | typed_text)` items, NOT "look at cwd" — so v3 web upload pipeline reuses the same skill code.
+- Bootstrap output artefacts use relative or env-driven paths only — no hardcoded `C:\Users\...`.
+- Genesis CLI plugin is the *reference implementation* that v3 server-side runtime imports / vendors. No parallel divergent fork.
+- Phase 5.5's PAT-creation logic must be factorable into a server-side equivalent (platform bot account creates repos in hosted mode).
+- **Auth split — DO NOT collapse** : v2 CLI uses `Phase anthropic_auth` (Max subscription). v3 web uses platform-paid `ANTHROPIC_API_KEY` server-side. v2 must NOT aggressively REMOVE `<field>_source_citation` schema keys (per Q-C reco "keep deprecated v2.x, remove v3.0") because v3 web RE-INTRODUCES the extraction subprocess server-side and citations become valid again.
 
 ## Cross-skill-pattern composition (master.md update required)
 
