@@ -28,7 +28,7 @@ This ship exercises the **runtime surface** : fresh Claude Code sessions in 5 fi
 
 | # | Criterion | Method |
 |---|---|---|
-| AC1 | Worktree `feat_2026-04-19_v1_6_2_runtime_dogfood` created on branch `feat/v1.6.2-runtime-dogfood` from `main` (0b1b310) | `git worktree list` shows entry |
+| AC1 | Worktree `feat_2026-04-19_v1_5_2_runtime_dogfood/` (directory name retained for local forensic continuity post-retitle ; branch renamed to `feat/v1.6.2-runtime-dogfood`) exists, created from `main` at `0b1b310` | `git worktree list` shows entry |
 | AC2 | `skills/genesis-drop-zone/tests/runtime_dogfood_v1_6_2.md` runbook exists with sections "Pre-flight", "Per-fixture spawn + trigger + observe", "Redaction rules", "Re-run guidance" | `test -f` + `grep -c "^##"` ≥ 4 |
 | AC3 | `skills/genesis-drop-zone/tests/runtime_dogfood_evidence_v1_6_2.md` evidence log exists with 5 per-fixture sections (4 v1.5.0 + 1 alexandre_windows), each with `Trigger phrase used`, `Invocation form observed`, `Cards rendered`, `Artefacts written`, `Frictions found` headers | `grep -c "^### Fixture"` = 5 |
 | AC4 | New fixture at `C:/tmp/genesis-v1.6.2-alexandre/` contains 5 artefacts : `config.txt`, `catalogue_fenetres_fr.md`, `specs_usine_pl.md`, `voice_memo_alexandre.txt`, `photo_facade_client.jpg` | `ls` shows 5 files, sizes > 0 |
