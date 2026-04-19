@@ -35,6 +35,16 @@ Before spawning ANY fresh Claude Code session :
    ```
 
    After spawn by any path, verify `/genesis-drop-zone` AND `/promptor` both surface before proceeding with trigger-phrase runs. The cheapest check : ask Claude `"liste les skills genesis-* + promptor dans ton harness"` and confirm both skills appear.
+
+   **Additional isolation requirements discovered during v1.6.2 Path-B runtime (see `runtime_dogfood_evidence_v1_6_2.md` § Path B addendum) :**
+
+   - **F4 — user-scope `~/.claude/skills/` shadow** : personal-scope stale skills at `~/.claude/skills/<skill-name>/` surface regardless of plugin install/uninstall. True isolation requires `rm -rf ~/.claude/skills/<genesis-skill-name>/` for each Genesis skill (or rename to `.bak` for reversibility). Do NOT do this without user consent — it's personal state.
+   - **F5 — SPDX comment breaks frontmatter** : every Genesis SKILL.md starts with `<!-- SPDX-License-Identifier: MIT -->` before the YAML `---` delimiter. `claude plugin validate` reports "No frontmatter block found" for all 8 skills. Fresh marketplace installs get an empty plugin. **v1.6.3 P0 fix** : move SPDX comment to AFTER the closing `---` (or remove from SKILL.md files per R10.5 scope-narrowing — keep SPDX only on actual source-code files like `.py` / `.ts` / `.md` that are not plugin manifests). Pre-flight sanity check the plugin is load-ready :
+
+     ```
+     claude plugin validate C:/Dev/Claude_cowork/project-genesis/.claude/worktrees/feat_2026-04-19_v1_5_2_runtime_dogfood/.claude-plugin/plugin.json 2>&1 | grep -c "No frontmatter block found"
+     ```
+     Expected after F5 fix : `0`. Currently (v1.6.2) : `8`.
 2. **API key presence** — for the 4 happy-path fixtures (`scenario_first_write` / `scenario_retirement` / `scenario_halt_no_sdk` + `alexandre_windows`), `ANTHROPIC_API_KEY` MUST be exported in the shell env where `claude` is invoked. For `scenario_halt_no_key` (EXIT_NO_KEY test), explicitly `unset ANTHROPIC_API_KEY` before `claude` spawn.
 3. **Git status clean in fixture cwd** — `cd <fixture>` → `ls -la` shows ONLY the intended fixture artefacts, no stale `drop_zone_intent.md` or archive. If present, check whether this is a planned re-run (v1.5.0 dryrun fixtures may contain prior paper-trace artefacts — keep them) or accidental pollution (delete before spawn).
 4. **Driver session state** — this runbook is consumed by the driver session (the one doing v1.6.2 ship). The driver session MUST be in Phase A complete state (feat-core commit landed, evidence log stub at `skills/genesis-drop-zone/tests/runtime_dogfood_evidence_v1_6_2.md` with 5 TBD fixture sections) before fresh sessions spawn.

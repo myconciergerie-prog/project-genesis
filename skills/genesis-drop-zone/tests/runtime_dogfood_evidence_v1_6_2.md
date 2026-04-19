@@ -116,24 +116,42 @@ Runtime JSON : `/c/tmp/v1.6.2-runs/run_post_disable_list.json` — duration 5.8 
 
 | Friction # | Class | Description | Disposition |
 |---|---|---|---|
-| F1 | B (prose / methodology ambigu) | `claude --plugin-dir <path>` does NOT override a same-named stale cached plugin install. Even `claude plugin disable <name>` does not prevent the cache's skill list from surfacing. Runbook needs a pre-flight step : either (a) `claude plugin uninstall <name>` first, OR (b) use `--bare` with `ANTHROPIC_API_KEY` env-var set, OR (c) publish new version and `claude plugin update` first. This is ARGUABLY a Claude Code CLI bug, not a Genesis bug — but the runbook must document the workaround regardless. | **DEFERRED v1.6.3** — runbook methodology fix. Ship path : update runbook Pre-flight section + add `claude plugin uninstall` instruction + re-run evidence capture against true-isolated harness. |
-| F2 | B (observation) | `-p` single-shot mode cannot exercise multi-turn skill flows (Phase 0.1 → 0.2 → 0.3 → 0.4 → 0.5). Even with F1 fixed, single-shot reveals only first-card render. Phase 0.4 arbitration + Phase 0.5 consent need interactive or `--input-format stream-json` multi-turn. | **DEFERRED v1.6.3+** — either (a) manual interactive sessions (the originally-planned method user-work), (b) scripted stream-json multi-turn via subprocess-managed pipes. |
-| F3 | C (observation / insight) | Freelance Claude on natural phrase produces rich arbitration-quality content without skill dispatch — especially on the alexandre_windows multi-source drop (extracted 4 fixture artefacts into a coherent consent card). Implication : the skill's value-add over freelance should be explicitly characterized. Not a bug, but a product-clarity question. | **DEFERRED** — candidate for v2 design conversation ("when does invoking the skill improve over freelance Claude?"). |
+| F1 | B (methodology) | `claude --plugin-dir <path>` does NOT override a same-named stale cached plugin install. Even `claude plugin disable <name>` does not prevent the cache's skill list from surfacing. The cache at `~/.claude/plugins/cache/<marketplace>/<name>/<version>/` persists after `plugin uninstall`. Isolation paths documented in runbook : (a) `plugin uninstall` + `rm -rf <cache-dir>`, (b) `--bare` + `ANTHROPIC_API_KEY` env, (c) publish + `plugin update`. | **DEFERRED v1.6.3** — runbook methodology fix. |
+| F2 | B (methodology) | `-p` single-shot mode cannot exercise multi-turn skill flows (Phase 0.1 → 0.2 → 0.3 → 0.4 → 0.5). Even with F1+F4+F5 fixed, single-shot reveals only first-card render. | **DEFERRED v1.6.3+** — either manual interactive sessions OR scripted stream-json multi-turn. |
+| F3 | C (insight) | Freelance Claude on natural phrase produces rich arbitration-quality content without skill dispatch — especially on alexandre_windows (extracted 4 artefacts into a coherent consent card covering Product / Pain / Pricing / Factory constraints). The skill's value-add over freelance Claude should be explicitly characterized. | **DEFERRED** — v2 design conversation ("when does invoking the skill improve over freelance Claude?"). |
+| F4 | B (structural) | **NEW post-Path-B discovery.** Even after `plugin uninstall` + `rm -rf cache/project-genesis-marketplace/`, 6 Genesis skills still surface because the user has them manually installed at `~/.claude/skills/` (user-scope personal skills directory, separate from plugin system). This directory bypasses the plugin installation entirely. Specifically `~/.claude/skills/genesis-protocol/`, `journal-system/`, `pepite-flagging/`, `phase-5-5-auth-preflight/`, `phase-minus-one/`, `session-post-processor/` exist as personal-scope stale copies. Testing a fresh plugin install requires also `rm -rf ~/.claude/skills/<name>/` for each Genesis skill. | **DEFERRED v1.6.3** — runbook methodology note. User may have installed these manually early in project life ; stale vs current. |
+| F5 | **B (structural, universal — Genesis-owned bug)** | **MOST IMPORTANT FINDING.** `claude plugin validate` on the v1.6.2 worktree emits the warning `"frontmatter: No frontmatter block found"` for EVERY ONE of the 8 SKILL.md files (genesis-drop-zone / genesis-protocol / journal-system / pepite-flagging / phase-5-5-auth-preflight / phase-minus-one / promptor / session-post-processor). Root cause : each SKILL.md starts with `<!-- SPDX-License-Identifier: MIT -->` BEFORE the YAML `---` frontmatter delimiter. Claude Code's frontmatter parser requires the `---` block at line 1, not preceded by any comment or content. The SPDX comment is mandated by R10.5 for source-file licensing, but it's incompatible with Claude Code's strict frontmatter placement. Consequence : the plugin's skills fail validation at load time ; skills that work currently are surviving via `~/.claude/skills/` personal-scope shadow (F4), not via plugin-dir loading. For new users installing the plugin via marketplace on a clean machine, NO Genesis skill would load — the plugin appears empty. This has been latent since v1.3.0 and masked by user's personal-scope install history. | **CLASS-A-ADJACENT** : not a privilege violation (NG3 scope-wise) but a load-failure that renders the plugin effectively broken for fresh users. The fix is universal (move SPDX comment to AFTER frontmatter OR remove from SKILL.md entirely — rules/v1_rules.md R10.5 can scope SPDX to source-code files excluding SKILL.md). **DEFERRED v1.6.3 as P0 fix** — the universality and blast radius (every new install) warrant a dedicated PATCH. Not in v1.6.2 scope per hybrid-gate class-B classification + common-root-cause consideration (F1 + F4 + F5 cluster around plugin-loading methodology, unified v1.6.3 fix more surgical than chain). |
 
 ## Deferred-friction queue (B + C → v1.6.3+)
 
 | Friction # | Proposed ship | Reason for defer |
 |---|---|---|
-| F1 | v1.6.3 — runbook methodology fix | Ship v1.6.3 as "runtime dogfood harness fix + re-run H1-H4 evidence capture against isolated plugin load" |
-| F2 | v1.6.3 or later | Ties into F1 resolution ; multi-turn evidence capture can be scripted only after single-turn works |
-| F3 | v2 design conversation | Product-positioning question, not a bug |
+| F5 | **v1.6.3 as P0 primary scope** | SPDX-comment-before-frontmatter breaks ALL SKILL.md validation ; universal Genesis-owned bug with massive blast radius (every new marketplace install). Fix is mechanical : move SPDX to trailing HTML comment OR remove from SKILL.md per R10.5 scope-narrowing. |
+| F1 + F4 | v1.6.3 bundled with F5 | Runbook methodology hardening ; both F1 + F4 are Claude Code CLI behaviour (cache persistence + user-scope shadow) that the runbook must document around. |
+| F2 | v1.6.3 or later | Single-shot `-p` multi-turn gap ; ties into F1/F5 resolution cleanly. |
+| F3 | v2 design conversation | Product-positioning question ("when does skill invoke beat freelance Claude?"), not a bug. |
+
+---
+
+## Path B addendum — post-`plugin uninstall` + `rm -rf cache` + `plugin validate` evidence
+
+After user confirmed Path B (true isolation attempt) :
+
+1. **`claude plugin uninstall project-genesis@project-genesis-marketplace`** — succeeded at registry level ; stale cache directory persisted.
+2. **`rm -rf ~/.claude/plugins/cache/project-genesis-marketplace/`** — physical cache deleted (reversible via reinstall).
+3. **Re-run `claude -p --plugin-dir <worktree> ...`** — still only 6 Genesis skills surface, confirming F4 (user-scope `~/.claude/skills/` shadow).
+4. **`claude plugin validate <worktree>/.claude-plugin/plugin.json`** — surfaced F5 (frontmatter warning on ALL 8 SKILL.md).
+5. **`claude plugin install project-genesis@project-genesis-marketplace`** — user state restored (step performed before this evidence-log commit).
+
+Path B was valuable : it surfaced F4 + F5 which the Option-A ship would have missed. Honest rating reflects the additional findings.
 
 ---
 
 ## Cost + time summary
 
 - 5 fixture runs : $2.43, ~394 s total (6.6 min)
-- 2 control runs : $0.35, ~30 s total
-- **Grand total : $2.78, ~424 s (7.1 min)**
+- 2 control runs (pre-Path-B) : $0.35, ~30 s total
+- 3 Path-B additional runs (isolated skill list + explicit invoke + post-cache-clean list) : $0.41, ~29 s total
+- **Grand total : $3.19, ~453 s (7.6 min)**
 
-Evidence gathering cost well within reasonable budget for a runtime dogfood ship. Future v1.6.3 with F1 fix should run at similar cost (plus one uninstall + reinstall step, negligible).
+Evidence gathering cost well within reasonable budget. v1.6.3 with F5 fix + F1/F4 runbook hardening should be ~$3-4 and similar duration.
