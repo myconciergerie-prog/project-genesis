@@ -62,8 +62,8 @@ Genesis v1 is an engineer's protocol that speaks to engineers. The v2 vision add
 2. **Citations-enabled extraction** — the subprocess calls the API with `citations: {enabled: true}` per document block and `cache_control: {type: "ephemeral", ttl: "1h"}`. Mandatory 1h TTL explicit per R8 § Stage 2 (guards against March 2026 Anthropic default TTL regression).
 3. **Mirror annotation** — each field optionally carries a `[page N]` (PDF) or `[lines X-Y]` (plain-text) suffix when a citation is available. ASCII-safe, language-neutral. Image-only drops produce no citations (by design — Citations API does not cite images).
 4. **Frontmatter schema extension** — `drop_zone_intent.md` gains optional nested keys `<field>_source_citation` with shape `{type, document_index, start, end, cited_text_preview}`. Key omitted (not written as `null`) when no citation applies. `schema_version` stays at `1` — additive and backward-compatible.
-5. **Graceful fallback** — four triggers commit to the v1.3.3 in-context extraction path: (a) `ANTHROPIC_API_KEY` unset at skill entry; (b) Python runtime unresolvable; (c) subprocess exit code ≠ 0; (d) subprocess stdout fails shape validation. Fallback is silent — no user-facing note.
-6. **Five mitigations** for the network privilege class — pre-flight env check at skill entry; subprocess isolation; explicit 1h cache TTL; token-budget logging to stderr (forensic only); silent graceful fallback.
+5. **Graceful fallback** — four triggers commit to the v1.3.3 in-context extraction path: (a) `ANTHROPIC_API_KEY` unset at skill entry; (b) Python runtime unresolvable; (c) subprocess exit code ≠ 0; (d) subprocess stdout fails shape validation. Fallback is silent — no user-facing note. **Retired in v1.5.0** — see v1.5.0 In scope item #1. All four triggers now route to the halt-with-remediation card.
+6. **Five mitigations** for the network privilege class — pre-flight env check at skill entry; subprocess isolation; explicit 1h cache TTL; token-budget logging to stderr (forensic only); silent graceful fallback (retired in v1.5.0 — see § v1.5.0 In scope item #1 + § "Network class mitigations" below; halt-with-remediation supersedes).
 7. **Typed-text wrapping** — non-empty inline `typed_text` is wrapped in a synthetic citations-enabled document block at index 0 of the `documents[]` array. Attachments follow at indices 1..N.
 8. **Three new fixtures** — `tests/fixtures/drop_zone_intent_fixture_v1_4_0_fr_with_citations.md`, `drop_zone_intent_fixture_v1_4_0_en_with_citations.md`, and `drop_zone_intent_fixture_v1_4_0_fallback.md` (byte-identical to `drop_zone_intent_fixture_v1_3_3_en.md` modulo `skill_version`).
 9. **MINOR semver bump** — v1.3.3 → v1.4.0. Second privilege class + first external dependency (`ANTHROPIC_API_KEY`, Anthropic Python SDK) + first subprocess invocation in `genesis-drop-zone` justify the tranche.
@@ -112,7 +112,7 @@ Genesis v1 is an engineer's protocol that speaks to engineers. The v2 vision add
 - `GH_BROWSER` profile routing.
 - UX toolkit integration (@clack/prompts, Charm Gum, cli-spinners).
 - Completion chime (cross-platform).
-- Error handling refinements (permission-denied / disk-full / symlink edge cases on the filesystem side; API-side errors have their own fallback per § "Fallback triggers").
+- Error handling refinements (permission-denied / disk-full / symlink edge cases on the filesystem side; API-side errors route to the halt-with-remediation card in v1.5.0+ — see § "Halt-with-remediation card"; v1.4.0 fallback behaviour retired).
 - **Bilingual Layer B null-class parsing** — v1.5+ target.
 - **Three-locale-or-more expansion** — deferred until a real non-FR/EN user emerges.
 
@@ -217,7 +217,9 @@ When the user replies to the consent card with a modification (`garde Type en bo
 
 ## Citations API dispatch (v1.4.0)
 
-v1.4.0 layers an optional API-powered extraction path on top of the v1.3.1 in-context extraction. When `ANTHROPIC_API_KEY` is present at skill entry, the skill launches a Python subprocess that calls the Anthropic Messages API with `citations: {enabled: true}` per document block. Per-field source attribution (`[page N]` for PDF, `[lines X-Y]` for plain-text documents) is rendered inline in the mirror and persisted as optional `<field>_source_citation` nested keys in `drop_zone_intent.md`. When the key is absent or the subprocess fails for any reason, the skill routes through a silent graceful fallback to v1.3.3 in-context extraction.
+> **v1.5.0 + v1.5.1 retirement notice** — the silent graceful fallback to v1.3.3 in-context extraction documented in this section has been RETIRED. Exit codes 2-7 and pre-flight failures (`ANTHROPIC_API_KEY` unset, Python unresolvable, SDK missing) now route to the halt-with-remediation card — see `## Living memory dispatch (v1.5.0)` § "Halt-with-remediation card" below. Prose in this section that still references fallback behaviour is kept for historical context; behavioural contracts are superseded by the Living memory dispatch section.
+
+v1.4.0 layers an optional API-powered extraction path on top of the v1.3.1 in-context extraction. When `ANTHROPIC_API_KEY` is present at skill entry, the skill launches a Python subprocess that calls the Anthropic Messages API with `citations: {enabled: true}` per document block. Per-field source attribution (`[page N]` for PDF, `[lines X-Y]` for plain-text documents) is rendered inline in the mirror and persisted as optional `<field>_source_citation` nested keys in `drop_zone_intent.md`. When the key is absent or the subprocess fails for any reason, **v1.5.0+ halts with the remediation card** (v1.4.0 routed through silent graceful fallback — retired per v1.5.0 anti-Frankenstein retroactive).
 
 ### Dispatch lifecycle
 
@@ -241,20 +243,20 @@ If no Python is found on `$PATH`, fall back to the v1.3.3 in-context extraction 
 
 **Output (exit 0)**: single JSON object on stdout with `schema_version` (int, `1`), the 9 semantic fields, optional `<field>_source_citation` nested entries (key omitted when no citation applies), and `usage` mirroring the SDK response's token counts.
 
-**Exit codes**:
+**Exit codes** (v1.5.0+ — fallback column superseded):
 
-| Exit | Meaning | SKILL.md response |
+| Exit | Meaning | SKILL.md response (v1.5.0+) |
 |---|---|---|
 | `0` | Success — valid JSON on stdout | Parse, proceed with citation-annotated mirror |
-| `2` | `ANTHROPIC_API_KEY` unset at subprocess runtime | Fallback |
-| `3` | SDK import error (`anthropic` not installed) | Fallback |
-| `4` | API error (4xx / 5xx not 429) | Fallback |
-| `5` | Rate limit (429) — retries exhausted | Fallback |
-| `6` | Bad input (malformed stdin JSON / missing key) | Fallback |
-| `7` | Output JSON shape invalid | Fallback |
-| other | Unknown error | Fallback |
+| `2` | `ANTHROPIC_API_KEY` unset at subprocess runtime | Halt with EXIT_NO_KEY / generic internal-error card (see § "Halt-with-remediation card" — v1.5.1 taxonomy) |
+| `3` | SDK import error (`anthropic` not installed) | Halt with generic internal-error card (v1.5.1 — collapsed from EXIT_SDK_MISSING per Friction #4 dogfood finding) |
+| `4` | API error (4xx / 5xx not 429) | Halt with generic internal-error card |
+| `5` | Rate limit (429) — retries exhausted | Halt with generic internal-error card |
+| `6` | Bad input (malformed stdin JSON / missing key) | Halt with generic internal-error card |
+| `7` | Output JSON shape invalid | Halt with generic internal-error card |
+| other | Unknown error | Halt with generic internal-error card |
 
-All fallback paths are silent to the user. Subprocess stderr surfaces at the harness-visible stderr for developer inspection.
+The extractor preserves all 6 distinct exit codes for diagnostic fidelity — stderr still reports the precise class. v1.5.1 collapsed the render layer to 2 distinct halt cards (EXIT_NO_KEY distinct, exits 3-7 merged into a generic internal-error card) — see § "Halt-with-remediation card" for the current taxonomy. Subprocess stderr surfaces at the harness-visible stderr for developer inspection.
 
 ### Typed-text citation wrapping
 
@@ -273,16 +275,18 @@ The Anthropic Citations API produces `cited_text` only for content carried in a 
 
 Document-array ordering: typed-text synthetic document at index 0 (if `typed_text` non-empty), followed by one document block per file in `attachments[]` (indices 1..N for PDFs and text files). Image blocks are a different content-block type and do NOT carry the `citations` flag — Citations API does not cite images. If `typed_text` is empty, attachment documents start at index 0. Citation output uses `document_index` referring to this assembled array.
 
-### Fallback triggers
+### Fallback triggers (RETIRED v1.5.0)
 
-The dispatch commits to the v1.3.3 in-context extraction path under any of:
+> **v1.5.0 retirement** — the v1.4.0 silent graceful fallback to v1.3.3 in-context extraction has been retired. The four triggers listed below now route to the halt-with-remediation card (see `## Living memory dispatch (v1.5.0)` § "Halt-with-remediation card"). This subsection is preserved as historical context; behavioural contracts are superseded.
 
-1. `api_extraction_available` is `false` at skill entry (pre-flight env check negative).
-2. Python runtime unresolvable at subprocess launch.
-3. Subprocess exit code ≠ 0.
-4. Subprocess exit code `0` but stdout is not valid UTF-8 JSON, or is JSON but fails shape validation (missing required keys, wrong types).
+The following conditions previously committed dispatch to the v1.3.3 in-context fallback path; in v1.5.0+ they all route to the halt card:
 
-Fallback is silent. The mirror renders v1.3.3-identical output (no `[page N]` / `[lines X-Y]` annotations). `drop_zone_intent.md` is written without any `<field>_source_citation` keys on the fallback path.
+1. `api_extraction_available` is `false` at skill entry (pre-flight env check negative) → halt EXIT_NO_KEY.
+2. Python runtime unresolvable at subprocess launch → halt generic internal-error.
+3. Subprocess exit code ≠ 0 → halt per exit-code taxonomy in the § "Halt-with-remediation card" table.
+4. Subprocess exit code `0` but stdout is not valid UTF-8 JSON, or is JSON but fails shape validation (missing required keys, wrong types) → halt generic internal-error (exit 7 synthetic, routed to the generic card).
+
+v1.5.0+ halt is explicit — the mirror does not render v1.3.3-identical output as a substitute for API extraction. `drop_zone_intent.md` is not written on the halt path. Anti-Frankenstein retroactive rationale: fallback was preemptive, never pain-driven validated; R8 research `sota/anthropic-auth-and-oauth-status_2026-04-19.md` confirmed no first-party OAuth path for Messages API in April 2026 means halt-with-remediation is the only ToS-clean contract.
 
 ### Citation object shape
 
@@ -314,7 +318,7 @@ Rendered in the mirror as `[page N]` (PDF) or `[lines X-Y]` (text, derived from 
 
 When the user replies to the consent card with a modification, the skill re-invokes the extractor subprocess on each iteration. Citations are re-computed. The 1h cache TTL keeps the document block resident across iterations — typical modification-loop re-run cost is ~0.1× of the first call per R8 § Stage 2 cache economics.
 
-If `ANTHROPIC_API_KEY` is revoked mid-session (user unsets externally — out-of-scope), `api_extraction_available` stays `true` (the gate is immutable). The subprocess launches on the next iteration, hits exit code `2` at its own env check, and the dispatch routes through the fallback path via the exit-code-≠-0 trigger. The re-printed consent card does not indicate the path change.
+If `ANTHROPIC_API_KEY` is revoked mid-session (user unsets externally — out-of-scope), `api_extraction_available` stays `true` (the gate is immutable). The subprocess launches on the next iteration, hits exit code `2` at its own env check. **v1.5.0+: this routes to the halt-with-remediation card (EXIT_NO_KEY) and the modification loop terminates** — no write, no re-printed consent card. Victor restores `ANTHROPIC_API_KEY` at the OS / shell-profile level and re-invokes `/genesis-drop-zone`. (v1.4.0 silently fell back to in-context extraction without user-facing indication — retired in v1.5.0 per anti-Frankenstein retroactive.)
 
 ### Zero Layer B ripple preserved
 
@@ -345,7 +349,12 @@ Tag each cross-session divergence with `[cross-session]` for the arbitration car
 
 ### Phase 0.5 — Arbitration consolidated card
 
-If the consolidated divergences list (intra-drop + cross-session) is empty, skip Phase 0.5 entirely. Proceed to write/archive operations with the new extraction values verbatim.
+If the consolidated divergences list (intra-drop + cross-session) is empty, skip Phase 0.5 entirely. **Render the v1.3.2 consent card** (`## Phase 0 — consent card`) as the gate before any write. The write mechanism after an affirmative consent response bifurcates on whether `drop_zone_intent.md` already exists at cwd:
+
+- **First-write path** (no prior snapshot): affirmative consent → v1.3.2 write flow (`## Phase 0 — write flow`). Step 2 pre-write existence check passes (no existing file), write proceeds per v1.3.2.
+- **Re-run path** (prior snapshot exists, new extraction byte-identical or trivially different): affirmative consent → § "Archive write — supersession chain" (below). v1.3.2 write flow is NOT invoked on this path — its Step 2 halt-on-existing would collide with the supersession contract. The archive chain IS the v1.5.0+ explicit overwrite contract for the re-run case.
+
+See § "Consent-card interaction with Phase 0.5 (v1.5.1 clarification)" below for the full three-path contract.
 
 If non-empty, render the bilingual arbitration card. The card prints in `content_locale` per v1.3.3 dispatch (FR if `content_locale=FR`, EN if `content_locale=EN`, FR fallback if `mixte`). Both bilingual variants are paired-authored in `phase-0-welcome.md` per R9 tier-3 — see § "Arbitration card — FR variant" / "EN variant" in that file.
 
@@ -401,22 +410,39 @@ When the extractor exits with code 2-7, the dispatch layer renders the bilingual
 
 The two are intentionally distinct — research-confirmed `.claude/docs/superpowers/research/sota/anthropic-auth-and-oauth-status_2026-04-19.md`. Even on April 19, 2026, no public OAuth path lets a third-party app (including Genesis) use a subscription identity for Messages API. The halt card surfaces this honestly rather than degrading silently.
 
-Per-failure-class card content (full bilingual templates in `phase-0-welcome.md`):
+Per-failure-class card content (v1.5.1 taxonomy — collapsed from 6 distinct cards × 2 langs = 12 variants in v1.5.0 to 2 distinct cards × 2 langs = 4 variants per dogfood Friction #4 + Friction #1 anti-Frankenstein retroactive). Full bilingual templates in `phase-0-welcome.md`:
 
-| Exit code | Card title (FR / EN) | Remediation summary |
+| Exit code | Card | Remediation summary |
 |---|---|---|
-| 2 EXIT_NO_KEY | Genesis nécessite une clé API Anthropic / Genesis requires an Anthropic API key | Console deep-link, `setx`/`.zshenv` persistent one-liners, escape hatches, env-scrub warning |
-| 3 EXIT_SDK_MISSING | SDK Anthropic non installé / Anthropic SDK not installed | `pip install anthropic` (or `uv pip install` / `pipx`), relaunch, re-invoke |
-| 4 EXIT_API_ERROR | Erreur API Anthropic / Anthropic API error | https://status.anthropic.com check, retry, set `GENESIS_DROP_ZONE_VERBOSE=1` for diagnostic logs |
-| 5 EXIT_RATE_LIMIT | Limite de débit Anthropic dépassée / Anthropic rate limit exceeded | Wait 60s + retry, check workspace usage at https://console.anthropic.com/settings/billing |
-| 6 EXIT_BAD_INPUT | Erreur interne extracteur / Internal extractor error | File issue at https://github.com/myconciergerie-prog/project-genesis/issues with stderr log |
-| 7 EXIT_OUTPUT_INVALID | Sortie API invalide / Invalid API output | Retry, switch model via `GENESIS_DROP_ZONE_MODEL` env var, check Anthropic Console message logs |
+| 2 `EXIT_NO_KEY` | **EXIT_NO_KEY card** — distinct | Console deep-link, `setx`/`.zshenv` persistent one-liners, escape hatches, env-scrub warning. Addresses highest-pain user-facing surface (subscription ≠ API confusion). |
+| 3-7 (all other exits) | **Generic internal-error card** — merged | Title names the extractor class via stderr, directs to GitHub issue template at `https://github.com/myconciergerie-prog/project-genesis/issues`, one-line stderr-excerpt capture guidance, `GENESIS_DROP_ZONE_VERBOSE=1` diagnostic env var. |
+
+**Why collapsed** — dogfood v1.5.0 on 2026-04-19 surfaced that EXIT_SDK_MISSING vs EXIT_API_ERROR vs EXIT_RATE_LIMIT vs EXIT_BAD_INPUT vs EXIT_OUTPUT_INVALID are all operationally-opaque "something broke internally" from Victor's perspective; Fixture D runtime distinction was unverifiable within 2h timebox. Keeping them as 5 distinct bilingual variants cost 10 bilingual templates for zero user benefit. The stderr still reports the precise extractor class for forensic diagnostic — the script's 6 distinct exit codes are preserved; collapse is at the render layer only. See § "Candidate 2 — Halt-card taxonomy collapse" in `specs/v1_5_1_dogfood_and_prose.md` for the full rationale.
 
 **Footer note** (always rendered, both languages): "the Claude Code (Max) subscription does NOT grant API access. The Anthropic API key is a separate product, billed per-token at the workspace level — see https://console.anthropic.com/settings/keys".
 
 The card prints in `content_locale` order. After printing, the dispatch layer halts (no fallback, no retry, no in-context degradation). Victor fixes the cause and re-runs `/genesis-drop-zone`.
 
 **Future-proofing note**: a future Claude Code release may default `CLAUDE_CODE_SUBPROCESS_ENV_SCRUB=1`, scrubbing `ANTHROPIC_API_KEY` from subprocess env at extractor invocation time. To survive that change, the env var MUST be set at the **OS / shell profile level** (`setx` Windows / `.zshenv` POSIX), NOT just in the current Claude Code session.
+
+### Consent-card interaction with Phase 0.5 (v1.5.1 clarification)
+
+Dogfood paper-trace on 2026-04-19 (fixtures A, B, C at `C:/tmp/genesis-v1.5.0-dryrun/` — archived at `memory/project/dogfood_v1.5.0_2026-04-19/friction_log.md`) surfaced that the v1.5.0 prose above left the v1.3.2 consent card's role ambiguous on the empty-divergences write path. Friction #6 in the log is a blocker: on Fixture B (first write, internally consistent drop), a literal reading of § "Phase 0.5" pre-v1.5.1-amendment would have written `drop_zone_intent.md` without Victor ever seeing the consent card — violating the v1.3.2 privilege model.
+
+v1.5.1 commits the three-path contract explicitly:
+
+**Path 1 — Non-empty divergences (intra-drop and/or cross-session detected)**: the Phase 0.5 arbitration card SUBSUMES the v1.3.2 consent card. Victor's arbitration response IS the consent to write. Affirmative arbitration (valid `"i,j,k"` or `"autre N: <value>"` response) proceeds to the write/archive sequence. `"abort"` or malformed response halts without any write. The v1.3.2 consent card does NOT render on this path — Phase 0.5 is the single point of user intent.
+
+**Path 2 — Empty divergences**: the v1.3.2 consent card RENDERS, per `## Phase 0 — consent card (v1.3.2, v1.3.3 locale-switched)`. The v1.3.2 response routing applies verbatim (Affirmative / Negative / Modification). Bifurcation on write mechanism:
+
+- **Path 2a — First write, no prior snapshot**: affirmative consent → v1.3.2 write flow (`## Phase 0 — write flow (v1.3.2)`). Byte-identical behaviour to v1.4.x. Dogfood Fixture B (paper-trace) is the evidence basis for this path.
+- **Path 2b — Re-run, prior snapshot exists, new extraction shows no divergence**: affirmative consent → § "Archive write — supersession chain" above (NOT the v1.3.2 write flow, whose Step 2 halt-on-existing would collide with the supersession contract). The archive chain is the explicit v1.5.0+ overwrite mechanism — snapshot_version increment, archive entry under `drop_zone_intent_history/`, bidirectional supersession pointers. For byte-identical content specifically, the dispatch MAY optionally short-circuit the overwrite step AFTER consent (the file already holds the identical bytes); short-circuit never replaces consent. Short-circuit is a v1.5.2+ polish.
+
+v1.5.0 did not touch the empty-divergences consent semantics — v1.5.1 clarifies the write-mechanism bifurcation that v1.5.0 prose collapsed ambiguously.
+
+**Path 3 — Halt card (extractor exit 2-7, per § "Halt-with-remediation card" above)**: neither the Phase 0.5 arbitration card NOR the v1.3.2 consent card renders. The halt card terminates the dispatch before any consent surface is evaluated — there is nothing to consent to when no extraction succeeded. Dogfood Fixture C (paper-trace, `ANTHROPIC_API_KEY` verified absent in the session) confirmed this path is reachable without API access and is the correct terminal for any exit-code 2-7.
+
+**Victor-exit safety invariant across all three paths**: if Victor exits (ctrl+c, abort) at ANY consent surface (Phase 0.5 arbitration card OR v1.3.2 consent card), the existing `drop_zone_intent.md` (if any) remains byte-identical, no archive is created, no new write occurs. This preserves the v1.3.2 privilege model's core promise — Genesis never writes files behind Victor's back.
 
 ## Phase 0 — welcome
 
@@ -617,7 +643,7 @@ v1.4.0 refines cross-skill-pattern #2 from *"at most one concentrated privilege 
 | v1.3.1 | `none` | `none` |
 | v1.3.2 | writes `drop_zone_intent.md` to cwd after consent, halt-on-existing, no `mkdir` | `none` |
 | v1.3.3 | unchanged from v1.3.2 (runtime locale dispatch only) | `none` |
-| **v1.4.0** | **unchanged from v1.3.2** (additive frontmatter keys only — same write, same halt, same path) | **subprocess → Anthropic Messages API for Citations extraction, pre-flight env check, silent graceful fallback, 1h cache TTL explicit** |
+| **v1.4.0** | **unchanged from v1.3.2** (additive frontmatter keys only — same write, same halt, same path) | **subprocess → Anthropic Messages API for Citations extraction, pre-flight env check, silent graceful fallback (RETIRED in v1.5.0), 1h cache TTL explicit** |
 | **v1.5.0** | **EXTENDED**: writes `drop_zone_intent.md` to cwd after consent (v1.3.2 preserved as first-write path), writes `drop_zone_intent_history/v<N>_<ts>.md` archive entries on supersession, overwrites `drop_zone_intent.md` with new snapshot after archive. Mitigations extended (see § Disk class mitigations v1.5.0 below). | **subprocess unchanged** (Anthropic Messages API, pre-flight env check, 1h TTL explicit, token-budget logging). **Fallback RETIRED** — exit codes 2-7 now route to halt-with-remediation card; no in-context degradation. Anti-Frankenstein retroactive per R8 `sota/anthropic-auth-and-oauth-status_2026-04-19.md`. |
 
 ### Disk class mitigations (unchanged since v1.3.2)
@@ -634,7 +660,7 @@ v1.3.2 broke the `none` streak with the minimum viable concentrated privilege �
 
 v1.5.0 extends the disk class to cover archive + supersession writes. The five mitigations are augmented, not replaced:
 
-- **Arbitration card consent gates the write/archive operation** — Phase 0.5 arbitration card (when divergences detected) is the consent surface for any operation that overwrites or supersedes an existing snapshot. No write happens until Victor responds. Empty divergences → write proceeds without an explicit consent gate (parity with v1.3.2 first-write path).
+- **Arbitration card consent gates the write/archive operation** — Phase 0.5 arbitration card (when divergences detected) is the consent surface for any operation that overwrites or supersedes an existing snapshot. No write happens until Victor responds. **Empty divergences → v1.3.2 consent card renders as the gate** (see § "Consent-card interaction with Phase 0.5 (v1.5.1 clarification)" in the Living memory dispatch section). v1.3.2 first-write and re-run-no-change paths both keep the v1.3.2 consent gate; v1.5.1 corrected an ambiguity from v1.5.0's initial ship on this point.
 - **`drop_zone_intent_history/` directory created without `mkdir -p` magic** — only as a sibling of `drop_zone_intent.md` at cwd, never as an arbitrary path. Creation is conditional (only when needed for an archive write). No path traversal, no symlink-following beyond what cwd already grants.
 - **ISO8601 UTC timestamp guarantees archive filename uniqueness** — `v<N>_<YYYY-MM-DDTHH-MM-SS>Z.md` collision-resistant by construction (single-writer + per-second resolution).
 - **Victor-exit safety = no partial state on disk** — arbitration fully precedes any write. If Victor abandons mid-card (ctrl+c, abort, malformed response), existing `drop_zone_intent.md` byte-identical, no archive created.
@@ -650,7 +676,7 @@ v1.4.0 adds the second class with its own orthogonal consent model and five miti
 - **Subprocess isolation** — the extractor runs as a separate Python process. It cannot mutate the session filesystem beyond its own stdout/stderr streams. The SKILL.md dispatch is the only place where subprocess output is read, validated, and consumed.
 - **Explicit 1h cache TTL always** — the extractor hardcodes `cache_control: {type: "ephemeral", ttl: "1h"}` on document blocks per R8 § Stage 2 mandate. The env override `GENESIS_DROP_ZONE_CACHE_TTL` accepts `5m` or `1h`; the SDK default (5-minute) is never reached by omission.
 - **Token-budget logging to stderr** — every successful extraction logs `input_tokens`, `cache_read_input_tokens`, `cache_creation_input_tokens`, `output_tokens` as a single stderr line (verbose mode via `GENESIS_DROP_ZONE_VERBOSE=1` adds per-phase tracing). Forensic only — invisible to the Victor-facing UX.
-- **Silent graceful fallback** — any fallback trigger (env unset, Python unresolvable, subprocess exit ≠ 0, stdout not valid JSON, schema check fails) commits to the v1.3.3 in-context extraction path. The mirror renders v1.3.3-identical output. No user-facing informational note prints. The privilege never escalates on failure — fallback inherits zero new privileges beyond v1.3.3.
+- **Halt-with-remediation card** (v1.5.0+ — supersedes v1.4.0's silent graceful fallback) — any trigger (env unset, Python unresolvable, subprocess exit 2-7) routes to the bilingual halt card. The card names the failure class and points Victor at the specific remediation (Console deep-link, persistent env-var one-liner, SDK install command). Halt is terminal — Victor fixes the underlying cause at the OS / shell-profile level and re-invokes the skill. Anti-Frankenstein retroactive: fallback was preemptive, never pain-driven validated; R8 research confirmed no first-party OAuth path makes halt-with-remediation the only ToS-clean contract. The privilege never escalates on failure — the subprocess never runs when pre-flight fails; the halt card surfaces only prose (no side effects).
 
 ### Precedent for future multi-class privileges
 
@@ -668,7 +694,7 @@ Ordered by rough priority, non-binding, revisit at each session boundary:
 4. `GH_BROWSER` profile routing wire-up.
 5. UX toolkit integration — @clack/prompts, Charm Gum, cli-spinners. Surface is complete now (R9 closed in v1.3.3, citations shipped in v1.4.0); polish can land without re-fragmenting it.
 6. Completion chime (cross-platform).
-7. Error handling refinements — filesystem-side permission-denied / disk-full / symlink edge cases currently let `OSError` bubble up; API-side errors have their own silent fallback per § "Citations API dispatch (v1.4.0) / Fallback triggers". v1.4.1+ adds filesystem halt + remediation if real pain emerges.
+7. Error handling refinements — filesystem-side permission-denied / disk-full / symlink edge cases currently let `OSError` bubble up; API-side errors route to the halt-with-remediation card in v1.5.0+ (§ "Halt-with-remediation card" in the Living memory dispatch section; v1.4.0 silent fallback retired). v1.5.2+ adds filesystem halt + remediation if real pain emerges.
 8. **Contradictions surfacing** — cross-document conflict detection when multiple documents dropped. v1.5+ if multi-document drops become common.
 9. **Chain-of-Verification (CoVe) second pass** — Haiku 4.5 verification of Citations output. R8 recommends skipping unless evals demand.
 10. **Bilingual Layer B null-class parsing** — if `drop_zone_intent.md` frontmatter null-class tokens ever carry EN canonical variants alongside FR canonical, Layer B's Step 0.2a parser grows a bilingual branch. v1.5+ target.

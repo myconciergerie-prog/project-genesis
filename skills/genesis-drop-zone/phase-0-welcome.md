@@ -465,272 +465,63 @@ Note: the Claude Code (Max) subscription does NOT grant API
 access. The Anthropic API key is a separate product.
 ```
 
-## Halt-with-remediation card — FR variant (EXIT_SDK_MISSING = 3)
+## Halt-with-remediation card — FR variant (generic internal-error, exits 3-7, v1.5.1 collapsed)
 
 ```
-⛔ SDK Anthropic non installe
+⛔ Erreur interne Genesis
 
-L'extracteur Citations necessite le package Python `anthropic`
-(>= 0.40.0) qui n'est pas installe dans l'environnement actuel.
+L'extracteur Citations a echoue. La cause exacte est dans les
+logs stderr (classe d'erreur : SDK_MISSING, API_ERROR, RATE_LIMIT,
+BAD_INPUT, ou OUTPUT_INVALID — affichee par l'extracteur).
 
 Remediation :
 
-  1. Installer le SDK :
-       pip install anthropic
-       (ou : uv pip install anthropic / pipx install anthropic
-        selon ta gestion d'environnement Python)
+  1. Capturer les logs stderr de l'invocation qui vient d'echouer.
 
-  2. Verifier l'installation :
-       python -c "import anthropic; print(anthropic.__version__)"
-     Doit afficher >= 0.40.0
-
-  3. Relance Claude Code dans ce dossier
-
-  4. Reinvoque /genesis-drop-zone
-
-Note : la souscription Claude Code (Max) ne donne PAS acces a
-l'API. La cle API Anthropic est un produit separe.
-```
-
-## Halt-with-remediation card — EN variant (EXIT_SDK_MISSING = 3)
-
-```
-⛔ Anthropic SDK not installed
-
-The Citations extractor requires the Python `anthropic` package
-(>= 0.40.0) which is not installed in the current environment.
-
-Remediation:
-
-  1. Install the SDK:
-       pip install anthropic
-       (or: uv pip install anthropic / pipx install anthropic
-        depending on your Python environment management)
-
-  2. Verify the install:
-       python -c "import anthropic; print(anthropic.__version__)"
-     Must show >= 0.40.0
-
-  3. Relaunch Claude Code in this folder
-
-  4. Re-invoke /genesis-drop-zone
-
-Note: the Claude Code (Max) subscription does NOT grant API
-access. The Anthropic API key is a separate product.
-```
-
-## Halt-with-remediation card — FR variant (EXIT_API_ERROR = 4)
-
-```
-⛔ Erreur API Anthropic
-
-L'appel a l'API Messages a echoue avec une erreur de statut
-ou un probleme reseau.
-
-Remediation :
-
-  1. Verifier le statut Anthropic :
-       https://status.anthropic.com
-     Si un incident est en cours, attendre sa resolution.
-
-  2. Si pas d'incident, retenter dans quelques minutes
-     (erreur transitoire reseau probable).
-
-  3. Pour diagnostique detaille, configurer :
+  2. Pour un diagnostic plus detaille, reinvoquer avec :
        (PowerShell)  $env:GENESIS_DROP_ZONE_VERBOSE = "1"
        (bash)        export GENESIS_DROP_ZONE_VERBOSE=1
-     Puis reinvoquer /genesis-drop-zone — les logs stderr
-     contiendront le detail de l'erreur API.
+     Puis relance /genesis-drop-zone.
 
-  4. Si l'erreur persiste, consulter la console Anthropic :
-       https://console.anthropic.com (logs des messages)
-
-Note : la souscription Claude Code (Max) ne donne PAS acces a
-l'API. La cle API Anthropic est un produit separe.
-```
-
-## Halt-with-remediation card — EN variant (EXIT_API_ERROR = 4)
-
-```
-⛔ Anthropic API error
-
-The Messages API call failed with a status error or
-network problem.
-
-Remediation:
-
-  1. Check Anthropic status:
-       https://status.anthropic.com
-     If an incident is in progress, wait for resolution.
-
-  2. If no incident, retry in a few minutes (likely
-     transient network error).
-
-  3. For detailed diagnostics, set:
-       (PowerShell)  $env:GENESIS_DROP_ZONE_VERBOSE = "1"
-       (bash)        export GENESIS_DROP_ZONE_VERBOSE=1
-     Then re-invoke /genesis-drop-zone — stderr logs will
-     contain the API error detail.
-
-  4. If the error persists, check the Anthropic console:
-       https://console.anthropic.com (message logs)
-
-Note: the Claude Code (Max) subscription does NOT grant API
-access. The Anthropic API key is a separate product.
-```
-
-## Halt-with-remediation card — FR variant (EXIT_RATE_LIMIT = 5)
-
-```
-⛔ Limite de debit Anthropic depassee
-
-L'API a renvoye une erreur 429 (rate limit) apres les
-retries automatiques du SDK.
-
-Remediation :
-
-  1. Attendre 60 secondes et retenter.
-
-  2. Verifier la consommation workspace :
-       https://console.anthropic.com/settings/billing
-     Si tu es en tier gratuit, demander une montee de tier.
-
-  3. Pour reduire les appels API : l'extracteur Genesis
-     utilise un cache 1h (cache_control: ttl=1h) — un re-run
-     dans cette fenetre devrait etre gratuit.
-
-  4. Si la limite est atteinte tres frequemment, c'est probable-
-     ment du a un usage workspace-wide eleve par d'autres apps.
-
-Note : la souscription Claude Code (Max) ne donne PAS acces a
-l'API. La cle API Anthropic est un produit separe.
-```
-
-## Halt-with-remediation card — EN variant (EXIT_RATE_LIMIT = 5)
-
-```
-⛔ Anthropic rate limit exceeded
-
-The API returned a 429 (rate limit) error after the SDK's
-automatic retries.
-
-Remediation:
-
-  1. Wait 60 seconds and retry.
-
-  2. Check workspace usage:
-       https://console.anthropic.com/settings/billing
-     If you're on the free tier, request a tier upgrade.
-
-  3. To reduce API calls: the Genesis extractor uses a 1h
-     cache (cache_control: ttl=1h) — a re-run within that
-     window should be free.
-
-  4. If the limit is hit very frequently, it's likely due
-     to workspace-wide high usage from other apps.
-
-Note: the Claude Code (Max) subscription does NOT grant API
-access. The Anthropic API key is a separate product.
-```
-
-## Halt-with-remediation card — FR variant (EXIT_BAD_INPUT = 6)
-
-```
-⛔ Erreur interne extracteur (input invalide)
-
-L'extracteur a recu une payload stdin malformee. C'est un
-bug interne Genesis (cote dispatch SKILL.md), pas une erreur
-de ton cote.
-
-Remediation :
-
-  1. Ouvrir un issue avec les logs stderr :
+  3. Ouvrir un issue avec les logs stderr + la classe d'erreur :
        https://github.com/myconciergerie-prog/project-genesis/issues
      Inclure : version Genesis (`cat .claude-plugin/plugin.json`),
-     OS, contenu drop-zone (description, pas le contenu sensible).
+     OS, description du drop (pas le contenu sensible).
 
-  2. En attendant la correction, contourner via le path v1.3.3
-     in-context :
-       (temporairement)  unset ANTHROPIC_API_KEY
-     Cela force le path d'extraction in-context (pas de citations).
+  4. Escape hatch temporaire — si l'urgence l'exige, une version
+     ulterieure de Genesis pourrait reintroduire le path in-context
+     v1.3.3 comme option explicite. v1.5.x n'offre pas ce fallback.
 
 Note : la souscription Claude Code (Max) ne donne PAS acces a
 l'API. La cle API Anthropic est un produit separe.
 ```
 
-## Halt-with-remediation card — EN variant (EXIT_BAD_INPUT = 6)
+## Halt-with-remediation card — EN variant (generic internal-error, exits 3-7, v1.5.1 collapsed)
 
 ```
-⛔ Internal extractor error (invalid input)
+⛔ Genesis internal error
 
-The extractor received a malformed stdin payload. This is an
-internal Genesis bug (in the SKILL.md dispatch side), not an
-error on your end.
+The Citations extractor failed. The precise cause is in the
+stderr logs (error class: SDK_MISSING, API_ERROR, RATE_LIMIT,
+BAD_INPUT, or OUTPUT_INVALID — printed by the extractor).
 
 Remediation:
 
-  1. File an issue with the stderr logs:
+  1. Capture the stderr logs from the invocation that just failed.
+
+  2. For more detailed diagnostics, re-invoke with:
+       (PowerShell)  $env:GENESIS_DROP_ZONE_VERBOSE = "1"
+       (bash)        export GENESIS_DROP_ZONE_VERBOSE=1
+     Then relaunch /genesis-drop-zone.
+
+  3. File an issue with the stderr logs + error class:
        https://github.com/myconciergerie-prog/project-genesis/issues
      Include: Genesis version (`cat .claude-plugin/plugin.json`),
-     OS, drop-zone content (description only, no sensitive content).
+     OS, drop description (no sensitive content).
 
-  2. Workaround while awaiting a fix — fall back to v1.3.3
-     in-context path:
-       (temporarily)  unset ANTHROPIC_API_KEY
-     This forces the in-context extraction path (no citations).
-
-Note: the Claude Code (Max) subscription does NOT grant API
-access. The Anthropic API key is a separate product.
-```
-
-## Halt-with-remediation card — FR variant (EXIT_OUTPUT_INVALID = 7)
-
-```
-⛔ Sortie API invalide
-
-L'API Anthropic a retourne une reponse qui ne respecte pas
-le schema attendu (JSON malforme, champs manquants, ou
-divergences[] mal forme).
-
-Remediation :
-
-  1. Retenter une fois — peut etre une variation transitoire
-     du modele.
-
-  2. Si persistent, essayer un autre modele :
-       (PowerShell)  $env:GENESIS_DROP_ZONE_MODEL = "claude-sonnet-4-6"
-       (bash)        export GENESIS_DROP_ZONE_MODEL="claude-sonnet-4-6"
-     Modeles candidats : claude-opus-4-7 (defaut), claude-sonnet-4-6,
-     claude-haiku-4-5-20251001.
-
-  3. Inspecter la reponse brute via la console Anthropic :
-       https://console.anthropic.com (logs des messages)
-
-Note : la souscription Claude Code (Max) ne donne PAS acces a
-l'API. La cle API Anthropic est un produit separe.
-```
-
-## Halt-with-remediation card — EN variant (EXIT_OUTPUT_INVALID = 7)
-
-```
-⛔ Invalid API output
-
-The Anthropic API returned a response that doesn't match the
-expected schema (malformed JSON, missing fields, or malformed
-divergences[]).
-
-Remediation:
-
-  1. Retry once — may be a transient model variation.
-
-  2. If persistent, try a different model:
-       (PowerShell)  $env:GENESIS_DROP_ZONE_MODEL = "claude-sonnet-4-6"
-       (bash)        export GENESIS_DROP_ZONE_MODEL="claude-sonnet-4-6"
-     Candidate models: claude-opus-4-7 (default), claude-sonnet-4-6,
-     claude-haiku-4-5-20251001.
-
-  3. Inspect the raw response via the Anthropic console:
-       https://console.anthropic.com (message logs)
+  4. Temporary escape hatch — if urgency demands, a future Genesis
+     version may reintroduce the v1.3.3 in-context path as an
+     explicit opt-in. v1.5.x does not offer this fallback.
 
 Note: the Claude Code (Max) subscription does NOT grant API
 access. The Anthropic API key is a separate product.
