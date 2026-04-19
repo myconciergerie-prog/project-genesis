@@ -10,7 +10,13 @@ description: Reusable runbook for spawning fresh Claude Code sessions per fixtur
 
 Before spawning ANY fresh Claude Code session :
 
-1. **Claude Code version check** — the driver session's Claude Code binary must be a version where the `project-genesis` plugin is installed AND the `/genesis-drop-zone` skill is surfaced in the Skill tool. If the fixture sessions spawn different Claude Code binaries (e.g., different user-scope install), confirm the plugin is loaded there too. Check the session-start system reminder for the skill list.
+1. **Claude Code version check + plugin pointing** — verify plugin sourcing. This host has `project-genesis@project-genesis-marketplace` user-scope-installed BUT pinned to a stale version (v1.1.0 as of 2026-04-19). The runtime dogfood MUST test the v1.6.2 code under review, not the cached older version. Therefore every fresh session MUST be spawned with `--plugin-dir` pointing at the feat worktree :
+
+   ```
+   claude --plugin-dir C:/Dev/Claude_cowork/project-genesis/.claude/worktrees/feat_2026-04-19_v1_5_2_runtime_dogfood
+   ```
+
+   (Flag confirmed via `claude --help` ; repeatable ; loads plugin for that session only.) After spawn, verify in session that `/genesis-drop-zone` surfaces from the **local worktree path**, not from user-scope. The fastest check : ask Claude `"list available skills"` and look for `genesis-drop-zone` entry referencing `worktrees/feat_2026-04-19_v1_5_2_runtime_dogfood/` path OR check session system-reminder skills list.
 2. **API key presence** — for the 4 happy-path fixtures (`scenario_first_write` / `scenario_retirement` / `scenario_halt_no_sdk` + `alexandre_windows`), `ANTHROPIC_API_KEY` MUST be exported in the shell env where `claude` is invoked. For `scenario_halt_no_key` (EXIT_NO_KEY test), explicitly `unset ANTHROPIC_API_KEY` before `claude` spawn.
 3. **Git status clean in fixture cwd** — `cd <fixture>` → `ls -la` shows ONLY the intended fixture artefacts, no stale `drop_zone_intent.md` or archive. If present, check whether this is a planned re-run (v1.5.0 dryrun fixtures may contain prior paper-trace artefacts — keep them) or accidental pollution (delete before spawn).
 4. **Driver session state** — this runbook is consumed by the driver session (the one doing v1.6.2 ship). The driver session MUST be in Phase A complete state (feat-core commit landed, evidence log stub at `skills/genesis-drop-zone/tests/runtime_dogfood_evidence_v1_6_2.md` with 5 TBD fixture sections) before fresh sessions spawn.
@@ -44,13 +50,13 @@ echo "key present? ${ANTHROPIC_API_KEY:+yes}"
 ```
 Expected : `key present? yes`.
 
-### Step 3 — spawn fresh Claude Code session
+### Step 3 — spawn fresh Claude Code session with `--plugin-dir` pointing at worktree
 
 ```
-claude
+claude --plugin-dir C:/Dev/Claude_cowork/project-genesis/.claude/worktrees/feat_2026-04-19_v1_5_2_runtime_dogfood
 ```
 
-(Spawns the Claude Code CLI in the current cwd. Plugin must be pre-installed.)
+Do NOT spawn bare `claude` — that would load the stale user-scope v1.1.0 plugin cache, invalidating the runtime evidence. `--plugin-dir` flag is session-local and repeatable.
 
 ### Step 4 — type a natural trigger phrase
 
