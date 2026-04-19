@@ -1,0 +1,9 @@
+{
+  "loggedIn": true,
+  "authMethod": "claude.ai",
+  "apiProvider": "firstParty",
+  "email": "<elided-for-fixture>",
+  "orgId": "<elided>",
+  "orgName": "<elided>",
+  "subscriptionType": "max"
+}

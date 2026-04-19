@@ -1,7 +1,7 @@
 {
   "name": "project-genesis",
-  "version": "1.6.3",
-  "description": "Project Genesis \u00e2\u20ac\u201d recursive project bootstrap template, shipped as a Claude Code plugin",
+  "version": "2.0.0",
+  "description": "Project Genesis â€” recursive project bootstrap template, shipped as a Claude Code plugin",
   "author": {
     "name": "myconciergerie-prog",
     "email": "myconciergerie@gmail.com",

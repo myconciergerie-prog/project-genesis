@@ -16,7 +16,11 @@ The user invokes the orchestrator from inside a folder that either already conta
 - The target project folder is the current working directory of the Claude Code session.
 - The top-level consent card from `SKILL.md` Step 0 has been confirmed by the user.
 
-## The flow — five steps
+## The flow — six steps (Step 0.0 added v2.0.0+)
+
+### Step 0.0 — Auth pre-flight (v2.0.0+)
+
+Before inspecting the input folder (Step 0.1), invoke the `phase-auth-preflight` skill to verify Claude Code is authed via Max subscription. If `phase-auth-preflight` returns pass, proceed to Step 0.1. If it halts (auth missing, claude binary missing, or auth-status corrupt), do NOT proceed with seed loading — the auth-preflight halt-card is the user-facing output for this turn. Control returns to `genesis-protocol` only on the next user-launched session after the user has run `claude auth login`.
 
 ### Step 0.1 — Inspect the input folder
 
@@ -71,9 +75,11 @@ The following 4 fields are not consumed by Phase 0 mapping but are **preserved**
 - `budget_ou_contrainte` — budget / deadline / constraint mention.
 - `prive_ou_public` — private / public / team visibility.
 
-#### Citation preservation (v1.4.1)
+#### Citation preservation (v1.4.1) — DEPRECATED v2.x
 
-**Added in v1.4.1.** `drop_zone_intent.md` frontmatter may carry optional `<field>_source_citation` nested dicts (written by `genesis-drop-zone` v1.4.0+ on the Citations API extraction path). Step 0.2a reads and **preserves** these keys alongside the 9 semantic + 4 metadata keys — the dict-based YAML parser already reads the entire frontmatter; no new parser branching is introduced.
+**Added in v1.4.1. DEPRECATED in v2.0.0** : v2 retired the subprocess Citations API path that wrote these keys (see `.claude/docs/superpowers/specs/2026-04-19-v2-bootstrap-via-max-subscription-design.md` and `genesis-drop-zone/SKILL.md § In scope (v2.0.0) item 4`). v2-written `drop_zone_intent.md` files OMIT the citation keys. Parser preservation logic below stays for backward-compatibility with v1.4.x/v1.5.x files until v3.0+ removal (per master.md design discipline #4 — v3 web mode may re-introduce the keys server-side).
+
+`drop_zone_intent.md` frontmatter may carry optional `<field>_source_citation` nested dicts (written by `genesis-drop-zone` v1.4.0+ on the Citations API extraction path). Step 0.2a reads and **preserves** these keys alongside the 9 semantic + 4 metadata keys — the dict-based YAML parser already reads the entire frontmatter; no new parser branching is introduced.
 
 The 9 citation keys that may be preserved (one per semantic field):
 

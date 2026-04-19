@@ -55,7 +55,9 @@ Genesis v1 is an engineer's protocol that speaks to engineers. The v2 vision add
 5. **Concentrated privilege unchanged** — still writes `drop_zone_intent.md` to cwd after consent, halt-on-existing, no `mkdir`. Runtime rendering layer only.
 6. **New EN fixture** — `tests/fixtures/drop_zone_intent_fixture_v1_3_3_en.md` covers EN body + FR canonical null tokens asymmetry for Layer B parser regression + EN body inspection.
 
-### In scope (v1.4.0)
+### In scope (v1.4.0) — RETIRED in v2.0.0
+
+> **v2 retirement note** : This entire section is retired. The Citations API subprocess + anthropic Python SDK + ANTHROPIC_API_KEY dependency + `<field>_source_citation` writes are removed. Schema keys remain parseable (deprecated v2.x, removed v3.0+). See `.claude/docs/superpowers/specs/2026-04-19-v2-bootstrap-via-max-subscription-design.md`.
 
 1. **Second concentrated privilege class** — external Anthropic Messages API call via Python subprocess at `skills/genesis-drop-zone/scripts/extract_with_citations.py`. Orthogonal to v1.3.2's disk class. Cross-skill-pattern #2 refined to "at most one concentrated privilege per operation class, per skill".
 2. **Citations-enabled extraction** — the subprocess calls the API with `citations: {enabled: true}` per document block and `cache_control: {type: "ephemeral", ttl: "1h"}`. Mandatory 1h TTL explicit per R8 § Stage 2 (guards against March 2026 Anthropic default TTL regression).
@@ -68,7 +70,9 @@ Genesis v1 is an engineer's protocol that speaks to engineers. The v2 vision add
 9. **MINOR semver bump** — v1.3.3 → v1.4.0. Second privilege class + first external dependency (`ANTHROPIC_API_KEY`, Anthropic Python SDK) + first subprocess invocation in `genesis-drop-zone` justify the tranche.
 10. **R8 stack entry** — `stack/anthropic-python_2026-04-18.md` pins the SDK version at ship time (TTL 1 day per stack convention).
 
-### In scope (v1.5.0)
+### In scope (v1.5.0) — RETIRED in v2.0.0
+
+> **v2 retirement note** : Halt-with-remediation card retired (subprocess no longer exists, nothing to remediate). Revision-state metadata (`snapshot_version`, `arbitrated_fields`, `supersedes_snapshot`) PRESERVED — these are NOT subprocess-related. Halt-card content preserved at `skills/genesis-drop-zone/.archive/v1_5_0_halt_card_content.md`.
 
 1. **API requirement — fallback removed** — v1.4.0's silent graceful fallback to in-context extraction is **retired**. The extractor exit codes 2-7 now signal halt-with-remediation to the SKILL.md dispatch layer, not in-context fallback. Anti-Frankenstein retroactive — v1.4.0's fallback was preemptive, never pain-driven validated. Confirmed by R8 research `sota/anthropic-auth-and-oauth-status_2026-04-19.md`: no first-party OAuth path for Messages API in April 2026; halt-with-remediation is the only ToS-clean contract.
 2. **Divergence detection — two triggers, one arbitration phase**:
@@ -119,6 +123,14 @@ The v1.3.3 ship closes R9 tier-3 rendering loop end-to-end. v1.4.1+ refines rema
 
 The v1.4.0 ship introduces the second concentrated privilege class (network) with graceful fallback to v1.3.3 in-context extraction. v1.4.1+ refines remaining polish items (Layer B citation surfacing, UX toolkit, chime, error-handling).
 
+### In scope (v2.0.0)
+
+1. **Drop subprocess Citations path** — `extract_with_citations.py` deleted, anthropic SDK dependency removed, ANTHROPIC_API_KEY no longer required, halt-with-remediation card retired (preserved forensically at `.archive/v1_5_0_halt_card_content.md`).
+2. **Phase 0.0 invocation of `phase-auth-preflight`** — before Phase 0.1 welcome, the skill calls `phase-auth-preflight` to verify Claude Code is authed via Max subscription. If not authed, `phase-auth-preflight` halts with a remediation card instructing `claude auth login` ; control does not return to `genesis-drop-zone` until auth is re-verified on next launch.
+3. **Concentrated privilege class declaration reverts to disk-only** — network class retired (was added v1.4.0). v1.5.0 disk-class extension preserved (snapshot writes + history archive).
+4. **Schema backward compatibility** — `drop_zone_intent.md` files written by v1.4.0 / v1.4.1 / v1.5.0 with `<field>_source_citation` keys remain parseable. v2-written files simply omit the keys. `schema_version` stays at `1`. No migration required. Per master.md design discipline #4, citation keys remain in schema as deprecated v2.x (will be removed v3.0+ when web mode re-introduces extraction subprocess server-side).
+5. **In-context extraction** — extraction reverts to in-context (Claude in the current session, under Max auth), as in v1.3.x. Per-field provenance metadata (`[page N]` / `[lines X-Y]` markers) is no longer guaranteed by API ; in-context extraction can still cite sources best-effort in prose.
+
 ## Trigger
 
 The skill is invoked in two ways.
@@ -133,6 +145,10 @@ The skill is invoked in two ways.
 | EN | "I want to create a project", "start a new project", "new project" |
 
 **Invoke only when the user is starting from nothing.** If the user is already mid-task, mid-feature, or troubleshooting an existing project and happens to utter a trigger phrase in passing, do not invoke. The context guard below is a second layer of protection but the primary filter is this intent evaluation — the skill is for fresh-start moments, not casual mentions.
+
+### Phase 0.0 — Auth pre-flight (v2.0.0+)
+
+Before printing the welcome box (Phase 0.1), invoke the `phase-auth-preflight` skill to verify Claude Code is authed via Max subscription. If `phase-auth-preflight` returns pass, proceed to Phase 0.1. If it halts (auth missing, claude binary missing, or auth-status corrupt), do NOT print the welcome box — the auth-preflight halt-card is the user-facing output for this turn. Control returns to `genesis-drop-zone` only on the next user-launched session after the user has run `claude auth login`.
 
 ## Context guard
 
@@ -632,7 +648,7 @@ Future Étape 1 → Phase 1, Étape 2 → Phase 2, Étape 3 → Phase 3 wires wi
 
 ## Concentrated privilege
 
-v1.4.0 refines cross-skill-pattern #2 from *"at most one concentrated privilege per skill"* to *"at most one concentrated privilege per operation class, per skill"*. `genesis-drop-zone` now declares two orthogonal privilege classes — disk (v1.3.2) and network (v1.4.0) — each with its own consent model and five mitigations.
+v1.4.0 refined cross-skill-pattern #2 from *"at most one concentrated privilege per skill"* to *"at most one concentrated privilege per operation class, per skill"* and added a network class. **v2.0.0 reverts to disk-class only** — the network class (Citations API subprocess) is retired. **Network class retired in v2.0.0** — Citations API subprocess removed. See § In scope (v2.0.0) item #3.
 
 ### Privilege class table
 
@@ -644,6 +660,7 @@ v1.4.0 refines cross-skill-pattern #2 from *"at most one concentrated privilege 
 | v1.3.3 | unchanged from v1.3.2 (runtime locale dispatch only) | `none` |
 | **v1.4.0** | **unchanged from v1.3.2** (additive frontmatter keys only — same write, same halt, same path) | **subprocess → Anthropic Messages API for Citations extraction, pre-flight env check, silent graceful fallback (RETIRED in v1.5.0), 1h cache TTL explicit** |
 | **v1.5.0** | **EXTENDED**: writes `drop_zone_intent.md` to cwd after consent (v1.3.2 preserved as first-write path), writes `drop_zone_intent_history/v<N>_<ts>.md` archive entries on supersession, overwrites `drop_zone_intent.md` with new snapshot after archive. Mitigations extended (see § Disk class mitigations v1.5.0 below). | **subprocess unchanged** (Anthropic Messages API, pre-flight env check, 1h TTL explicit, token-budget logging). **Fallback RETIRED** — exit codes 2-7 now route to halt-with-remediation card; no in-context degradation. Anti-Frankenstein retroactive per R8 `sota/anthropic-auth-and-oauth-status_2026-04-19.md`. |
+| **v2.0.0** | **PRESERVED from v1.5.0**: writes `drop_zone_intent.md` to cwd after consent, archive pattern (`drop_zone_intent_history/`), snapshot supersession chain. All v1.5.0 disk-class mitigations unchanged. | **RETIRED** — Citations API subprocess (`extract_with_citations.py`) deleted, anthropic SDK dependency removed, ANTHROPIC_API_KEY no longer required, halt-with-remediation card retired. In-context extraction (Max auth) replaces subprocess extraction. |
 
 ### Disk class mitigations (unchanged since v1.3.2)
 

@@ -1,0 +1,59 @@
+# SPDX-License-Identifier: MIT
+# phase-auth-preflight / install-manifest.yaml
+#
+# The phase-auth-preflight skill is a pre-flight gate -- it does NOT write
+# files into the downstream project at install time. Its job at install is
+# narrower: verify that the skill entry point (SKILL.md) is present and that
+# the claude CLI is available for the auth probe.
+#
+# Idempotent by construction: this manifest creates no files and
+# creates no directories. Running it repeatedly is a no-op. It only
+# reads and verifies.
+
+skill: phase-auth-preflight
+version: 2.0.0
+created_at: 2026-04-19
+
+dependencies:
+  runtime:
+    - name: none
+      rationale: |
+        Pure Markdown skill. The pre-flight gate runs 'claude auth status'
+        via the shell and reads the JSON output. No Python, no additional
+        binaries beyond the claude CLI that Claude Code already requires.
+
+  sibling_skills: []
+
+targets:
+  - path: (none)
+    kind: noop
+    idempotent: true
+    description: |
+      The phase-auth-preflight skill does not install any files or directories
+      at plugin install time. It only runs at runtime when invoked by
+      genesis-drop-zone (Phase 0.0) or genesis-protocol (Phase 0 first step).
+      This targets entry is a placeholder to document the no-op intentionally.
+
+verification:
+  - check: file_exists
+    path: skills/phase-auth-preflight/SKILL.md
+    on_fail: |
+      skills/phase-auth-preflight/SKILL.md is missing. The skill entry point
+      is absent. Reinstall the phase-auth-preflight skill from a known-good
+      source (Genesis plugin release bundle) and re-run install verification.
+
+notes: |
+  This install step does NOT:
+    - Create any directories in the downstream project
+    - Write files of any kind
+    - Install Python packages or external binaries
+    - Register hooks in settings.json (hook wiring is deferred per R10)
+
+  Running this install verification is safe and idempotent -- it is
+  read-only. The check is designed to fail loudly if the skill entry
+  point is missing, because a missing SKILL.md means the skill cannot
+  be invoked by the orchestrator.
+
+  The version field (2.0.0) tracks the plugin release version at the
+  time this skill was introduced (v2.0.0). Future versions update both
+  install-manifest.yaml and plugin.json in lock step.
