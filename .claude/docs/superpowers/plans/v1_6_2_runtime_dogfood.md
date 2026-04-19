@@ -22,7 +22,7 @@ version: v1.6.2
 ## File structure (Phase A edits)
 
 ```
-.claude/worktrees/feat_2026-04-19_v1_6_2_runtime_dogfood/
+.claude/worktrees/feat_2026-04-19_v1_5_2_runtime_dogfood/
 ├── .claude-plugin/plugin.json                             ← version bump
 ├── .claude/docs/superpowers/
 │   ├── specs/v1_6_2_runtime_dogfood.md                    ← already landed (spec + spec-polish commits)
@@ -52,7 +52,7 @@ C:/tmp/genesis-v1.6.2-alexandre/
 
 - [ ] **Step 1: Dispatch plan-reviewer agent**
 
-Agent tool, subagent_type=code-reviewer. Prompt references this plan file + spec file. Report P0/P1/P2/P3 + approval.
+Agent tool, `subagent_type=code-reviewer` (Genesis uses the code-reviewer subagent as a plan-reviewer persona ; the prompt must explicitly frame the review as plan-level with focus areas listed — see v1.6.1 `session_v1_6_1_runtime_and_sota.md § "Spec + plan reviewer P1 + P2 fixes summary"` for the reference shape). Prompt references this plan file + spec file. Report P0/P1/P2/P3 + approval.
 
 - [ ] **Step 2: Apply P1 + P2 fixes in polish commit**
 
@@ -61,7 +61,7 @@ One `plan-polish(v1.6.2)` commit per v1.6.1 precedent. P3s optional bundle.
 - [ ] **Step 3: Idempotency — grep for polish marker before committing**
 
 ```bash
-cd "C:/Dev/Claude_cowork/project-genesis/.claude/worktrees/feat_2026-04-19_v1_6_2_runtime_dogfood"
+cd "C:/Dev/Claude_cowork/project-genesis/.claude/worktrees/feat_2026-04-19_v1_5_2_runtime_dogfood"
 git log --oneline feat/v1.6.2-runtime-dogfood | grep -c "plan-polish(v1.6.2)"
 ```
 Expected pre-commit: `0`. Post-commit: `1`.
@@ -93,17 +93,104 @@ Objectif : devis immédiat dès 1ère visite client (vs 1 semaine actuel).
 Bonus : montrer rendu produit depuis photo façade client.
 ```
 
-- [ ] **Step 3: Write `catalogue_fenetres_fr.md` (FR, ~30 lines)**
+- [ ] **Step 3: Write `catalogue_fenetres_fr.md` (FR, literal content)**
 
-Fake catalogue structure : sections matériaux (PVC / Alu / Bois), dimensions standard (cm), options (double/triple vitrage, argon, bas-émissif), finitions (RAL standard, bois chêne/sapin). Prix indicatifs HT €.
+Write via Write tool. Content verbatim :
+```
+# Catalogue fenêtres — Alexandre Fenêtres Paris
 
-- [ ] **Step 4: Write `specs_usine_pl.md` (PL + EN technique, ~15 lines)**
+## Gammes
 
-Fake Polish factory specs : `## Produkcja`, `## Standardy`, `## Uwaga techniczna` headers ; body mixes Polish narrative + English technical tokens (U-value, Uw coefficient, CE marking).
+### PVC standard (gamme blanche)
+- Dimensions : L 40-200 cm × H 40-240 cm (pas 10 cm)
+- Double vitrage 4/16/4 argon, Uw = 1.3 W/m²K
+- Prix indicatif : 180-420 € HT
 
-- [ ] **Step 5: Write `voice_memo_alexandre.txt` (FR informel, ~10 lines)**
+### Aluminium premium (gamme thermolaquée)
+- Dimensions : L 40-280 cm × H 40-280 cm (sur-mesure au cm)
+- Double ou triple vitrage, Uw = 0.9-1.1 W/m²K
+- Finitions RAL 9005 (noir profond), RAL 7016 (gris anthracite), RAL 9010 (blanc pur)
+- Prix indicatif : 520-1280 € HT
 
-Transcript-style voice memo : Alexandre parle à Claude en FR informel ("bon donc tu vois j'ai 3 clients cette semaine qui veulent du alu en noir RAL 9005 et le problème c'est que chaque fois je dois repasser par la Pologne et ça prend 1 semaine").
+### Bois massif (gamme patrimoine)
+- Essences : chêne européen, sapin du Nord, pin sylvestre
+- Dimensions : L 50-220 cm × H 60-260 cm
+- Double vitrage 4/16/4 argon basse-émissif, Uw = 1.1 W/m²K
+- Prix indicatif : 680-1450 € HT
+
+## Options transversales
+
+- Triple vitrage argon/krypton : +120-220 € / fenêtre
+- Store intégré (volet roulant aluminium) : +180-340 € / fenêtre
+- Poignée sécurité (anti-effraction) : +45 € / fenêtre
+- Vitrage feuilleté acoustique (44.2 silence) : +85 € / fenêtre
+
+## Délais usine (Pologne)
+Standard : 3-6 semaines après bon de commande validé.
+```
+
+- [ ] **Step 4: Write `specs_usine_pl.md` (PL + EN technique, literal content)**
+
+Write via Write tool. Content verbatim :
+```
+# Specyfikacja produkcyjna — Fabryka Poznań
+
+## Produkcja
+
+Zakład w Poznaniu produkuje okna PVC, aluminiowe i drewniane zgodnie
+z normą EN 14351-1. Wydajność miesięczna : 2400-2800 sztuk.
+Linie produkcyjne : PVC (3 linie), ALU (2 linie), drewno (1 linia).
+
+## Standardy techniczne
+
+- Uw coefficient : 0.8-1.3 W/m²K depending on glazing package
+- Air-tightness class : class 4 (EN 12207)
+- Water-tightness class : class E900 (EN 12208)
+- Wind-resistance class : class C5 (EN 12210)
+- CE marking : CPR 305/2011 compliant
+- ISO 9001:2015 certified (cert. no. PL-QC-9042)
+
+## Uwaga techniczna
+
+RAL 9005 matowy : minimum 8 sztuk na zlecenie (MOQ).
+Triple glazing argon/krypton : lead time +2 tygodnie vs double.
+Dostawa do Paryża : 5-7 dni roboczych, transport dedykowany.
+```
+
+- [ ] **Step 5: Write `voice_memo_alexandre.txt` (FR informel, literal content)**
+
+Write via Write tool. Content verbatim :
+```
+Voice memo — 2026-04-19, 09h32 — Alexandre (dictée rapide)
+
+Bon donc Claude tu vois le problème c'est que j'ai genre trois
+clients cette semaine qui me demandent du alu noir RAL 9005 et à
+chaque fois je dois repasser par Poznań pour confirmer les délais
+et entre le décalage horaire et la traduction FR-PL ça prend une
+semaine minimum avant que je puisse rappeler le client avec un devis.
+
+Ce que je veux c'est pouvoir dire au client à la fin de la visite
+"voilà votre devis, ça fait tant, livraison dans X semaines" direct.
+Et si en plus je pouvais montrer un rendu genre ta fenêtre sur ta
+façade tu prends une photo et boum tu vois le résultat ça serait
+le truc qui me ferait gagner un client sur deux.
+
+Tranche haute du marché : mes clients paient 800 à 1500 le mètre
+carré donc ils peuvent attendre mais ils veulent être rassurés.
+Tranche basse : PVC blanc à 200-400 c'est plus du volume.
+
+Les trois chantiers de cette semaine c'est tous du aluminium donc
+premium. Deux Paris 16ème, un Boulogne.
+```
+
+- [ ] **Step 5.5: Install Pillow (Python precondition for Step 6)**
+
+Pillow is NOT installed on this host by default (verified at plan-review time). Install idempotently :
+```bash
+python -c "from PIL import Image; print('OK')" 2>/dev/null || python -m pip install --user Pillow
+python -c "from PIL import Image; import PIL; print(PIL.__version__)"
+```
+Expected post-install : version string printed (e.g., `10.x`). If pip install fails due to network / cert / permissions, fall back to `py -3 -m pip install --user Pillow` or halt and surface to user for manual install.
 
 - [ ] **Step 6: Generate valid JPG with Pillow (≥ 5 KB, JFIF-headered)**
 
@@ -128,7 +215,7 @@ Expected : 5 files, all sizes > 0.
 - [ ] **Step 1: Check tests/ directory exists in skill**
 
 ```bash
-cd "C:/Dev/Claude_cowork/project-genesis/.claude/worktrees/feat_2026-04-19_v1_6_2_runtime_dogfood"
+cd "C:/Dev/Claude_cowork/project-genesis/.claude/worktrees/feat_2026-04-19_v1_5_2_runtime_dogfood"
 test -d skills/genesis-drop-zone/tests && echo EXISTS || (mkdir skills/genesis-drop-zone/tests && echo CREATED)
 ```
 
@@ -143,9 +230,9 @@ Sections minimum :
 - [ ] **Step 3: Verify runbook has ≥ 4 top-level `##` sections (AC2)**
 
 ```bash
-grep -c "^##[^#]" skills/genesis-drop-zone/tests/runtime_dogfood_v1_6_2.md
+grep -cE "^## [A-Za-z]" skills/genesis-drop-zone/tests/runtime_dogfood_v1_6_2.md
 ```
-Expected : ≥ 4.
+Expected : ≥ 4. (Uses `^## ` space-prefixed pattern for clarity vs `^##[^#]` ambiguity with tab / no-space edge cases.)
 
 ### Task A3: Write evidence log stub (session-specific)
 
@@ -214,10 +301,16 @@ Expected : 1 line match ~ line 95.
 
 - [ ] **Step 2: Append sentence after the eighth data-point note, marking v1.6.2 as a depth update on the sixth data-point**
 
-Use Edit tool. `old_string` = last sentence of the eighth-data-point block (specifically the sentence ending with "SOTA-driven template rework."). `new_string` = same sentence + appended sentence :
+Use Edit tool. Literal `old_string` ending (unique in master.md — verified pre-plan via `grep -c` = 1) :
 
 ```
-**v1.6.2 depth update on the sixth data-point** (no new ordinal) — Layer A-only runtime-evidence capture session ships with zero Layer B ripple per AC10 machine check. Structurally the same ripple class as v1.5.1 Layer A-only corrections (sixth data-point) : the work differs (runtime evidence vs paper-trace / prose correction) but the ripple is identical (zero Layer B diff line). Per v1.6.1 precedent (pattern #1 depth update on fourth, no new ordinal), same-ripple-class extension is a depth update, not a new ordinal. A ninth data-point remains reserved for a genuinely new ripple mode.
+stay zero-ripple under SOTA-driven template rework.
+```
+
+Literal `new_string` (same text + appended sentence) :
+
+```
+stay zero-ripple under SOTA-driven template rework. **v1.6.2 depth update on the sixth data-point** (no new ordinal) — Layer A-only runtime-evidence capture session ships with zero Layer B ripple per AC10 machine check. Structurally the same ripple class as v1.5.1 Layer A-only corrections (sixth data-point) : the work differs (runtime evidence vs paper-trace / prose correction) but the ripple is identical (zero Layer B diff line). Per v1.6.1 precedent (pattern #1 depth update on fourth, no new ordinal), same-ripple-class extension is a depth update, not a new ordinal. A ninth data-point remains reserved for a genuinely new ripple mode.
 ```
 
 - [ ] **Step 3: Verify (AC12)**
@@ -232,7 +325,7 @@ Expected : ≥ 1.
 - [ ] **Step 1: Run the AC10 grep pipeline**
 
 ```bash
-cd "C:/Dev/Claude_cowork/project-genesis/.claude/worktrees/feat_2026-04-19_v1_6_2_runtime_dogfood"
+cd "C:/Dev/Claude_cowork/project-genesis/.claude/worktrees/feat_2026-04-19_v1_5_2_runtime_dogfood"
 git diff --name-only main...HEAD \
   | grep -v '^skills/genesis-drop-zone/' \
   | grep -v '^\.claude-plugin/plugin\.json$' \
@@ -330,7 +423,7 @@ feat-runtime, PR, tag, chore.
 - [ ] **Step 1: Verify evidence log not already filled**
 
 ```bash
-cd "C:/Dev/Claude_cowork/project-genesis/.claude/worktrees/feat_2026-04-19_v1_6_2_runtime_dogfood"
+cd "C:/Dev/Claude_cowork/project-genesis/.claude/worktrees/feat_2026-04-19_v1_5_2_runtime_dogfood"
 grep -c "TBD at runtime" skills/genesis-drop-zone/tests/runtime_dogfood_evidence_v1_6_2.md
 ```
 Expected pre-Phase-B : ≥ 5 (stubs unfilled). Expected post-Phase-B : `0`.
@@ -363,13 +456,24 @@ grep -cE "^\| H[1-5] \| .+ \|" skills/genesis-drop-zone/tests/runtime_dogfood_ev
 ```
 Expected : ≥ 5.
 
+- [ ] **Step 5: Verify no TBD/TODO/??? placeholders remain**
+
+```bash
+grep -cE "TBD|TODO|\?\?\?|\[unfilled\]" skills/genesis-drop-zone/tests/runtime_dogfood_evidence_v1_6_2.md
+```
+Expected : `0`. Any residual placeholder = evidence gap → either fill with runtime observation OR explicitly mark `DEFERRED - <reason>` before proceeding to B3. This check gates feat-runtime commit per spec § 4.5.1 integrity requirement.
+
 ### Task B3: Hybrid gate triage
 
 - [ ] **Step 1: Count class-A findings**
 
 If 0 class-A → skip Task B4.
 If 1-2 class-A → proceed Task B4.
-If 3+ class-A with common root cause → ABORT v1.6.2 per § 5 common-root-cause abort. Write partial-evidence CHANGELOG + resume as v1.6.3 unified fix.
+If 3+ class-A with common root cause → ABORT v1.6.2 per § 5 common-root-cause abort, concrete steps :
+  (a) Commit evidence log as-is (feat-runtime-partial) so forensic record survives on branch.
+  (b) Update CHANGELOG with `v1.6.2-aborted` honest note explaining common root cause + why unified fix in v1.6.3 is safer than chained PATCHes.
+  (c) Push feat branch to origin but DO NOT open PR or merge ; tag `v1.6.2-aborted-<hash-prefix>` annotated for forensic reference ; main HEAD stays at v1.6.1 as the known-good release.
+  (d) Transition immediately to v1.6.3 unified fix spec + plan in a NEW feat worktree `feat_2026-04-19_v1_6_3_*/` ; current worktree kept read-only per R2.5.
 If 3+ class-A with distinct root causes → fix first 2 in Task B4, log 3rd+ as "immediate v1.6.3 PATCH chain" in evidence log.
 
 ### Task B4: Class-A fixes (if any)
@@ -381,6 +485,15 @@ If 3+ class-A with distinct root causes → fix first 2 in Task B4, log 3rd+ as 
 - [ ] **Step 1: Per class-A finding, apply prose/halt-card/consent-gate fix**
 
 Each class-A fix = separate commit `fix-class-a(v1.6.2) #<n>`. Commit message references evidence log line and friction class rationale.
+
+- [ ] **Step 1.5: NG3 boundary enforcement check**
+
+Before re-running AC10, verify NG3 wasn't violated (no edits to `extract_with_citations.py`) :
+
+```bash
+git diff --name-only main...HEAD | grep -c 'extract_with_citations.py'
+```
+Expected : `0`. Non-zero = NG3 violation ; revert those changes and re-route as extractor-refactor spec (separate class, NOT in v1.6.2).
 
 - [ ] **Step 2: Re-run AC10 grep**
 
@@ -402,6 +515,31 @@ Expected : `0` still.
 ```bash
 git add skills/genesis-drop-zone/tests/runtime_dogfood_evidence_v1_6_2.md
 ```
+
+- [ ] **Step 1.5: Commit message placeholder substitution discipline**
+
+Before running `git commit`, substitute ALL `<...>` placeholders in the commit message template with concrete values from the evidence log. Verify zero placeholders remain via draft grep :
+
+```bash
+# Write draft to a temp file first
+cat > /tmp/v1.6.2_feat_runtime_msg.txt <<'EOF'
+feat-runtime(v1.6.2): evidence filled — H1-H5 per-fixture observations
+
+Runtime evidence captured from 5 fresh Claude Code sessions per runbook.
+
+Summary :
+- H1 dispatch : 3 confirmed / 1 failed / 1 deferred per fixture
+- H2 arbitration (alexandre_windows) : arbitrated_fields present (N=<concrete>)
+- H3 Phase 0.5 Path 2a consent : 1 fixture confirmed
+- H4 EXIT_NO_KEY halt (Fixture A) : rendered
+- H5 zero Layer B ripple : AC10 grep = 0
+
+Friction triage : 0 class A / 2 class B / 1 class C (all logged, deferred v1.6.3+).
+EOF
+# Then check for unresolved placeholders
+grep -cE '<[A-Z][^>]*>' /tmp/v1.6.2_feat_runtime_msg.txt
+```
+Expected : `0`. Non-zero = placeholder still unresolved ; fix before `git commit`.
 
 - [ ] **Step 2: Commit**
 
@@ -474,6 +612,19 @@ EOF
 )"
 ```
 
+- [ ] **Step 4: Print PR URL + Profile-2 Chrome PowerShell launcher for user**
+
+Per Layer 0 `reference_chrome_profiles_machine.md` + "no new windows" rule — paste-back the one-line launcher to user as text (do NOT spawn the process from here) :
+
+```bash
+PR_URL=$(GH_TOKEN="$TOKEN" gh pr view --json url --jq .url)
+echo "PR opened : $PR_URL"
+echo ""
+echo "PowerShell launcher (paste into user PowerShell if a new window is wanted — otherwise paste URL into already-open Chrome Profile 2) :"
+echo ""
+echo "powershell -NoProfile -Command \"Start-Process chrome.exe -ArgumentList '--profile-directory=Profile 2','$PR_URL'\""
+```
+
 ### Task C2: Squash merge PR
 
 - [ ] **Step 1: Squash merge**
@@ -533,11 +684,14 @@ If `≥ 1` → proceed D2.
 
 Edit `~/.claude/memory/layer0/workflow_github_and_tooling.md` to encode `GH_TOKEN=$(gh auth token -u <user>)` prefix as **mandatory pre-flight** for write gh calls (not optional fallback).
 
-- [ ] **Step 3: Write sentinel**
+- [ ] **Step 3: Write sentinel (idempotent)**
 
 ```bash
-touch ~/.claude/memory/layer0/_v1_6_2_layer0_sync_DONE_2026-04-19.md
+SENTINEL=~/.claude/memory/layer0/_v1_6_2_layer0_sync_DONE_2026-04-19.md
+test -f "$SENTINEL" && echo "sentinel already exists — no-op" || touch "$SENTINEL"
+ls -la "$SENTINEL"
 ```
+Expected : file exists after run.
 
 ---
 
@@ -586,7 +740,7 @@ Max 150 chars. Points to `session_v1_6_2_runtime_dogfood.md`.
 
 - [ ] **Step 1: Write resume prompt mirroring v1.6.1 structure**
 
-Include : what v1.6.2 shipped, Phase D confirmation checklist, current state, next session candidates (v1.6.3 retirement semantics / v1.6.2 Skill-tool runtime / v1.7.0 new skill), reco + auto-critique, exact phrase for next session, PowerShell launcher one-liner.
+Include : what v1.6.2 shipped, Phase D confirmation checklist, current state, next session candidates (v1.6.3 retirement semantics / v1.6.3 Skill-tool promptor runtime / v1.7.0 new skill — note both v1.6.3 candidates bumped up one slot from v1.6.2 after this ship's retitle), reco + auto-critique, exact phrase for next session, PowerShell launcher one-liner.
 
 ### Task E6: Chore commit
 
@@ -603,7 +757,7 @@ Post-ship memory chore for v1.6.2 runtime dogfood.
 - CHANGELOG v1.6.2 honest 5-axis rating
 - Session trace with hypothesis outcomes + friction triage
 - MEMORY.md pointer
-- Resume prompt for next session (v1.6.3 / v1.6.2 / v1.7.0 candidates)
+- Resume prompt for next session (v1.6.3 retirement semantics / v1.6.3 Skill-tool promptor runtime / v1.7.0 new skill)
 
 Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
 EOF
@@ -620,17 +774,39 @@ Same GH_TOKEN prefix pattern as Phase C.
 
 ## Ship-gate checklist (before claiming v1.6.2 done)
 
-- [ ] All Phase A edit tasks complete (A1-A5)
-- [ ] AC10 grep = 0 pre-feat-core commit (A6)
-- [ ] feat-core commit landed (A7)
-- [ ] User spawned 5 fresh sessions + pasted evidence back
-- [ ] Phase B evidence log integrity gate passed (§ 4.5.1)
-- [ ] Class-A findings (if any) fixed in separate commits before feat-runtime
-- [ ] feat-runtime commit landed (B5)
-- [ ] PR opened, squash-merged, tagged v1.6.2
-- [ ] Phase D conditional executed iff triggered
-- [ ] Chore phase E complete
-- [ ] Self-rating honest computed + CHANGELOG entry reflects honest delta
+Partitioned by task class per v1.6.1 P2.5 precedent.
+
+### Edit tasks (Phase A pre-commit)
+
+- [ ] Task A1 Alexandre fixture : 5 files created, sizes > 0 (AC4)
+- [ ] Task A2 runbook : exists, ≥ 4 top-level `##` sections (AC2)
+- [ ] Task A3 evidence log : exists, 5 `### Fixture` sections (AC3)
+- [ ] Task A4 `plugin.json` bumped 1.6.1 → 1.6.2 (AC5)
+- [ ] Task A5 `master.md` pattern #4 depth-update on sixth data-point (AC12)
+
+### Verify tasks (pre- and post-commit diff checks)
+
+- [ ] Task A6 AC10 grep = 0 before feat-core commit (zero Layer B ripple)
+- [ ] Task B2 Step 4 evidence integrity gate : every H1-H5 row has ≥ 1 observation (§ 4.5.1)
+- [ ] Task B2 Step 5 placeholder grep : `grep -cE "TBD|TODO|\?\?\?"` = 0
+- [ ] Task B4 Step 1.5 NG3 boundary : `grep extract_with_citations.py` = 0
+- [ ] Task B4 Step 2 AC10 grep = 0 after class-A fixes (if any)
+- [ ] Task B5 Step 1.5 commit message placeholder check : `grep <[A-Z][^>]*>` = 0
+
+### Commit tasks
+
+- [ ] Task A7 feat-core commit landed (single commit)
+- [ ] Class-A fix commits landed (if applicable, 0-2 separate commits per § 5 ceiling)
+- [ ] Task B5 feat-runtime commit landed (single commit)
+- [ ] Task C1-C3 PR opened, squash-merged, tagged v1.6.2
+- [ ] Phase D conditional executed iff AC13 triggered
+- [ ] Phase E chore commit + PR + merge complete
+
+### Self-rating + ship honesty
+
+- [ ] 5-axis honest rating computed ; CHANGELOG entry written with projected-vs-honest delta called out explicitly
+- [ ] Streak ≥ 9.0 status updated (advances to 4 or breaks with note)
+- [ ] Running-average post-ship delta computed and recorded
 
 ## Running-average post-ship calculation
 
@@ -641,3 +817,5 @@ If honest = 9.14 → (160.20 + 9.14) / 19 = 169.34 / 19 ≈ **8.91 (+0.01)**.
 If honest drops to 8.5 → (160.20 + 8.50) / 19 = 168.70 / 19 ≈ **8.88 (-0.02)**.
 
 Streak ≥ 9.0 : advances to 4 iff honest ≥ 9.0 ; breaks otherwise.
+
+**Phase D note** : Phase D is a Layer 0 amplification (not a shipped feature) and does NOT add a rating. Denominator stays 19 regardless of whether Phase D fires.
