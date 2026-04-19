@@ -8,6 +8,88 @@ Every version bump includes a **5-axis self-rating block** per R10.3 discipline,
 
 ---
 
+## [1.6.0] — 2026-04-19 — "promptor skill (MINOR — orthogonal meta-skill, 8th skill ship)"
+
+**First MINOR on the v1.6.x line.** Promotes the Layer 0 Promptor pépite (`~/.claude/memory/layer0/pepite_promptor_template_anthropic_prompt_engineering.md`) into a standalone Genesis skill at `skills/promptor/`. Skill becomes canonical source of truth ; Layer 0 pépite demoted to synced cache role for sessions outside Genesis-bootstrapped projects. **8th Genesis skill ; 2nd privilege-`none` skill** (joins `journal-system`) ; **first orthogonal meta-skill** (neither Layer A nor Layer B — invocable cross-session/cross-project outside the bootstrap protocol). Net diff dominated by 2 new skill files + 3 plugin-keyword additions ; cross-cutting touches limited to `master.md` (3 pattern data-points + sixth-data-point reconciliation for v1.5.1 missed in PATCH) and `skills/README.md` (preamble update + entry).
+
+PR #41 squash-merged as `0e20462`. Tag `v1.6.0` pushed.
+
+### Added
+
+- `skills/promptor/SKILL.md` (~80 lines) — invocation gate with frontmatter description carrying the 4 verbatim binding-rule trigger phrases (FR + EN), when-to-invoke + when-NOT-to-invoke (non-technical / trivial / exploratory / non-Anthropic), two-phase operating mode high-level (standby / creation), adaptation discipline, 1:1 mirror declaration with sync metadata "Last sync: v1.6.0 @ 2026-04-19"
+- `skills/promptor/references/template.md` (~137 lines) — verbatim canonical XML template (Promptor `<role>` + `<operating_mode>` with `<phase_1_standby>` + `<phase_2_creation>` + `<output_structure>` + `<global_constraints>`) + 6 architectural principles (two-phase separation, KV cache optimization explicit, density over clarity, failure-mode explicit, env var discipline, semantic XML + rigorous Markdown) + adaptation points + when-not-to-use + cross-project utility list (Aurum / Genesis / Myconciergerie / Cyrano / new projects)
+- `.claude-plugin/plugin.json` — 3 new keywords (`prompt-engineering`, `promptor`, `meta-tool`)
+- `skills/README.md` — preamble updated to "v1.6.0 (8 skills)" with shipping-history breakdown + new `promptor` entry with one-line pitch + privilege map row
+- `memory/master.md` — pattern #1 fourth 1:1 mirror data-point (skill canonical, Layer 0 pépite synced cache) ; pattern #2 8th skill / 2nd none-class data-point ; pattern #4 **sixth data-point reconciling v1.5.1** (which was missed when v1.5.1 PATCH didn't touch master.md) **+ seventh data-point** (v1.6.0 orthogonal meta-skill, zero ripple to either Layer A or Layer B) ; orthogonal-to-Layer-A/B note (no Layer M category for one skill — emerges naturally if 2nd meta-skill arrives)
+
+### Changed
+
+- `.claude-plugin/plugin.json` version `1.5.1 → 1.6.0`
+- `~/.claude/memory/layer0/pepite_promptor_template_anthropic_prompt_engineering.md` (Phase B Layer 0 sync, post-merge, NOT in repo) — header note "Synced cache from `<repo>/skills/promptor/SKILL.md` v1.6.0 @ 2026-04-19" added after frontmatter ; § "Cross-references" tense fix ("Genesis v1.6.0 candidate" → past-tense "Genesis v1.6.0 promotion")
+- `~/.claude/memory/layer0/feedback_invoke_promptor_for_production_anthropic_prompts.md` (Phase B Layer 0 sync, post-merge, NOT in repo) — § "The rule" gains "Skill-first preference (added 2026-04-19, v1.6.0)" preamble with non-pinned skill-invocation syntax (namespace pinning deferred to v1.6.1 after empirical validation)
+
+### Preserved (explicit non-change)
+
+- `skills/genesis-drop-zone/**` — zero-line diff. Layer A untouched.
+- `skills/genesis-protocol/**` — zero-line diff. Layer B untouched.
+- All 6 other shipped skills (`phase-minus-one`, `phase-5-5-auth-preflight`, `journal-system`, `session-post-processor`, `pepite-flagging`) — zero-line diff.
+- `schema_version`, no privilege class added (privilege `none` = degenerate map entry, no mitigations).
+- No `install-manifest.yaml` (3rd skill without — joins `genesis-drop-zone` + `phase-5-5-auth-preflight`).
+- No `commands/` slash command (consistent with all 7 prior skills surfacing via skill-description match).
+
+### Self-rating — v1.6.0 (honest re-evaluation post-feat, per Layer 0 `feedback_honest_self_rating_post_feat.md`)
+
+**Initial spec projection was 9.14/10 (Pain-driven 9.2 / Prose 9.3 / Best-at-date 8.7 / Self-contained 9.5 / Anti-Frankenstein 9.0). Honest post-feat re-evaluation lands at 9.02/10** — streak ≥ 9.0 advances to 2 consecutive (post-v1.5.1 = 9.12).
+
+| Axis | Projected | Honest | Delta | Notes |
+|---|---|---|---|---|
+| Pain-driven | 9.2 | 9.2 | 0.0 | Cross-project utility = real pain (every Anthropic-API project bootstrapped via Genesis needs prompt-eng discipline). Capped at 9.2 because runtime auto-discovery validation deferred to v1.6.1 (skill engine cannot be exercised in the same session that ships the skill). |
+| Prose cleanliness | 9.3 | 9.3 | 0.0 | Two focused files with crisp gate/template separation. Frontmatter description carries triggers verbatim (single source). 1:1 mirror discipline declared in both files with sync metadata. No narrative redundancy with pépite. |
+| Best-at-date | 8.7 | 8.7 | 0.0 | Honest deduction priced in at spec time per P2.3 reviewer feedback — cited R8 entry `v2_promptor_fusion_landscape_2026-04-17.md` is about drop-zone landscape for v2, NOT about Anthropic prompt-engineering SOTA for Opus 4.7 1M as of 2026-04-19. **No R8 entry validates the template's choices against current Anthropic prompt-engineering guidance.** Flagged as v1.6.1 candidate (commission fresh `sota/anthropic-prompt-engineering_<date>.md` R8 entry and re-anchor). |
+| Self-contained | 9.5 | 9.3 | −0.2 | **Honest deduction.** Phase A bundled 2 reviewer-driven prose fixes as 6th commit `a7b0740` (READmme preamble stale "All six skills are shipped as of v0.8.0" → "v1.6.0 (8 skills)" + master.md pattern #4 missing sixth data-point for v1.5.1 reconciliation). Both fixes are downstream consequences of v1.6.0 ship (the README count is wrong because of v1.6.0 + v1.3.0 ; the master.md sequence skip is from v1.5.1 + v1.6.0), **directly traceable**, not unrelated cleanup. Still, bundling them in the same feat tranche rather than a separate PATCH stretched the "self-contained" envelope. Deduction 0.2. |
+| Anti-Frankenstein | 9.0 | 9.0 | 0.0 | Net new diff = 2 skill files + 3 plugin keywords + Layer 0 sync notes (text-only convention, no script). Skill adds value over pépite via marketplace distributability + cross-project propagation + the v1.6.x evolution path. **Rejected by deliberate design**: pre-cooked domain examples (decay > principles), `/promptor` slash command (structural anomaly vs 7 existing skills), auto-sync script for Layer 0 pépite (manual sync acceptable at observed frequency, pain-trigger on first observed drift), Layer M category for one orthogonal skill (emerges naturally if 2nd arrives). Reviewer ceremony was proportional (5+4 spec, 3+5 plan, 2 quality reviewer P1) — the in-feat fixes were correctness-bearing, not gold-plating. |
+| **Average** | **9.14** | **9.02** | **−0.12** | **Streak ≥ 9.0 advances to 2 consecutive** (v1.5.1 = 9.12, **v1.6.0 = 9.02**). |
+
+Running average post-v1.6.0 honest: ≈ **8.88/10** (+0.01 vs v1.5.1 running 8.87). MINOR tranche restoring the +0.01 increment cadence.
+
+### Cross-skill-pattern data-points
+
+- **Pattern #1 (1:1 mirror discipline) — fourth data-point.** `promptor` SKILL.md + references/template.md together mirror the Layer 0 pépite (split into 2 files for gate/template separation; semantic content unchanged). Per master.md count (which includes self-mirror), this is the fourth data-point. Drift between skill and pépite = merge-blocker per declared sync convention.
+- **Pattern #2 (concentrated privilege map) — 8th skill data-point.** Privilege class `none` (no disk write, no network, no subprocess). 2nd none-class skill (joins `journal-system`). Cleanest possible map entry — no mitigations needed since no privilege exists.
+- **Pattern #4 (Layer A/B + zero-ripple) — sixth data-point reconciliation + seventh data-point.** Sixth data-point: v1.5.1 PATCH was tracked in CHANGELOG but never updated `master.md` — v1.6.0 reconciles by adding the missing sentence (zero-ripple holds under PATCH constraint as well as MINOR-level expansion). Seventh data-point: v1.6.0 promptor ships as orthogonal meta-skill, neither Layer A nor Layer B, with zero edits to any Layer A or Layer B skill ; only cross-cutting touches are `master.md` (data-points + orthogonal note) and `skills/README.md` (entry). **Extends zero-ripple principle from "Layer A grows / corrects / opt-in renders without rippling Layer B" to "new orthogonal meta-skill ships without rippling either layer".**
+
+### Anti-Frankenstein notes
+
+- **Net new** = 2 skill files (~80 + ~137 lines) + 3 plugin.json keywords + 1 README entry + 3 master.md sentences + Layer 0 sync notes (manual convention, no script) + 2 reviewer-driven correctness prose fixes
+- **Rejected by deliberate design** (documented in spec § Anti-patterns avoided + § Non-goals) :
+  - Pre-cooked domain examples (data-engineer, security-researcher, legal-drafter) — examples decay faster than principles, copy-without-calibration risk
+  - `/promptor` slash command — structural anomaly vs 7 existing skills surfacing via description match, marginal UX gain
+  - Auto-sync script for pépite — manual ship-time sync sufficient at expected frequency ; pain-trigger reconsideration on first observed drift event
+  - Layer M (meta) category — defer until ≥ 2 meta-skills exist
+  - Bundling spec for v2 conversational Promptor — separate track, cross-link only ; forward-naming reservation recorded for v2 skill names (`genesis-spark` / `genesis-mirror` / `genesis-iterate` candidates)
+  - Retiring Layer 0 pépite outright — would break sessions opened outside Genesis-bootstrapped projects on this machine
+  - Pépite as canonical with skill as copy — would leave marketplace-shipped form vulnerable to per-machine drift, no clear authority for new-project bootstrap inheritance
+
+### Pre-Phase-A dogfood — explicitly skipped (silence-is-omission discipline)
+
+Per Layer 0 `feedback_dogfood_first_ordering_before_prose_correction` (empirical Genesis v1.5.1) : *"PATCH sur surface récemment-shipped = dogfood EN PREMIER"*. v1.6.0 is **net-new skill** (not a PATCH on shipped skill surface), so the strict v1.5.1 rule does not apply. Phase B Task 9 was a minor PATCH on the Layer 0 binding rule (idempotency-protected by marker grep), so the optional dogfood pre-step was **skipped consciously**. Explicit acknowledgement here per the v1.5.1 silence-is-omission lesson : the binding rule update ships unvalidated against runtime trigger firing in a sibling Genesis-bootstrapped project. Risk accepted as low (additive prepend, original rule preserved verbatim downstream of the new preamble).
+
+### Out-of-scope (deferred)
+
+- **v1.6.1 — Runtime auto-discovery validation** : spawn fresh Claude Code session in a Genesis-bootstrapped sibling project (Aurum frozen / Cyrano / Myconciergerie), type one of the trigger phrases, observe skill engine surfacing `promptor` (~3-4h with R8 grounding below)
+- **v1.6.1 — Anthropic prompt-engineering 2026-04 SOTA grounding** : commission fresh `sota/anthropic-prompt-engineering_<date>.md` R8 entry + re-anchor template's choices, lifting Best-at-date axis ceiling above 8.7 cap
+- **v1.5.2 — Runtime (not paper-trace) dogfood** of Phase 0.4 / 0.5 / archive / halt cards : still queued from v1.5.1 resume (~2-3h)
+- **v1.5.3 — Friction #3 retirement-trigger semantics** for Phase 0.4 (~4-5h)
+- **Cross-device Layer 0 sync (multidevice scenario)** — H7 refuted by construction ; Layer 0 lives at `~/.claude/memory/layer0/` per machine ; v1.6.0 update is single-machine. Future Layer 0 hygiene work (cross-device propagation) is its own thread, separate from v1.6.x line.
+
+### Discipline evidence
+
+- Spec + plan reviewer ceremony : 5 P1 + 4 P2 fixes on spec, 3 P1 + 5 P2 fixes on plan, 2 P1 fixes from code-quality reviewer pass on Phase A — all advisories landed before merge. Reviewer ceremony was proportional to a MINOR new-skill ship.
+- Honest self-rating ritual applied between feat-merge and chore commit per Layer 0 `feedback_honest_self_rating_post_feat.md`. Self-contained dropped 0.2 from projection (9.5 → 9.3) on bundling-scope-in-same-feat assessment ; mean 9.14 → 9.02 honest. Discipline-willingness to drop ≥ 0.1 demonstrated again post-v1.5.1.
+- Forward-naming reservation for `skills/promptor/` namespace recorded in spec § Non-goal #1 — pre-resolves the v2 conversational pipeline naming-collision risk before v2 ships.
+
+---
+
 ## [1.5.1] — 2026-04-19 — "dogfood + Phase 0.5 clarification + halt card collapse (PATCH)"
 
 **PATCH closing v1.5.0's three-gap honesty correction.** Dogfood-first ordering (3 → 1 → 2) is the v1.5.1 discipline upgrade — runtime evidence shapes prose, reversing v1.5.0's preemptive-prose mistake. Dogfood Candidate 3 ran first against 4 fixtures at `C:/tmp/genesis-v1.5.0-dryrun/` (paper-trace method, canonical runtime for prose-only skills), surfacing 7 frictions (2 blocker, 3 structural, 1 polish, 1 deferred). Candidates 1 + 2 prose edits shaped by the findings, including 2 latent bugs (v1.4.0 fallback prose contradicting v1.5.0 retirement in the same file; empty-divergences write path silently skipping v1.3.2 consent card). Code-reviewer caught a third latent collision (v1.3.2 halt-on-existing vs v1.5.0 re-run archive contract) pre-commit; Path 2a/2b bifurcation landed in the same feat.
