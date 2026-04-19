@@ -311,3 +311,473 @@ Come back whenever you want to save it to disk.
 ```
 
 Warm, non-pressurizing — the idea isn't lost, it's simply not persisted.
+
+## Living memory templates (v1.5.0)
+
+v1.5.0 introduces three new render surfaces (arbitration card, halt-with-remediation card, archive frontmatter) plus extends the disk class to cover archive + supersession writes. Each render surface has a verbatim FR + EN paired-authored template per R9 tier-3 discipline. Frontmatter examples are locale-neutral (English keys; FR canonical null tokens preserved per v1.3.3 data contract).
+
+See `SKILL.md § "Living memory dispatch (v1.5.0)"` for the dispatch logic that consumes these templates.
+
+## Arbitration card — FR variant (rendered when `content_locale = FR`)
+
+```
+⚖ Arbitrage requis — <N> divergences detectees
+
+[1] champ=<nom_du_champ_1> [intra-drop]
+    candidat 1 : "<valeur 1>" (source : <src 1>)
+    candidat 2 : "<valeur 2>" (source : <src 2>)
+
+[2] champ=<nom_du_champ_2> [cross-session]
+    valeur actuelle : "<valeur existante>" (source : snapshot existant)
+    nouvelle valeur : "<valeur extraite>" (source : nouvelle extraction)
+
+Reponds avec les indices separes par des virgules : "2,1,2" choisit
+la valeur 2 pour #1, valeur 1 pour #2, valeur 2 pour #3.
+Ou "autre N : <valeur>" pour ecraser #N avec une valeur libre.
+Ou "abort" pour quitter sans modification.
+```
+
+## Arbitration card — EN variant (rendered when `content_locale = EN`)
+
+```
+⚖ Arbitration required — <N> divergences detected
+
+[1] field=<field_name_1> [intra-drop]
+    candidate 1: "<value 1>" (source: <src 1>)
+    candidate 2: "<value 2>" (source: <src 2>)
+
+[2] field=<field_name_2> [cross-session]
+    current value: "<existing value>" (source: existing snapshot)
+    new value:     "<extracted value>" (source: new extraction)
+
+Reply with comma-separated indices: "2,1,2" picks value 2 for #1,
+value 1 for #2, value 2 for #3.
+Or "autre N: <value>" to override #N with a free-form value.
+Or "abort" to exit without changes.
+```
+
+## Halt-with-remediation card — FR variant (EXIT_NO_KEY = 2)
+
+```
+⛔ Genesis necessite une cle API Anthropic
+
+L'extracteur Citations a besoin d'une cle API Anthropic
+configuree dans la variable d'environnement ANTHROPIC_API_KEY.
+
+Pourquoi une cle API et pas mon abonnement Claude Max ?
+  L'abonnement Claude Max paye claude.ai + Claude Desktop +
+  Claude Code CLI (inference). La cle API Anthropic est un
+  produit SEPARE, facture au token au niveau workspace, et
+  active programmatic Messages API + Citations + Files. Les
+  deux sont volontairement distincts (architecture Anthropic
+  avril 2026, voir https://console.anthropic.com/settings/keys).
+
+Remediation :
+
+  1. Recupere une cle sur https://console.anthropic.com/settings/keys
+     - Cliquer "Create Key" -> nommer "genesis-drop-zone"
+     - Role : "Claude Code" (ou "Developer" si "Claude Code"
+       n'est pas propose dans ton workspace)
+     - Copier la valeur sk-ant-... commencant par sk-ant-
+
+  2. Configure la variable d'environnement de facon PERSISTANTE
+     (pas seulement la session courante) :
+
+     Windows (PowerShell elevee, persistant systeme) :
+       setx ANTHROPIC_API_KEY "sk-ant-..."
+
+     POSIX (bash/zsh, ajouter au profile shell) :
+       echo 'export ANTHROPIC_API_KEY="sk-ant-..."' >> ~/.zshenv
+       (ou ~/.bashrc selon ton shell)
+
+     Ne PAS utiliser uniquement `$env:ANTHROPIC_API_KEY = "..."`
+     dans la session Claude Code en cours : un futur release
+     Claude Code peut activer `CLAUDE_CODE_SUBPROCESS_ENV_SCRUB`
+     par defaut, qui retirerait la variable des subprocess.
+     setx / .zshenv survivent a ce changement.
+
+  3. Relance Claude Code dans ce dossier (close + reopen)
+
+  4. Reinvoque /genesis-drop-zone
+
+Echapatoires (avance, optionnels) :
+  - LLM gateway / proxy : utiliser ANTHROPIC_AUTH_TOKEN au lieu
+    de ANTHROPIC_API_KEY (voir docs Anthropic)
+  - Secrets rotatifs (vault, AWS Secrets Manager) : configurer
+    apiKeyHelper dans ~/.anthropic/config (voir docs Anthropic)
+
+Note : la souscription Claude Code (Max) ne donne PAS acces a
+l'API. La cle API Anthropic est un produit separe.
+```
+
+## Halt-with-remediation card — EN variant (EXIT_NO_KEY = 2)
+
+```
+⛔ Genesis requires an Anthropic API key
+
+The Citations extractor needs an Anthropic API key configured
+in the ANTHROPIC_API_KEY environment variable.
+
+Why an API key and not my Claude Max subscription?
+  Your Claude Max subscription pays for claude.ai + Claude
+  Desktop + Claude Code CLI (inference). The Anthropic API
+  key is a SEPARATE product, billed per-token at the
+  workspace level, and unlocks programmatic Messages API +
+  Citations + Files. The two are intentionally distinct
+  (Anthropic architecture, April 2026 — see
+  https://console.anthropic.com/settings/keys).
+
+Remediation:
+
+  1. Get a key at https://console.anthropic.com/settings/keys
+     - Click "Create Key" -> name it "genesis-drop-zone"
+     - Role: "Claude Code" (or "Developer" if "Claude Code"
+       is not offered in your workspace)
+     - Copy the sk-ant-... value beginning with sk-ant-
+
+  2. Set the environment variable PERSISTENTLY (not just the
+     current session):
+
+     Windows (PowerShell elevated, system-wide persistent):
+       setx ANTHROPIC_API_KEY "sk-ant-..."
+
+     POSIX (bash/zsh, add to shell profile):
+       echo 'export ANTHROPIC_API_KEY="sk-ant-..."' >> ~/.zshenv
+       (or ~/.bashrc depending on your shell)
+
+     Do NOT use only `$env:ANTHROPIC_API_KEY = "..."` in the
+     current Claude Code session: a future Claude Code release
+     may default-enable `CLAUDE_CODE_SUBPROCESS_ENV_SCRUB`,
+     which would strip the variable from subprocesses.
+     setx / .zshenv survive that change.
+
+  3. Relaunch Claude Code in this folder (close + reopen)
+
+  4. Re-invoke /genesis-drop-zone
+
+Escape hatches (advanced, optional):
+  - LLM gateway / proxy: use ANTHROPIC_AUTH_TOKEN instead of
+    ANTHROPIC_API_KEY (see Anthropic docs)
+  - Rotating secrets (vault, AWS Secrets Manager): configure
+    apiKeyHelper in ~/.anthropic/config (see Anthropic docs)
+
+Note: the Claude Code (Max) subscription does NOT grant API
+access. The Anthropic API key is a separate product.
+```
+
+## Halt-with-remediation card — FR variant (EXIT_SDK_MISSING = 3)
+
+```
+⛔ SDK Anthropic non installe
+
+L'extracteur Citations necessite le package Python `anthropic`
+(>= 0.40.0) qui n'est pas installe dans l'environnement actuel.
+
+Remediation :
+
+  1. Installer le SDK :
+       pip install anthropic
+       (ou : uv pip install anthropic / pipx install anthropic
+        selon ta gestion d'environnement Python)
+
+  2. Verifier l'installation :
+       python -c "import anthropic; print(anthropic.__version__)"
+     Doit afficher >= 0.40.0
+
+  3. Relance Claude Code dans ce dossier
+
+  4. Reinvoque /genesis-drop-zone
+
+Note : la souscription Claude Code (Max) ne donne PAS acces a
+l'API. La cle API Anthropic est un produit separe.
+```
+
+## Halt-with-remediation card — EN variant (EXIT_SDK_MISSING = 3)
+
+```
+⛔ Anthropic SDK not installed
+
+The Citations extractor requires the Python `anthropic` package
+(>= 0.40.0) which is not installed in the current environment.
+
+Remediation:
+
+  1. Install the SDK:
+       pip install anthropic
+       (or: uv pip install anthropic / pipx install anthropic
+        depending on your Python environment management)
+
+  2. Verify the install:
+       python -c "import anthropic; print(anthropic.__version__)"
+     Must show >= 0.40.0
+
+  3. Relaunch Claude Code in this folder
+
+  4. Re-invoke /genesis-drop-zone
+
+Note: the Claude Code (Max) subscription does NOT grant API
+access. The Anthropic API key is a separate product.
+```
+
+## Halt-with-remediation card — FR variant (EXIT_API_ERROR = 4)
+
+```
+⛔ Erreur API Anthropic
+
+L'appel a l'API Messages a echoue avec une erreur de statut
+ou un probleme reseau.
+
+Remediation :
+
+  1. Verifier le statut Anthropic :
+       https://status.anthropic.com
+     Si un incident est en cours, attendre sa resolution.
+
+  2. Si pas d'incident, retenter dans quelques minutes
+     (erreur transitoire reseau probable).
+
+  3. Pour diagnostique detaille, configurer :
+       (PowerShell)  $env:GENESIS_DROP_ZONE_VERBOSE = "1"
+       (bash)        export GENESIS_DROP_ZONE_VERBOSE=1
+     Puis reinvoquer /genesis-drop-zone — les logs stderr
+     contiendront le detail de l'erreur API.
+
+  4. Si l'erreur persiste, consulter la console Anthropic :
+       https://console.anthropic.com (logs des messages)
+
+Note : la souscription Claude Code (Max) ne donne PAS acces a
+l'API. La cle API Anthropic est un produit separe.
+```
+
+## Halt-with-remediation card — EN variant (EXIT_API_ERROR = 4)
+
+```
+⛔ Anthropic API error
+
+The Messages API call failed with a status error or
+network problem.
+
+Remediation:
+
+  1. Check Anthropic status:
+       https://status.anthropic.com
+     If an incident is in progress, wait for resolution.
+
+  2. If no incident, retry in a few minutes (likely
+     transient network error).
+
+  3. For detailed diagnostics, set:
+       (PowerShell)  $env:GENESIS_DROP_ZONE_VERBOSE = "1"
+       (bash)        export GENESIS_DROP_ZONE_VERBOSE=1
+     Then re-invoke /genesis-drop-zone — stderr logs will
+     contain the API error detail.
+
+  4. If the error persists, check the Anthropic console:
+       https://console.anthropic.com (message logs)
+
+Note: the Claude Code (Max) subscription does NOT grant API
+access. The Anthropic API key is a separate product.
+```
+
+## Halt-with-remediation card — FR variant (EXIT_RATE_LIMIT = 5)
+
+```
+⛔ Limite de debit Anthropic depassee
+
+L'API a renvoye une erreur 429 (rate limit) apres les
+retries automatiques du SDK.
+
+Remediation :
+
+  1. Attendre 60 secondes et retenter.
+
+  2. Verifier la consommation workspace :
+       https://console.anthropic.com/settings/billing
+     Si tu es en tier gratuit, demander une montee de tier.
+
+  3. Pour reduire les appels API : l'extracteur Genesis
+     utilise un cache 1h (cache_control: ttl=1h) — un re-run
+     dans cette fenetre devrait etre gratuit.
+
+  4. Si la limite est atteinte tres frequemment, c'est probable-
+     ment du a un usage workspace-wide eleve par d'autres apps.
+
+Note : la souscription Claude Code (Max) ne donne PAS acces a
+l'API. La cle API Anthropic est un produit separe.
+```
+
+## Halt-with-remediation card — EN variant (EXIT_RATE_LIMIT = 5)
+
+```
+⛔ Anthropic rate limit exceeded
+
+The API returned a 429 (rate limit) error after the SDK's
+automatic retries.
+
+Remediation:
+
+  1. Wait 60 seconds and retry.
+
+  2. Check workspace usage:
+       https://console.anthropic.com/settings/billing
+     If you're on the free tier, request a tier upgrade.
+
+  3. To reduce API calls: the Genesis extractor uses a 1h
+     cache (cache_control: ttl=1h) — a re-run within that
+     window should be free.
+
+  4. If the limit is hit very frequently, it's likely due
+     to workspace-wide high usage from other apps.
+
+Note: the Claude Code (Max) subscription does NOT grant API
+access. The Anthropic API key is a separate product.
+```
+
+## Halt-with-remediation card — FR variant (EXIT_BAD_INPUT = 6)
+
+```
+⛔ Erreur interne extracteur (input invalide)
+
+L'extracteur a recu une payload stdin malformee. C'est un
+bug interne Genesis (cote dispatch SKILL.md), pas une erreur
+de ton cote.
+
+Remediation :
+
+  1. Ouvrir un issue avec les logs stderr :
+       https://github.com/myconciergerie-prog/project-genesis/issues
+     Inclure : version Genesis (`cat .claude-plugin/plugin.json`),
+     OS, contenu drop-zone (description, pas le contenu sensible).
+
+  2. En attendant la correction, contourner via le path v1.3.3
+     in-context :
+       (temporairement)  unset ANTHROPIC_API_KEY
+     Cela force le path d'extraction in-context (pas de citations).
+
+Note : la souscription Claude Code (Max) ne donne PAS acces a
+l'API. La cle API Anthropic est un produit separe.
+```
+
+## Halt-with-remediation card — EN variant (EXIT_BAD_INPUT = 6)
+
+```
+⛔ Internal extractor error (invalid input)
+
+The extractor received a malformed stdin payload. This is an
+internal Genesis bug (in the SKILL.md dispatch side), not an
+error on your end.
+
+Remediation:
+
+  1. File an issue with the stderr logs:
+       https://github.com/myconciergerie-prog/project-genesis/issues
+     Include: Genesis version (`cat .claude-plugin/plugin.json`),
+     OS, drop-zone content (description only, no sensitive content).
+
+  2. Workaround while awaiting a fix — fall back to v1.3.3
+     in-context path:
+       (temporarily)  unset ANTHROPIC_API_KEY
+     This forces the in-context extraction path (no citations).
+
+Note: the Claude Code (Max) subscription does NOT grant API
+access. The Anthropic API key is a separate product.
+```
+
+## Halt-with-remediation card — FR variant (EXIT_OUTPUT_INVALID = 7)
+
+```
+⛔ Sortie API invalide
+
+L'API Anthropic a retourne une reponse qui ne respecte pas
+le schema attendu (JSON malforme, champs manquants, ou
+divergences[] mal forme).
+
+Remediation :
+
+  1. Retenter une fois — peut etre une variation transitoire
+     du modele.
+
+  2. Si persistent, essayer un autre modele :
+       (PowerShell)  $env:GENESIS_DROP_ZONE_MODEL = "claude-sonnet-4-6"
+       (bash)        export GENESIS_DROP_ZONE_MODEL="claude-sonnet-4-6"
+     Modeles candidats : claude-opus-4-7 (defaut), claude-sonnet-4-6,
+     claude-haiku-4-5-20251001.
+
+  3. Inspecter la reponse brute via la console Anthropic :
+       https://console.anthropic.com (logs des messages)
+
+Note : la souscription Claude Code (Max) ne donne PAS acces a
+l'API. La cle API Anthropic est un produit separe.
+```
+
+## Halt-with-remediation card — EN variant (EXIT_OUTPUT_INVALID = 7)
+
+```
+⛔ Invalid API output
+
+The Anthropic API returned a response that doesn't match the
+expected schema (malformed JSON, missing fields, or malformed
+divergences[]).
+
+Remediation:
+
+  1. Retry once — may be a transient model variation.
+
+  2. If persistent, try a different model:
+       (PowerShell)  $env:GENESIS_DROP_ZONE_MODEL = "claude-sonnet-4-6"
+       (bash)        export GENESIS_DROP_ZONE_MODEL="claude-sonnet-4-6"
+     Candidate models: claude-opus-4-7 (default), claude-sonnet-4-6,
+     claude-haiku-4-5-20251001.
+
+  3. Inspect the raw response via the Anthropic console:
+       https://console.anthropic.com (message logs)
+
+Note: the Claude Code (Max) subscription does NOT grant API
+access. The Anthropic API key is a separate product.
+```
+
+## Archive frontmatter examples (locale-neutral — keys are English)
+
+The three new v1.5.0 frontmatter keys (`snapshot_version`, `arbitrated_fields`, `supersedes_snapshot`) are added to existing v1.4.0 schema (schema_version stays at `1`, additive only). FR canonical null tokens preserved.
+
+**First write (v1.5.0 fresh)**:
+
+```yaml
+schema_version: 1
+created_at: 2026-04-19T15:30:00Z
+skill: genesis-drop-zone
+skill_version: "1.5.0"
+snapshot_version: 1
+arbitrated_fields: []
+# ... 9 semantic fields ...
+# ... optional <field>_source_citation entries ...
+```
+
+**Supersession write (v2 of the snapshot, after Phase 0.5 arbitration)**:
+
+```yaml
+schema_version: 1
+created_at: 2026-04-19T16:00:00Z
+skill: genesis-drop-zone
+skill_version: "1.5.0"
+snapshot_version: 2
+arbitrated_fields: [pour_qui, budget_ou_contrainte]
+supersedes_snapshot: ./drop_zone_intent_history/v1_20260419T153000Z.md
+# ... 9 semantic fields (with arbitrated values) ...
+```
+
+**Archived predecessor frontmatter (after supersession, augmented at archive time)**:
+
+```yaml
+schema_version: 1
+created_at: 2026-04-19T15:30:00Z
+skill: genesis-drop-zone
+skill_version: "1.5.0"
+snapshot_version: 1
+arbitrated_fields: []
+status: deprecated
+archived_at: 2026-04-19T16:00:00Z
+superseded_by: ../drop_zone_intent.md
+supersession_reason: cross-session re-extraction
+# ... 9 semantic fields (original values) ...
+```

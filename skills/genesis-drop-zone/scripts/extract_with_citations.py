@@ -170,14 +170,23 @@ def build_documents(attachments: list, typed_text: str, cache_ttl: str) -> tuple
 
 
 def build_system_prompt() -> str:
-    """English R9 tier-1 prompt quoting FR canonical null-class tokens as data."""
+    """English R9 tier-1 prompt quoting FR canonical null-class tokens as data.
+
+    v1.5.0 adds the divergences[] contract — extractor flags intra-drop
+    semantic conflicts where two or more sources disagree on the same
+    field within the same drop session. Flag-never-resolve principle
+    (KARMA + EMNLP knowledge-conflicts SOTA): emit conservative
+    detections (false positives over false negatives), let Victor
+    arbitrate via Phase 0.5 consolidated card.
+    """
     return (
-        "You are the v1.4.0 extractor for the Genesis drop-zone skill. "
+        "You are the v1.5.0 extractor for the Genesis drop-zone skill. "
         "Read the attached documents and images, then output a SINGLE JSON "
         "object with exactly these top-level keys: "
         f"schema_version (integer, value {SCHEMA_VERSION}), "
-        f"{', '.join(SEMANTIC_FIELDS)}. "
-        "All values are strings. "
+        f"{', '.join(SEMANTIC_FIELDS)}, "
+        "divergences (array, possibly empty). "
+        "All semantic field values are strings. "
         "Use these EXACT FR canonical null-class tokens when a field is missing: "
         f'"{FR_CANONICAL_NULL_CORE}" for missing core fields (pour_qui, type, nom); '
         f'"{FR_CANONICAL_NULL_BONUS_MASC}" for missing masculine bonus fields '
@@ -189,6 +198,13 @@ def build_system_prompt() -> str:
         "For langue_detectee emit exactly one of: FR, EN, mixte. "
         "For attaches emit a short human descriptor such as "
         '"1 brief \'name.pdf\' + 1 photo \'logo.png\'" or "texte seul" if nothing dropped. '
+        "For divergences emit an array. Each item is an object with three keys: "
+        "field (string, MUST be one of " + ", ".join(SEMANTIC_FIELDS) + "), "
+        "candidate_values (array of strings, the conflicting values verbatim from sources), "
+        "sources (array of strings, brief human identifiers e.g. 'brief.pdf p2', 'annexe.md L14'). "
+        "Detect divergences only when two or more sources EXPLICITLY disagree on the same "
+        "semantic field — do NOT flag completion (one source silent, another populated) "
+        "and do NOT flag minor wording variation. When no divergence exists emit []. "
         "Output ONLY the JSON object, no prose wrapper, no code fence."
     )
 
@@ -196,8 +212,8 @@ def build_system_prompt() -> str:
 # API call and response shaping
 
 
-def call_api(client, model: str, documents: list, images: list) -> tuple[dict, dict, dict]:
-    """Send the extraction request and return (extracted, per_field_citations, usage)."""
+def call_api(client, model: str, documents: list, images: list) -> tuple[dict, dict, dict, list]:
+    """Send the extraction request and return (extracted, per_field_citations, usage, divergences)."""
     content_blocks = list(documents) + list(images) + [
         {"type": "text", "text": "Extract the 9-field intent schema from the attachments. Emit JSON only."}
     ]
@@ -232,6 +248,13 @@ def call_api(client, model: str, documents: list, images: list) -> tuple[dict, d
         print(f"[extractor] API output missing fields: {missing}", file=sys.stderr)
         sys.exit(EXIT_OUTPUT_INVALID)
 
+    # v1.5.0 — extract divergences[] from API output (default to [] if absent)
+    raw_divergences = extracted.get("divergences", [])
+    if not isinstance(raw_divergences, list):
+        print(f"[extractor] divergences must be a list, got {type(raw_divergences).__name__}", file=sys.stderr)
+        sys.exit(EXIT_OUTPUT_INVALID)
+    divergences = _shape_divergences(raw_divergences)
+
     # Heuristic citation-to-field mapping: one citation per field in
     # emission order. The SDK attaches citations at the content-block level.
     per_field_citations: dict = {}
@@ -240,7 +263,7 @@ def call_api(client, model: str, documents: list, images: list) -> tuple[dict, d
             per_field_citations[field] = _shape_citation(block_citations[idx])
 
     usage = _shape_usage(getattr(response, "usage", None))
-    return extracted, per_field_citations, usage
+    return extracted, per_field_citations, usage, divergences
 
 
 def _shape_citation(raw) -> dict:
@@ -284,16 +307,51 @@ def _shape_usage(raw) -> dict:
     }
 
 
+def _shape_divergences(raw: list) -> list:
+    """Validate and normalize each divergence object.
+
+    v1.5.0 contract: each item must be a dict with keys
+    `field` (str, in SEMANTIC_FIELDS), `candidate_values` (list of str),
+    `sources` (list of str). Items failing the contract are dropped
+    with a stderr warning rather than failing the whole extraction —
+    flag-never-resolve principle: imperfect divergence detection
+    should not block arbitration on the perfect ones.
+    """
+    shaped: list = []
+    for idx, item in enumerate(raw):
+        if not isinstance(item, dict):
+            print(f"[extractor] divergence #{idx} not a dict; skipped", file=sys.stderr)
+            continue
+        field = item.get("field")
+        cvs = item.get("candidate_values")
+        srcs = item.get("sources")
+        if field not in SEMANTIC_FIELDS:
+            print(f"[extractor] divergence #{idx} field={field!r} not in SEMANTIC_FIELDS; skipped", file=sys.stderr)
+            continue
+        if not isinstance(cvs, list) or not all(isinstance(v, str) for v in cvs):
+            print(f"[extractor] divergence #{idx} candidate_values invalid; skipped", file=sys.stderr)
+            continue
+        if not isinstance(srcs, list) or not all(isinstance(s, str) for s in srcs):
+            print(f"[extractor] divergence #{idx} sources invalid; skipped", file=sys.stderr)
+            continue
+        if len(cvs) < 2:
+            print(f"[extractor] divergence #{idx} candidate_values has fewer than 2 entries; skipped", file=sys.stderr)
+            continue
+        shaped.append({"field": field, "candidate_values": cvs, "sources": srcs})
+    return shaped
+
+
 # Output assembly
 
 
-def build_output(extracted: dict, per_field_citations: dict, usage: dict) -> dict:
-    """Merge extraction + citations + usage into the final stdout dict."""
+def build_output(extracted: dict, per_field_citations: dict, usage: dict, divergences: list) -> dict:
+    """Merge extraction + citations + usage + divergences into the final stdout dict."""
     output: dict = {"schema_version": SCHEMA_VERSION}
     for field in SEMANTIC_FIELDS:
         output[field] = extracted[field]
     for field, citation in per_field_citations.items():
         output[f"{field}_source_citation"] = citation
+    output["divergences"] = divergences
     output["usage"] = usage
     return output
 
@@ -333,7 +391,7 @@ def main() -> None:
     client = anthropic.Anthropic()
 
     try:
-        extracted, per_field_citations, usage = call_api(client, model, documents, images)
+        extracted, per_field_citations, usage, divergences = call_api(client, model, documents, images)
     except anthropic.RateLimitError as exc:
         print(f"[extractor] rate limit after SDK retries: {exc}", file=sys.stderr)
         sys.exit(EXIT_RATE_LIMIT)
@@ -346,7 +404,7 @@ def main() -> None:
 
     print(f"[extractor] usage={json.dumps(usage)}", file=sys.stderr)
 
-    output = build_output(extracted, per_field_citations, usage)
+    output = build_output(extracted, per_field_citations, usage, divergences)
     json.dump(output, sys.stdout, ensure_ascii=False)
     sys.stdout.write("\n")
     sys.exit(EXIT_OK)
