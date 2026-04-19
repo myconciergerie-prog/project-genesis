@@ -64,11 +64,10 @@ All decisions locked during the 2026-04-19 brainstorming session. Ordered by the
 
 ### Q1 — Stack: **Vite + vanilla TypeScript**
 
-Picked over Next.js and static HTML for three load-bearing reasons:
+Picked over Next.js and static HTML for two load-bearing reasons:
 
 1. **Grow-path preserved cheaply.** Sub-project #2 will add a drop-zone page reusing `<Header/>`, `<ProviderCard/>`, picker state, and the auth modal. Vite's component model makes that import-by-path trivial; static HTML would require copy-pasting and CSS forking.
 2. **No vendor lock-in on deploy.** Vite outputs plain static files — deploys to OVH VPS or Cloudflare Pages without Vercel-tier-commercial restrictions that would affect the paid SaaS tier.
-3. **V2 design discipline #5 preserved.** Vanilla TS + web-standard DOM APIs are server-side-vendorable when the v3.x platform backend SSRs components.
 
 Framework flavor: **vanilla TS first**, not React. React can be introduced if picker state plus modal plus localization hooks justify a component framework; v1 scope is tight enough that `DocumentFragment` + custom elements suffice. Revisit at sub-project #2.
 
@@ -101,11 +100,11 @@ Per user intent "commencer sur le VPS en prod". The VPS is provisioned but not y
 
 Per Layer 0 R9 three-tier language policy. Detection via `navigator.language` — `fr-*` renders French, anything else renders English. User override via header toggle (FR | EN), persisted in `localStorage`. String bundles: `src/i18n/fr.json`, `src/i18n/en.json`, helper `t(key)`. ~30–50 strings total for MVL scope.
 
-### Q6 — Auth: **Supabase Auth (new cloud project "Genesis")** + **magic-link** + **Google OAuth**
+### Q6 — Auth: **Supabase self-hosted on VPS OVH** + **magic-link (OVH SMTP)** + **Google OAuth**
 
-**Q6a — New Supabase project.** Verified via MCP that no Genesis Supabase project exists yet (three projects listed: Myconciergerie, Cyrano INACTIVE, atelier-playmobil-james-west). Create dedicated "Genesis" project in organization `laaxlkdscxntajtjzcve`, region `eu-west-2` for consistency with siblings. Free tier (50K MAU). Self-hosted migration to VPS Supabase planned for later, but that's a single-project export/import operation, not a refactor.
+**Q6a — Self-hosted Supabase on VPS OVH.** Deploy the official Supabase Docker Compose stack (Kong + PostgREST + GoTrue + Storage + Realtime + Studio) on the OVH VPS that will also host the landing nginx. Aligned with Layer 0 `infra_2026-04-18_supabase_vps_ovh_migration.md` — Genesis starts self-hosted from day 1 instead of migrating cloud → self-host later. Free (open-source Supabase + compute already paid for the VPS). No MAU cap. Reverse proxy via nginx (or Traefik) serves the Supabase API at `https://supabase.myconciergerie.fr` with Let's Encrypt cert.
 
-**Q6b — Both auth methods.** Both Google OAuth + magic-link offered in the modal, user chooses per sign-in. Supabase Auth supports both natively; ~45 min total config (Google Cloud OAuth client + Supabase Email provider template customization).
+**Q6b — Both auth methods, OVH SMTP for magic-link.** Both Google OAuth + magic-link offered in the modal; user chooses per sign-in. Supabase GoTrue supports both natively. Magic-link email sent via **OVH webmail SMTP** (`ssl0.ovh.net:465` TLS) from a dedicated address like `noreply@myconciergerie.fr` — inherits existing SPF/DKIM config for `myconciergerie.fr` domain, avoiding the spam-folder risk of Supabase default sendmail. Google OAuth client created in Google Cloud Console, client ID + secret configured in Supabase Auth settings. ~1h total config (SMTP creds + Google OAuth client + email templates FR/EN).
 
 **Q6c — Post-auth `/welcome` micro-dashboard**. Not a bare placeholder — includes provider badge, platform status card, empty-state project list (future-anchor for sub-project #2), secondary CTAs (Discord / Changelog / GitHub), and sign-out. Shell that sub-project #2 will fill with real drop-zone entry.
 
@@ -383,15 +382,25 @@ Each phase is landable as its own PR and its own tag. Phases are sequential — 
 - Dogfood: click teaser, click again, reload, verify state.
 - Tag `v0.3.0`.
 
-### Phase 5 — Supabase project + Auth config (`v0.4.0`)
+### Phase 5 — Supabase self-host on VPS + Auth config (`v0.4.0`, expanded)
 
-- Create Supabase project "Genesis" via MCP (`create_project` tool), free tier, region `eu-west-2`, organization `laaxlkdscxntajtjzcve`.
-- Enable magic-link provider in Supabase Auth config.
-- Configure Google OAuth provider (Google Cloud Console client creation, client ID + secret into Supabase).
-- Customize magic-link email template (FR + EN versions via Supabase Auth Email Templates).
-- Record Supabase project URL + anon key in `memory/reference/supabase_genesis_project.md` of the `genesis-web` repo (not in env, memory only — anon key is public-safe).
-- `.env.local` (gitignored) gets `VITE_SUPABASE_URL` + `VITE_SUPABASE_ANON_KEY`.
-- Tag `v0.4.0` (backend config, no code ship beyond `.env.example`).
+Infra-heavy phase (3–5h realistic wall-clock). Split into sub-steps:
+
+**5.1 — VPS prerequisites** (~30 min). Verify the VPS has Docker + Docker Compose installed, sufficient RAM (min 2 GB, 4 GB recommended), and a user with sudo/docker group. If missing, install. Open firewall ports 80 / 443 only.
+
+**5.2 — Supabase Docker Compose stack** (~45 min). Clone official Supabase repo on VPS (`git clone --depth 1 https://github.com/supabase/supabase`), `cd supabase/docker`, `cp .env.example .env`. Generate strong random values for `POSTGRES_PASSWORD`, `JWT_SECRET`, `ANON_KEY` + `SERVICE_ROLE_KEY` (derived from JWT_SECRET per Supabase docs). Set `SITE_URL=https://genesis.myconciergerie.fr`, `API_EXTERNAL_URL=https://supabase.myconciergerie.fr`. `docker compose up -d`. Verify `docker compose ps` shows all services healthy.
+
+**5.3 — Reverse proxy + TLS** (~45 min). Configure nginx server block on the VPS for `supabase.myconciergerie.fr` proxying to Kong (localhost:8000). `certbot --nginx` for Let's Encrypt cert. OVH DNS: add `A supabase → VPS_IP`. Verify HTTPS endpoint responds to `GET /auth/v1/health`.
+
+**5.4 — OVH SMTP config in GoTrue** (~30 min). Create `noreply@myconciergerie.fr` mailbox in OVH manager if not existing. In Supabase Studio (`https://supabase.myconciergerie.fr/project/default/settings/auth`), enable custom SMTP: host `ssl0.ovh.net`, port `465`, user = `noreply@myconciergerie.fr`, pass = mailbox password, sender name "Genesis", sender email matches user. Test by triggering a password-reset or magic-link from Studio test tool; verify received in a real Gmail/Outlook inbox (not spam).
+
+**5.5 — Google OAuth provider** (~30 min). Create Google Cloud Console project "Genesis Platform" (or reuse existing myconciergerie project); create OAuth 2.0 client ID type "Web application"; authorized origins = `https://genesis.myconciergerie.fr`; authorized redirect URIs = `https://supabase.myconciergerie.fr/auth/v1/callback`. Copy client ID + secret into Supabase Studio Auth providers → Google → enable.
+
+**5.6 — Email templates FR / EN** (~30 min). Customize Supabase Auth email templates via Studio for `magic_link` type. Two templates — FR + EN. Locale detection: at sign-in call time, Vite app passes `emailRedirectTo` with locale query param; the template is pre-rendered per locale (Supabase GoTrue does not natively switch template by user metadata, so we include both languages stacked in a single template — French first if detected from signup origin, English fallback).
+
+**5.7 — Memory + env** (~15 min). Record self-host endpoint + anon key + service role key (the last one NEVER committed) in `memory/reference/supabase_genesis_selfhost.md` of the `genesis-web` repo. Anon key is public-safe and goes into `.env.local` + `.env.example` as `VITE_SUPABASE_URL=https://supabase.myconciergerie.fr` + `VITE_SUPABASE_ANON_KEY=<anon>`. Service role key in VPS-only env, used for admin scripts later.
+
+**Tag `v0.4.0`** (infra phase complete; no Vite code changes in this phase, but `.env.example` committed so sub-sequent phases can compile locally).
 
 ### Phase 6 — Auth modal + wire CTAs (`v0.5.0`)
 
@@ -428,18 +437,19 @@ Each phase is landable as its own PR and its own tag. Phases are sequential — 
 
 For reference during plan writing and execution (per Layer 0 `feedback_spec_writing_discipline_mcp_first_reviewer_gate.md` — MCP schema awareness).
 
-### Supabase MCP
+### Supabase MCP — **cloud-only, not applicable to self-hosted**
 
-| Tool | Use |
+The Supabase MCP tools (`create_project`, `get_logs`, `apply_migration`, etc.) target the Supabase cloud management API. **They do not work against a self-hosted instance** because the management API is cloud-specific. For Phase 5 self-host work, Claude operates via:
+
+| Tool substitute | Use |
 |---|---|
-| `list_organizations` | Confirm target org ID (already run — `laaxlkdscxntajtjzcve`) |
-| `list_projects` | Verify no existing Genesis project (already run) |
-| `create_project` | Phase 5 — create "Genesis" project |
-| `get_project_url` | Phase 5 — retrieve URL to populate `.env.local` |
-| `get_publishable_keys` | Phase 5 — retrieve anon key |
-| `get_advisors` | Phase 5 post-create — security + performance lint |
-| `list_extensions` | Phase 5 — verify `pgcrypto` / auth defaults |
-| `get_logs` | Debugging auth failures in Phases 6–8 (Layer 0 `feedback_postgres_logs_first_check.md`) |
+| SSH to VPS + `docker compose` commands | Phase 5.2 — bring stack up / down / inspect |
+| SSH to VPS + `docker exec -it <db-container> psql` | Direct Postgres access for migrations / debugging |
+| Supabase Studio web UI (`https://supabase.myconciergerie.fr`) | Auth provider config, email templates, table inspection |
+| HTTP requests to `/auth/v1/*` endpoints | Programmatic auth testing in Phases 6–7 |
+| VPS log files (`docker compose logs <service>`) | Debugging (equivalent of cloud `get_logs`) |
+
+**Cloud-Supabase MCP tools remain useful** for sibling projects still on cloud Supabase (e.g., the Myconciergerie and atelier-playmobil-james-west projects). They're just not relevant here.
 
 ### Playwright MCP
 
@@ -468,8 +478,9 @@ These are explicit non-decisions for this spec. Each will be resolved in a later
 |---|---|---|---|
 | VPS not ready for Phase 8 | Medium | Medium | Cloudflare Pages fallback documented; 20-min migration later |
 | Google OAuth client config drift between dev/prod | Medium | Low | Document exact authorized origins in `memory/reference/google_oauth_config.md` of `genesis-web` repo |
-| Supabase free tier MAU limit hit | Low | Medium | 50K MAU is ample for MVL + early beta; monitor via Supabase dashboard |
-| Magic-link email in spam folder | High | Low | "Check spam" in state 2 copy; template customization with DKIM/SPF via Supabase Auth settings |
+| Self-host Supabase ops overhead (updates / backup / monitoring) | Medium | Medium | Accepted cost vs vendor lock-in; Phase 5.7 records exact `docker compose pull` + backup command; follow-up sub-project will add Docker-based backup cron |
+| Supabase Docker stack RAM pressure on shared VPS | Medium | Medium | Verify VPS has min 4 GB RAM before Phase 5; if constrained, disable Realtime + Storage containers initially (not needed for MVL) |
+| Magic-link email in spam folder via OVH SMTP | Low | Low | OVH SMTP inherits SPF/DKIM from `myconciergerie.fr` (existing config); Phase 5.4 test against real Gmail/Outlook/iCloud inboxes before sign-off |
 | Locale detection misfires (e.g., Canadian French `fr-CA`) | Medium | Low | Match on `fr*` prefix; if user toggles, persist |
 | DNS propagation delay at cutover | Low | Low | TTL to 300 s ahead of cutover; monitor |
 | User types `genesis.myconciergerie.fr` before DNS is set | Medium | Low | Pre-configure DNS before the domain is announced externally |
