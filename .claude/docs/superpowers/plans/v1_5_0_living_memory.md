@@ -359,7 +359,7 @@ Locate the line `### In scope (v1.4.0)` in SKILL.md. After the v1.4.0 In-scope i
 
 - [ ] **Step 3.2: Update privilege declaration block**
 
-Locate the section in SKILL.md describing the v1.4.0 privilege map (search `Concentrated privilege` near v1.4.0 In-scope). Append after the v1.4.0 declaration:
+Locate the `## Concentrated privilege` section in SKILL.md via `grep -n "^## Concentrated privilege" skills/genesis-drop-zone/SKILL.md` (currently around line 479, well below the In-scope list — do NOT search near v1.4.0 In-scope, the section is in its own canonical location). Append after the v1.4.0 declaration:
 
 ```markdown
 **v1.5.0 update — disk class extended**: the disk class concentrated privilege now covers (a) writing `drop_zone_intent.md` to cwd after consent (v1.3.2 behaviour preserved), (b) writing `drop_zone_intent_history/v<N>_<ts>.md` archive on supersession, (c) overwriting `drop_zone_intent.md` with the new snapshot after archive. Mitigations: (1) arbitration card consent gates the entire write/archive operation; (2) archive directory created with no `mkdir -p` magic — the v1.5.0 dispatch creates `drop_zone_intent_history/` only when needed and only as a sibling of `drop_zone_intent.md` (no path traversal); (3) timestamp format ISO8601 UTC ensures filename uniqueness; (4) Victor-exit safety = no partial state; (5) supersedes_snapshot pointer + archived superseded_by pointer enable forensic traceability. Network class unchanged (subprocess to Anthropic API per v1.4.0 contract).
@@ -822,14 +822,9 @@ Locate the genesis-drop-zone privilege description (search "genesis-drop-zone" +
 
 - [ ] **Step 6.4: Update streak count + most-recent-ship reference at end of cross-skill-pattern paragraph**
 
-Search for "tenth consecutive ship ≥ 9.0" or whichever count is current (likely "11th" or "Eleventh"). Update to reflect v1.5.0 = 12th consecutive ≥ 9.0:
+**Default to the fallback path** — reviewer iteration confirmed master.md does not currently carry an explicit "Eleventh consecutive ship ≥ 9.0" sentence in the cross-skill-pattern paragraph. Do NOT spend time hunting for an existing sentence to edit. Instead, add a new sentence at the end of the v1.5.0 fifth-data-point paragraph (Step 6.2 just appended it) reading: "This data-point is also the **twelfth consecutive ship ≥ 9.0** for project-genesis (11/11 since v1.2.1, projected v1.5.0 self-rating ≈ 9.20-9.30)."
 
-```diff
-- **Eleventh consecutive ship ≥ 9.0**
-+ **Twelfth consecutive ship ≥ 9.0**
-```
-
-(If the master.md does not have an explicit ship-count sentence, add one in the closing paragraph of the cross-skill-pattern section.)
+If grep DOES surface an existing ship-count sentence elsewhere (run `grep -nE "(consecutive|onzième|onzieme|eleventh|11th|11/11)" memory/master.md`), update that sentence in place rather than creating a duplicate.
 
 - [ ] **Step 6.5: Verify edits don't break the existing prose flow**
 
@@ -871,7 +866,9 @@ Expected: `1.5.0`.
 
 - [ ] **Step 8.1: Write fixture file**
 
-Create the file with this exact content (UTF-8, LF line endings, schema_version: 1, demonstrating arbitrated_fields + supersedes_snapshot + snapshot_version, with two arbitrated fields + corresponding citation keys retained):
+Create the file with this exact content (UTF-8, LF line endings, schema_version: 1, demonstrating arbitrated_fields + supersedes_snapshot + snapshot_version, with two arbitrated fields + corresponding citation keys retained).
+
+**CRLF preservation note** (Layer 0 `gotcha_crlf_preservation_git_bash_windows.md`): use `Write` tool directly (Python-equivalent direct write via `pathlib`), NOT `cp` from an existing fixture template followed by `sed` / `perl` / `awk` in-place edits. Such tools silently normalize CRLF → LF on Windows git-bash and shift bytes invisibly. If the implementer chooses a copy-as-template path, use Python `pathlib.Path.read_bytes() + bytes.replace() + write_bytes()` to preserve byte-exact line-ending semantics. Probe load-bearing: `cmp -l <new fixture> <reference fixture> | wc -l` should show only the intentional byte deltas (e.g. frontmatter additions), zero spurious EOL byte differences.
 
 ```yaml
 <!-- SPDX-License-Identifier: MIT -->
@@ -1191,11 +1188,13 @@ Run: `gh pr merge <PR_NUMBER> --squash` (no `--delete-branch` per Layer 0 R2.1 r
 
 - [ ] **Step 11.7: Tag v1.5.0 on main**
 
-After merge, in main repo (not worktree):
+**Explicit cd out of worktree first** — the previous steps run inside `.claude/worktrees/v1.5.0-living-memory/`. Tagging from the worktree would tag `feat/v1.5.0-living-memory` HEAD instead of main HEAD. Run from a fresh shell or `cd C:/Dev/Claude_cowork/project-genesis` (the main repo dir) before tagging:
 
 ```bash
-git checkout main && git pull origin main && git tag v1.5.0 && git push origin v1.5.0
+cd C:/Dev/Claude_cowork/project-genesis && git checkout main && git pull origin main && git tag v1.5.0 && git push origin v1.5.0
 ```
+
+Verify post-tag: `git log --oneline -1 v1.5.0` should show the squash-merged feat commit on main, NOT the pre-squash plan/feat commits from the worktree branch.
 
 ---
 
