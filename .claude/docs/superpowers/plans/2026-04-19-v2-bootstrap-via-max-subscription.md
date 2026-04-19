@@ -421,13 +421,13 @@ Add a step :
 Before printing the welcome box (Phase 0.1), invoke the `phase-auth-preflight` skill. If it returns pass, proceed to Phase 0.1. If it halts (auth missing), do not print welcome — the auth-preflight halt-card is the user-facing output for this turn.
 ```
 
-- [ ] **Step 3: Locate Layer B Phase 0 first step**
+- [ ] **Step 3: Locate Layer B Phase 0 first step (pre-resolved by plan author)**
 
-Read `skills/genesis-protocol/SKILL.md` and `skills/genesis-protocol/phase-0-seed-loading.md`. Identify whichever file holds the very first step of Phase 0 dispatch.
+Insertion site : `skills/genesis-protocol/phase-0-seed-loading.md` § "## The flow — five steps", **before `### Step 0.1 — Inspect the input folder`**, as a new `### Step 0.0 — Auth pre-flight (v2.0.0+)`. Plan author verified this location 2026-04-19 by reading the file directly.
 
-- [ ] **Step 4: Insert phase-auth-preflight invocation as first step of Layer B Phase 0**
+- [ ] **Step 4: Insert phase-auth-preflight invocation as new Step 0.0 of Layer B Phase 0**
 
-Same content shape as Step 2 above, but framed as "Step 0.0 — Auth pre-flight" before Step 0.1 (seed detection).
+Same content shape as Step 2 above ("invoke phase-auth-preflight ; if pass proceed to Step 0.1, if halt do not proceed"), inserted at the location identified in Step 3.
 
 - [ ] **Step 5: Verify plugin still loads**
 
@@ -456,10 +456,10 @@ Search `memory/master.md` for "Concentrated-privilege map" — the long pattern 
 Append to the existing pattern #2 paragraph (after the v1.6.0 promptor sentence) :
 
 ```markdown
-**v2.0.0 retires `genesis-drop-zone`'s network class** — Citations API subprocess removed, returns to disk-only (v1.5.0 disk-class extension preserved). The "first multi-class declaration" precedent (v1.4.0) stands as a historical data-point but the current state of every shipped skill returns to ≤1 class. **v2.0.0 also adds `phase-auth-preflight` as the 9th skill** with privilege class `subprocess` (calls `claude auth status` and probes for `claude` binary presence ; never executes `claude auth login` automatically). Five mitigations : (a) read-only commands only, (b) no auth-state-mutating side effects (only print remediation), (c) no env var writes, (d) no file writes, (e) JSON-parse-with-fallback (corrupt output halts with diagnostic, never crashes uncontrolled). Total privilege map at v2.0.0 : 9 skills, 6 with privilege classes (genesis-drop-zone disk + genesis-protocol disk + phase-minus-one subprocess + phase-5-5-auth-preflight subprocess + pepite-flagging disk + session-post-processor disk + phase-auth-preflight subprocess), 3 with `none` (journal-system + promptor + ... wait verify count).
+**v2.0.0 retires `genesis-drop-zone`'s network class** — Citations API subprocess removed, returns to disk-only (v1.5.0 disk-class extension preserved). The "first multi-class declaration" precedent (v1.4.0) stands as a historical data-point but the current state of every shipped skill returns to ≤1 class. **v2.0.0 also adds `phase-auth-preflight` as the 9th skill** with privilege class `subprocess` (calls `claude auth status` and probes for `claude` binary presence ; never executes `claude auth login` automatically). Five mitigations : (a) read-only commands only, (b) no auth-state-mutating side effects (only print remediation), (c) no env var writes, (d) no file writes, (e) JSON-parse-with-fallback (corrupt output halts with diagnostic, never crashes uncontrolled). Total privilege map at v2.0.0 : **9 skills, 7 with privilege classes** (genesis-drop-zone disk + genesis-protocol disk + phase-minus-one subprocess + phase-5-5-auth-preflight subprocess + pepite-flagging disk + session-post-processor disk + phase-auth-preflight subprocess), **2 with `none`** (journal-system + promptor — pre-v2 count of 2 preserved, no change).
 ```
 
-(Verification note for executor : count current `none`-class skills before writing the final sentence — adjust the count as needed.)
+(Pre-resolved by plan author 2026-04-19 via grep against current master.md — pre-v2 has 8 skills, 6 with privilege classes + 2 with `none`. v2 adds 1 skill (phase-auth-preflight subprocess) and reverts 1 (genesis-drop-zone returns to single class) → 9 total, 7 privilege, 2 none.)
 
 - [ ] **Step 3: Locate cross-skill-pattern #4 narrative**
 
@@ -595,19 +595,33 @@ Wait for user confirm before pushing.
 
 (Execute the 5 commands above with user-supplied PR number for the merge step.)
 
-- [ ] **Step 9: Chore commit — CHANGELOG + session trace + MEMORY + resume**
+- [ ] **Step 9: Chore commit — CHANGELOG + session trace + MEMORY + resume (separate PR per v1.6.3 pattern)**
 
-Per project convention (see v1.6.3 chore commit pattern) :
+Per project convention verified from v1.6.3 commit chain (`0c50440 chore(memory): v1.6.3 — CHANGELOG honest + session trace + MEMORY + resume (#48)` was a SEPARATE PR after the v1.6.3 feat ship), the chore lands as its own PR squash-merged to main :
+
+a. Create new chore worktree :
+```bash
+cd C:/Dev/Claude_cowork/project-genesis
+git worktree add .claude/worktrees/chore_2026-04-19_v2_0_0_session -b chore/v2-0-0-session
+cd .claude/worktrees/chore_2026-04-19_v2_0_0_session
+```
+
+b. Inside chore worktree, write the 4 chore artefacts :
 - Update `CHANGELOG.md` with v2.0.0 entry + 5-axis honest rating
-- Write `memory/project/session_v2_0_0_max_subscription_drop_subprocess.md` (session trace per template)
+- Write `memory/project/session_v2_0_0_max_subscription_drop_subprocess.md` (session trace per template — mirror shape of `session_v1_6_3_f5_fix.md`)
 - Update `memory/MEMORY.md` index
-- Write `.claude/docs/superpowers/resume/2026-04-19_v2_0_0_to_next.md` (next session handoff)
+- Write `.claude/docs/superpowers/resume/2026-04-19_v2_0_0_to_next.md` (next session handoff with PowerShell launcher per Layer 0 `feedback_end_of_session_resume_phrase.md`)
 
+c. Commit + push + PR + squash + merge :
 ```bash
 git add CHANGELOG.md memory/ .claude/docs/superpowers/resume/
 git commit -m "chore(memory): v2.0.0 — CHANGELOG honest + session trace + MEMORY + resume"
-git push origin main  # if chore is on main, else PR + squash again
+git push -u origin chore/v2-0-0-session
+gh pr create --title "chore(memory): v2.0.0 session artefacts" --body "Mirrors v1.6.3 #48 chore PR pattern."
+gh pr merge --squash <pr-number>
 ```
+
+d. Both feat worktree (`feat_2026-04-19_v2_max_subscription_design/`) and chore worktree (`chore_2026-04-19_v2_0_0_session/`) retained per R2.5.
 
 ---
 
