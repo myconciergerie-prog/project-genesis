@@ -4,9 +4,9 @@
 
 This directory holds the skills that Project Genesis ships. Per Claude Code plugin convention (2026), `skills/` is at the plugin root level — **NOT** inside `.claude-plugin/`. Only `plugin.json` lives in `.claude-plugin/`.
 
-## Shipped skills — v0.8.0 complete (v1.0.0 ship candidate)
+## Shipped skills — v1.6.0 (8 skills)
 
-All six skills are shipped as of v0.8.0. The orchestrator landed at Option A (pure Markdown) as the final piece. Each skill's entry below links it to the pain point / spec that motivated it and the version it shipped in.
+Each skill's entry below links it to the pain point / spec that motivated it and the version it shipped in. The original v1 set (six skills) landed v0.1–v0.8 and was complete at v0.8.0 with the `genesis-protocol` orchestrator (pure-Markdown Option A). `genesis-drop-zone` shipped v1.3.0 as the first Layer A vertical slice. `promptor` shipped v1.6.0 as the first orthogonal meta-skill (neither Layer A nor Layer B).
 
 - **`genesis-protocol/`** — **shipped v0.8.0**. The 7-phase protocol orchestrator, pure Markdown (Option A) conductor composing the five sibling skills into a single `/genesis-protocol` invocation. Eight files: `SKILL.md` with the 7-phase master table (1:1 mirror of `memory/master.md`), four phase runbooks (`phase-0-seed-loading.md`, `phase-1-rules-memory.md` covering phases 1+2, `phase-3-git-init.md` covering phases 3+4, `phase-6-commit-push.md` covering phases 6+7), one thin skill-pointer file (`phase-5-5-auth.md`), a verification-only `install-manifest.yaml` that checks sibling skills are present, and a two-mode `verification.md` with per-phase post-action checks. The orchestrator reimplements nothing — it invokes existing skills at the right phase, threads their outputs, and emits a single genesis report. One concentrated privilege (writing outside the Genesis repo), mitigated by the top-level consent card.
 - **`phase-minus-one/`** — Dependencies Pre-flight. Detects OS, package manager, existing stack, gaps. Presents gap report card. Offers 3-mode ladder (detailed pas-à-pas / semi-auto / auto). Runs installs via `winget` / `brew` / `apt`. Handles the batched sign-in round and batched restart round. Multidevice core per `specs/v1_phase_minus_one_first_user_bootstrap_flow.md`.
