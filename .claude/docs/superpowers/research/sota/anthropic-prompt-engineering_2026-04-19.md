@@ -267,7 +267,7 @@ Five places where SOTA evidence weakens or contradicts the template as-is. Each 
 
 ### 1. `Température, Top_P, Top_K, stop_sequences` in Part A (PARAMÈTRES D'INFERENCE & CALIBRAGE) — **broken on Opus 4.7**
 
-Opus 4.7 removes temperature/top_p/top_k (400 error). Template currently lists them as general recommendation without model gating. ([claudefa.st](https://claudefa.st/blog/guide/development/opus-4-7-best-practices), community-derived; corroborate on Anthropic migration guide before edit)
+Opus 4.7 removes temperature/top_p/top_k (400 error on non-default values). Template currently lists them as general recommendation without model gating. ([Anthropic migration guide, canonical](https://platform.claude.com/docs/en/about-claude/models/migrating-to-claude-4) — "Setting `temperature`, `top_p`, or `top_k` to any non-default value on Claude Opus 4.7 returns a 400 error" ; cross-check [claudefa.st](https://claudefa.st/blog/guide/development/opus-4-7-best-practices), community-derived)
 
 **Suggested patch:** replace with `effort: "xhigh" | "high" | "medium" | "low"` + `thinking: {type: "adaptive"}` + `max_tokens ≥ 64k` recommendation for 4.7. Keep legacy sampling doc as a "pre-4.7 models" subsection.
 
