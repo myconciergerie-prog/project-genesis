@@ -55,7 +55,7 @@ Same auth covers : the Claude Code session itself, all in-context Claude inferen
 
 ### 1. Phase anthropic_auth — pre-flight check
 
-A new bootstrap phase that runs **before** any other Genesis phase invocation (Layer A `genesis-drop-zone` Phase 0 OR Layer B `genesis-protocol` Phase 0). Idempotent ; ~10 seconds when authed ; one-turn remediation when not.
+A new bootstrap phase **packaged as a separate skill** `phase-auth-preflight` (decision : option D-2 locked, see § "Locked architectural decisions" below). Runs **before** any other Genesis phase invocation (called by both Layer A `genesis-drop-zone` Phase 0 AND Layer B `genesis-protocol` Phase 0 as their first step). Idempotent ; ~10 seconds when authed ; one-turn remediation when not.
 
 #### 1.1 Detect auth status
 
@@ -92,11 +92,27 @@ On pass, Phase anthropic_auth writes nothing to disk, sets no env var, prints on
 
 ### 2. Drop v1.4.0 subprocess Citations API path
 
-#### 2.1 File deletions
+#### 2.1 File deletions and archives — enumerated
 
+**Deleted entirely** :
 - `skills/genesis-drop-zone/scripts/extract_with_citations.py` — entire script removed
-- `skills/genesis-drop-zone/scripts/` directory removed if empty after the deletion
-- `.claude/docs/superpowers/research/stack/anthropic-python_2026-04-18.md` — moved to `archive/` with a note "v2 retired the subprocess that pinned this dependency"
+- `skills/genesis-drop-zone/scripts/` directory removed (empty after the deletion above)
+
+**Moved to R8 archive** :
+- `.claude/docs/superpowers/research/stack/anthropic-python_2026-04-18.md` → `.claude/docs/superpowers/research/archive/anthropic-python_2026-04-18.md` with a one-line top note "v2 retired the subprocess that pinned this dependency. Entry preserved for cross-project reference (other projects that use the anthropic SDK directly remain valid consumers)."
+
+**Moved to fixture archive** (`tests/fixtures/.archive/` — created if absent) :
+- `tests/fixtures/drop_zone_intent_fixture_v1_4_0_fr_with_citations.md` — citation keys present
+- `tests/fixtures/drop_zone_intent_fixture_v1_4_0_en_with_citations.md` — citation keys present
+- `tests/fixtures/drop_zone_intent_fixture_v1_5_0_arbitrated.md` — DUAL SEMANTICS (carries both v1.5.0 `snapshot_version` + `arbitrated_fields` AND v1.4.0 `_source_citation` keys ; archived because citation keys make it unrepresentative of v2 schema)
+
+**Kept in active fixtures** (already citation-free, valid as v2 reference) :
+- `tests/fixtures/drop_zone_intent_fixture_v1_3_2.md`
+- `tests/fixtures/drop_zone_intent_fixture_v1_3_3_en.md`
+- `tests/fixtures/drop_zone_intent_fixture_v1_4_0_fallback.md` (per v1.4.0 spec : byte-identical to v1.3.3, no citation keys, valid v2 shape modulo `skill_version`)
+
+**To be created** (replaces archived v1.5.0 arbitrated fixture in v2 schema) :
+- `tests/fixtures/drop_zone_intent_fixture_v2_arbitrated.md` — same revision-state semantics (`snapshot_version`, `arbitrated_fields`) but without citation keys, demonstrating the v2 shape
 
 #### 2.2 SKILL.md edits — `genesis-drop-zone`
 
@@ -108,7 +124,7 @@ On pass, Phase anthropic_auth writes nothing to disk, sets no env var, prints on
 #### 2.3 Cross-skill-pattern impact (master.md updates)
 
 - **Pattern #2 — Concentrated privilege map** : `genesis-drop-zone` returns to single-class. Network class retired. The pattern's "first multi-class declaration" precedent is preserved as a historical data-point but the current state of every shipped skill returns to ≤1 class. Document the retirement explicitly.
-- **Pattern #4 — Zero-ripple** : new ordinal data-point. v2 demonstrates the principle holds during architectural REMOVAL : Layer A's `<field>_source_citation` keys are no longer written, but Layer B's parser still ignores unknown / missing keys gracefully. **No new ordinal needed if v1.5.1's "PATCH-level prose cleanup" data-point already covers REMOVAL semantics ; new ordinal warranted if removal-semantics is judged structurally distinct from prose-correction-semantics.** Decision deferred to spec-reviewer or user.
+- **Pattern #4 — Zero-ripple** : NEW ORDINAL data-point (ninth). Locked decision per spec-reviewer judgement : architectural REMOVAL is structurally distinct from v1.5.1's PATCH-prose-cleanup data-point. v1.5.1 was "Layer A polishes wording, contract unchanged". v2 is "Layer A stops writing entire keys, parser-level zero-ripple proven under field omission" — a new failure mode (forward-compat with old writers + backward-compat with old parsers, simultaneously, under a key-omission regime). Master.md pattern #4 narrative gains a ninth ordinal entry tracking this distinction.
 
 ### 3. v1.5.0 halt-with-remediation card retirement
 
@@ -123,10 +139,11 @@ The card content moves to `skills/genesis-drop-zone/.archive/v1_5_0_halt_card_co
 
 ### 5. Tests + fixtures
 
-- `tests/fixtures/drop_zone_intent_fixture_v1_4_0_*` — moved to `tests/fixtures/.archive/` with an `ARCHIVE.md` note.
-- `tests/fixtures/drop_zone_intent_fixture_v1_5_0_*` (if any) — same treatment.
-- New `tests/fixtures/drop_zone_intent_fixture_v2_*` — captures the citation-key-omitted shape for the post-v2 schema.
-- Phase anthropic_auth test coverage : 5 cases (authed-firstParty / authed-Bedrock / loggedIn=false / claude-not-installed / status-command-error). All testable single-shot via `claude -p` since Phase anthropic_auth is multi-step but single-turn.
+Fixture treatment enumerated in § 2.1 above (3 archived, 3 kept, 1 to-create). One additional file in this section :
+
+- `tests/fixtures/.archive/ARCHIVE.md` — short index file listing the 3 archived fixtures with one-line rationale per file ("citation keys present, unrepresentative of v2 schema").
+
+**Phase anthropic_auth test coverage** : 5 cases (authed-firstParty / authed-Bedrock-or-Vertex / loggedIn=false / claude-not-installed / status-command-error). All testable single-shot via `claude -p` since the phase is multi-step but single-turn (no user input mid-flow). Tests live in the `phase-auth-preflight` skill at `skills/phase-auth-preflight/tests/`.
 
 ## Out of scope but noted (v3 vision orientation)
 
@@ -171,7 +188,14 @@ Genesis becomes a hosted platform :
 - **Pattern #1 (1:1 mirror)** : no impact on `genesis-drop-zone`'s mirror discipline ; the spec itself is canonical for the v2 changes (no separate skill mirrors v2 SKILL.md).
 - **Pattern #2 (concentrated privilege)** : `genesis-drop-zone` returns to disk-class only. Document the network-class retirement explicitly. Add Phase anthropic_auth as a new privilege-map entry — class : `subprocess` (calls `claude auth status` and potentially `claude` for install detection), with mitigations : (a) read-only commands only, (b) no auth-state-mutating side effects (never run `claude auth login` automatically — only print the instruction), (c) no env var writes, (d) no file writes, (e) JSON-parse-with-fallback (corrupt output halts gracefully).
 - **Pattern #3 (granular commits)** : v2 ship follows the precedent ; spec / spec-polish / plan / plan-polish / feat-core / chore commits in the same feat branch.
-- **Pattern #4 (zero-ripple)** : NEW data-point candidate (architectural REMOVAL preserves zero-ripple at parser level). Whether this is a new ordinal or a depth-update on v1.5.1's PATCH-level data-point is a judgement call — defer to spec-reviewer.
+- **Pattern #4 (zero-ripple)** : NEW ordinal (ninth data-point) — locked. v2 is structurally distinct from v1.5.1's PATCH-prose-cleanup. See § "In scope item #2 cross-skill-pattern impact" above for the rationale.
+
+## Locked architectural decisions (post-spec-reviewer)
+
+The following decisions are locked in this spec — plan does NOT need to re-litigate :
+
+- **Phase anthropic_auth lives in a separate skill `phase-auth-preflight`** (D-2 locked). **Primary justification : present-day reuse across two entry points** (`genesis-drop-zone` Layer A AND `genesis-protocol` Layer B both need the same auth check ; factoring into one skill is anti-Frankenstein-clean per R10.4 because both call sites exist TODAY). Secondary benefit : naturally hosts v3.2 BYOAI multi-provider dispatcher when that ships, but BYOAI is NOT the load-bearing reason for the factoring decision (per R10.4 anti-speculative-feature gate, future flexibility alone would not justify a 9th skill).
+- **Cross-skill-pattern #4** : NEW ordinal (ninth data-point), per spec-reviewer judgement. Architectural REMOVAL semantics is distinct from v1.5.1 PATCH-prose-cleanup semantics.
 
 ## Open questions for user (decide before plan writing)
 
@@ -202,16 +226,7 @@ Genesis becomes a hosted platform :
 
 **Reco** : Keep as deprecated for one MAJOR version (v2.x), remove in v3.0.0. Same pattern as Anthropic SDK deprecation cadence.
 
-### Q-D : Phase anthropic_auth invocation point
-
-Two options for *when* Phase anthropic_auth runs :
-
-- **(D-1)** Inside `genesis-drop-zone` SKILL.md, as Phase 0.0 before Phase 0.1 welcome
-- **(D-2)** As a separate dispatcher skill `phase-auth-preflight` that `/genesis-drop-zone` and `/genesis-protocol` both call before their first phase
-
-**Reco** : (D-2) — separate skill. Reusable across both Layer A and Layer B entry points. Cleaner factoring for v3.1 external-installer reuse. Increases skill count from 8 to 9 (passes anti-Frankenstein gate per the user's input "à terme il y a aussi le BYOAI" — the dispatcher skill is the natural home for v3.2 multi-provider).
-
-### Q-E : Self-rating projection (post-spec, pre-implementation)
+### Q-D : Self-rating projection (post-spec, pre-implementation)
 
 | Axis | Projected | Rationale |
 |---|---|---|
