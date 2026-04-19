@@ -11,7 +11,7 @@ description: Reusable runbook for spawning fresh Claude Code sessions per fixtur
 Before spawning ANY fresh Claude Code session :
 
 1. **Claude Code version check** — the driver session's Claude Code binary must be a version where the `project-genesis` plugin is installed AND the `/genesis-drop-zone` skill is surfaced in the Skill tool. If the fixture sessions spawn different Claude Code binaries (e.g., different user-scope install), confirm the plugin is loaded there too. Check the session-start system reminder for the skill list.
-2. **API key presence** — for the 4 happy-path fixtures (Fixture B/C/D + alexandre_windows), `ANTHROPIC_API_KEY` MUST be exported in the shell env where `claude` is invoked. For Fixture A (EXIT_NO_KEY test), explicitly `unset ANTHROPIC_API_KEY` before `claude` spawn.
+2. **API key presence** — for the 4 happy-path fixtures (`scenario_first_write` / `scenario_retirement` / `scenario_halt_no_sdk` + `alexandre_windows`), `ANTHROPIC_API_KEY` MUST be exported in the shell env where `claude` is invoked. For `scenario_halt_no_key` (EXIT_NO_KEY test), explicitly `unset ANTHROPIC_API_KEY` before `claude` spawn.
 3. **Git status clean in fixture cwd** — `cd <fixture>` → `ls -la` shows ONLY the intended fixture artefacts, no stale `drop_zone_intent.md` or archive. If present, check whether this is a planned re-run (v1.5.0 dryrun fixtures may contain prior paper-trace artefacts — keep them) or accidental pollution (delete before spawn).
 4. **Driver session state** — this runbook is consumed by the driver session (the one doing v1.6.2 ship). The driver session MUST be in Phase A complete state (feat-core commit landed, evidence log stub at `skills/genesis-drop-zone/tests/runtime_dogfood_evidence_v1_6_2.md` with 5 TBD fixture sections) before fresh sessions spawn.
 
@@ -22,7 +22,7 @@ For each of the 5 fixtures, execute the following 5 steps in a dedicated PowerSh
 ### Step 1 — cd to fixture cwd
 
 ```
-cd C:/tmp/genesis-v1.5.0-dryrun/fixture_A/       # or fixture_B / C / D
+cd C:/tmp/genesis-v1.5.0-dryrun/scenario_halt_no_key/       # or scenario_first_write / scenario_retirement / scenario_halt_no_sdk
 # OR
 cd C:/tmp/genesis-v1.6.2-alexandre/
 ```
@@ -31,7 +31,7 @@ Verify `pwd` matches expectation.
 
 ### Step 2 — ensure API key env matches fixture class
 
-**Fixture A (EXIT_NO_KEY test)** — MUST be unset :
+**`scenario_halt_no_key` (EXIT_NO_KEY test)** — MUST be unset :
 ```
 unset ANTHROPIC_API_KEY
 echo "key present? ${ANTHROPIC_API_KEY:+yes}${ANTHROPIC_API_KEY:-NO}"
@@ -71,7 +71,7 @@ Observe until the first Phase 0 card renders (welcome) OR an error / halt occurs
 - The verbatim Skill invocation message (if visible) — this answers AC6 H1 "invocation form observed" (bare `genesis-drop-zone` / namespaced `project-genesis:genesis-drop-zone` / something else).
 - The welcome card (verbatim or summarized — ≤ 40 lines).
 - For the full-happy-path fixture (alexandre_windows only) : proceed through Phase 0.1 → 0.2 → 0.3 → 0.4 arbitration card → Phase 0.5 consent → `drop_zone_intent.md` write. Record arbitration `arbitrated_fields` list for H2, Phase 0.5 Path observed for H3.
-- For Fixture A (EXIT_NO_KEY) : record the halt card rendered and its error message (redacted per § Redaction rules).
+- For `scenario_halt_no_key` (EXIT_NO_KEY) : record the halt card rendered and its error message (redacted per § Redaction rules).
 - After session closes : `ls -la <fixture>` to see artefacts written (AC evidence).
 
 ## Redaction rules

@@ -14,7 +14,7 @@ description: Per-fixture runtime observations from 5 fresh Claude Code sessions 
 
 ## Per-fixture observations
 
-### Fixture fixture_A (EXIT_NO_KEY test — `C:/tmp/genesis-v1.5.0-dryrun/fixture_A/`)
+### Fixture scenario_halt_no_key (EXIT_NO_KEY test — `C:/tmp/genesis-v1.5.0-dryrun/scenario_halt_no_key/`)
 
 - **Trigger phrase used :** TBD at runtime
 - **Invocation form observed :** TBD
@@ -22,7 +22,7 @@ description: Per-fixture runtime observations from 5 fresh Claude Code sessions 
 - **Artefacts written :** TBD
 - **Frictions found :** TBD
 
-### Fixture fixture_B (multi-file happy-start dispatch — `C:/tmp/genesis-v1.5.0-dryrun/fixture_B/`)
+### Fixture scenario_first_write (multi-file happy-start dispatch — `C:/tmp/genesis-v1.5.0-dryrun/scenario_first_write/`)
 
 - **Trigger phrase used :** TBD at runtime
 - **Invocation form observed :** TBD
@@ -30,7 +30,7 @@ description: Per-fixture runtime observations from 5 fresh Claude Code sessions 
 - **Artefacts written :** TBD
 - **Frictions found :** TBD
 
-### Fixture fixture_C (re-run / supersession scenario — `C:/tmp/genesis-v1.5.0-dryrun/fixture_C/`)
+### Fixture scenario_retirement (re-run / supersession scenario — `C:/tmp/genesis-v1.5.0-dryrun/scenario_retirement/`)
 
 - **Trigger phrase used :** TBD at runtime
 - **Invocation form observed :** TBD
@@ -38,7 +38,7 @@ description: Per-fixture runtime observations from 5 fresh Claude Code sessions 
 - **Artefacts written :** TBD
 - **Frictions found :** TBD
 
-### Fixture fixture_D (SDK-absent edge — now generic internal-error per v1.5.1 — `C:/tmp/genesis-v1.5.0-dryrun/fixture_D/`)
+### Fixture scenario_halt_no_sdk (SDK-absent edge — now generic internal-error per v1.5.1 — `C:/tmp/genesis-v1.5.0-dryrun/scenario_halt_no_sdk/`)
 
 - **Trigger phrase used :** TBD at runtime
 - **Invocation form observed :** TBD
@@ -60,10 +60,10 @@ description: Per-fixture runtime observations from 5 fresh Claude Code sessions 
 
 | Fixture | Dispatch | Invocation form (verbatim) |
 |---|---|---|
-| fixture_A | TBD (confirmed / failed / deferred) | TBD |
-| fixture_B | TBD (confirmed / failed / deferred) | TBD |
-| fixture_C | TBD (confirmed / failed / deferred) | TBD |
-| fixture_D | TBD (confirmed / failed / deferred) | TBD |
+| scenario_halt_no_key | TBD (confirmed / failed / deferred) | TBD |
+| scenario_first_write | TBD (confirmed / failed / deferred) | TBD |
+| scenario_retirement | TBD (confirmed / failed / deferred) | TBD |
+| scenario_halt_no_sdk | TBD (confirmed / failed / deferred) | TBD |
 | alexandre_windows | TBD (confirmed / failed / deferred) | TBD |
 
 ## H2-H5 global hypothesis rows
