@@ -1369,7 +1369,13 @@ export function renderHero(opts: { onCtaClick?: () => void } = {}): HTMLElement 
 ```
 Repeat for `header`, `picker`, `footer`. Pass no copy through props (bundle is canonical).
 
-- [ ] **Step 2: Update all affected component tests** to not pass copy props (they now read from bundles).
+- [ ] **Step 2: Rewrite affected component tests** — specifically these four files lose their copy props and must call `setBundleLocale('fr')` (or `'en'`) in `beforeEach` before rendering:
+  - `tests/unit/components.header.test.ts` — drop `locale` prop, assert via DOM `data-locale` attrs
+  - `tests/unit/components.hero.test.ts` — drop `headline`/`subhead`/`ctaLabel` props, assert content matches `t('hero.*')`
+  - `tests/unit/components.picker.test.ts` — drop `statusLabels` prop, assert `Disponible`/`Bientôt` (FR) or `Active`/`Coming soon` (EN) per `setBundleLocale` call
+  - `tests/unit/components.footer.test.ts` — drop any copy props, assert link labels match `t('footer.*')`
+
+Run all four after refactor — expect each to PASS once both `setBundleLocale` is called in `beforeEach` and the component is updated.
 
 - [ ] **Step 3: In `main.ts`, wire locale detection + toggle**
 
@@ -1710,8 +1716,16 @@ DASHBOARD_PASSWORD=$(openssl rand -hex 16)
 Edit `.env` to set:
 - `POSTGRES_PASSWORD=<generated>`
 - `JWT_SECRET=<generated>`
-- `ANON_KEY=<derived from JWT_SECRET per https://supabase.com/docs/guides/self-hosting/docker#generate-api-keys>`
-- `SERVICE_ROLE_KEY=<derived similarly>`
+- `ANON_KEY=<derived>` — signed HS256 JWT with payload `{"role":"anon","iss":"supabase","iat":<now>,"exp":<now + 10 years>}`
+- `SERVICE_ROLE_KEY=<derived>` — same shape, `role: "service_role"`
+
+Concrete Node one-liner to generate both keys:
+```bash
+npx --yes jsonwebtoken-cli sign \
+  --payload '{"role":"anon","iss":"supabase","iat":1745000000,"exp":2060000000}' \
+  --algorithm HS256 --secret "$JWT_SECRET"
+```
+(Run twice, swap role to `service_role` for the second key. Supabase docs: https://supabase.com/docs/guides/self-hosting/docker#generate-api-keys)
 - `SITE_URL=https://genesis.myconciergerie.fr`
 - `API_EXTERNAL_URL=https://supabase.myconciergerie.fr`
 - `DASHBOARD_USERNAME=admin`
@@ -1811,7 +1825,7 @@ Use Studio's Auth → Users → Send magic link to 3 real emails you control:
 
 For each: open the inbox within 2 minutes, verify email arrived in primary inbox (NOT spam), click link, verify redirect to `https://genesis.myconciergerie.fr` (will 404 for now — that's fine, we're testing the email flow).
 
-**If any of the 3 lands in spam → STOP.** Investigate SPF/DKIM on `myconciergerie.fr` via `dig TXT myconciergerie.fr @1.1.1.1`, confirm OVH SMTP is authorized sender, adjust DNS if needed, retry. Do not proceed with Phase 6 until all 3 deliver clean.
+**If 2/3 deliver clean → proceed to Phase 6** and log the 3rd provider failure in `memory/reference/supabase_genesis_selfhost.md` under a "Known issues" section (e.g. "iCloud spam at v0.4.0 — retest before v1.0.0 ship"). **If 0/3 or 1/3 deliver clean → STOP.** Investigate SPF/DKIM on `myconciergerie.fr` via `dig TXT myconciergerie.fr @1.1.1.1`, confirm OVH SMTP is authorized sender, adjust DNS if needed, retry. Phase 6 can proceed with known-issue docstring if the ratio is 2/3; must be resolved before v1.0.0 acceptance criterion #7.
 
 ### Task 5.5: Google OAuth provider
 
@@ -1984,13 +1998,16 @@ export const supabase = createClient(url, key, {
 import { supabase } from './supabase';
 import type { Provider } from '../components/picker';
 
-const callbackUrl = `${window.location.origin}/auth/callback`;
+// Computed lazily so unit tests with happy-dom can set window.location first.
+function getCallbackUrl(): string {
+  return `${window.location.origin}/auth/callback`;
+}
 
 export async function signInWithGoogle(providerPref: Provider): Promise<void> {
   const { error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: callbackUrl,
+      redirectTo: getCallbackUrl(),
       queryParams: { provider_preference: providerPref },
     },
   });
@@ -2001,7 +2018,7 @@ export async function signInWithMagicLink(email: string, providerPref: Provider)
   const { error } = await supabase.auth.signInWithOtp({
     email,
     options: {
-      emailRedirectTo: callbackUrl,
+      emailRedirectTo: getCallbackUrl(),
       data: { provider_preference: providerPref },
     },
   });
@@ -2120,6 +2137,10 @@ test('magic-link request succeeds', async ({ page }) => {
 - [ ] **Step 1: Write workflow**
 
 ```yaml
+# Pipeline order: unit tests → build → pre-deploy E2E against Vite dev server
+# (playwright.config.ts webServer starts Vite) → rsync to VPS. E2E here validates
+# the build; post-deploy smoke against https://genesis.myconciergerie.fr is a
+# separate manual step in Task 8.3 (or a follow-up job if automated later).
 name: Deploy to production
 on:
   push:
