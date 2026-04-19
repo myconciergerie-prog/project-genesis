@@ -68,11 +68,21 @@ All skills and templates listed in `skills/README.md` and `templates/README.md`,
 
 ## What v2 target is
 
+- **Phase anthropic_auth + drop subprocess Citations** — bootstrap leverages the Max subscription that Claude Code already holds at session open ; `claude auth login` is the only auth path required. Drops v1.4.0's subprocess Citations API, anthropic Python SDK dependency, and ANTHROPIC_API_KEY requirement. v1.5.0's halt-with-remediation card becomes obsolete. Spec : `.claude/docs/superpowers/specs/2026-04-19-v2-bootstrap-via-max-subscription-design.md`
 - Browser-automation-driven Phase 5.5 (paste-back becomes optional via Playwright MCP)
 - Pépite graph tooling with cross-project propagation automation
 - Hook wiring for `SessionEnd` (auto-post-processor)
 - Full Meta-Memory Path B: graph walker, backlinks, promote, cross-project-search
 - Submission to the official Anthropic marketplace (`anthropics/claude-plugins-official`)
+
+## What v3 vision is — captured 2026-04-19
+
+Beyond v2 architectural shift, the long-term direction orienting design choices today (per user input "ces idées sont à noter dès maintenant pour orienter le dev dans ce sens") :
+
+- **External installer surface — Genesis as bootstrap-the-bootstrapper.** Victor encounters Genesis through a single entry point (web link, PowerShell one-liner similar to `irm https://claude.ai/install.ps1 | iex`) that : (a) detects whether Claude Code is installed, (b) installs Claude Code if absent with consent, (c) triggers `claude auth login`, (d) opens Claude Code in a fresh project folder with `/genesis-drop-zone` already invoked. Replaces the current "user must already have Claude Code installed and run /genesis-drop-zone manually" entry path. v2's Phase anthropic_auth is the in-Claude-Code subset of this v3 external installer.
+- **BYOAI multi-provider.** Phase anthropic_auth generalizes to Phase auth with provider dispatcher (Anthropic / OpenAI / Gemini / others). Per Layer 0 user profile "Default to multi-LLM routing / BYO-AI considerations when designing architecture". The user already has Claude Max + Anthropic API + Gemini full Google ecosystem + GPT — the platform should let any of these power a Genesis-bootstrapped project.
+- **Lovable-style hosted SaaS.** Genesis becomes a hosted product, not just a Claude Code plugin. The platform : (a) auto-hosts Supabase on VPS OVH infrastructure (per Layer 0 `infra_2026-04-18_supabase_vps_ovh_migration.md`), (b) creates GitHub repos as part of bootstrap (already partial via Phase 5.5 fine-grained PAT pattern), (c) deploys the bootstrapped project to a subdomain. **Tier model** : free tier deploys to a subfolder of the platform's subdomain (e.g. `<projectslug>.genesis.platform.tld/`) ; paid subscription gives the project its own subdomain (`<projectslug>.tld`) plus extra features.
+- **Design discipline today (load-bearing on every v2 PR).** Keep auth flow provider-agnostic-ready in naming + structure even if only Anthropic ships in v2. Keep bootstrap output structure compatible with future hosted-deployment (no hardcoded local paths in artefacts that would break when deployed to subdomain). Keep the Genesis CLI plugin as the *reference* implementation that the v3 hosted platform reuses, not as a parallel codebase that diverges.
 
 ## Layer 0 inheritance — how project memory defers to the universal layer
 
