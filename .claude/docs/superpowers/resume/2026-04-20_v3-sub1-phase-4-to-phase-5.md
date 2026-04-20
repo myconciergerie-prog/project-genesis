@@ -1,11 +1,14 @@
 <!-- SPDX-License-Identifier: MIT -->
 ---
 name: Resume prompt — 2026-04-20 v3.0 sub-project #1 Phase 4 → Phase 5
+status: SUPERSEDED by 2026-04-20_v3-sub1-phase-6-to-phase-7.md — Phase 5 VPS was deferred mid-same-session after user said VPS not yet operational; session continued through Phase 6 ship (v0.5.0 against local Supabase Docker stack). Read the Phase 6→7 resume for current handoff.
 description: Handoff after THREE phases shipped in one autonomous session — Phase 2 v0.1.0 (static landing FR, 9.0), Phase 3 v0.2.0 (bilingual i18n, 8.8), Phase 4 v0.3.0 (dev band manga, 8.9). Genesis-web at 4 tags, 26 unit + 8 E2E tests passing, build 8.9 KB CSS / 9.6 KB JS. R2.1 Option D pattern validated 6× (3 feat worktrees + 3 chore changelog worktrees). Phase 5 is Supabase self-host + auth on VPS OVH — substantial 3–5 h infrastructure shift, deserves a fresh focused session.
 type: resume
 previous_session: v3.0 sub-project #1 Phase 2+3+4 implementation (one autonomous session, three tagged ships)
 next_action: Phase 5 — Supabase self-host + Auth config (`v0.4.0`)
 ---
+
+> **SUPERSEDED 2026-04-20 late-night** — this resume's "next_action: Phase 5" was not the path taken. Mid-same-session the user confirmed VPS was not yet operational and pivoted to local Supabase Docker stack, unblocking Phase 6 ship (v0.5.0). Current resume: `2026-04-20_v3-sub1-phase-6-to-phase-7.md`.
 
 # Resume — 2026-04-20 v3.0 sub-project #1 Phase 4 → Phase 5
 
