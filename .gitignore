@@ -44,6 +44,12 @@ venv/
 # Genesis-specific — R2.5 forensic snapshots stay LOCAL ONLY
 .claude/worktrees/
 
+# Claude Code machine-local settings (per-user permission grants)
+.claude/settings.local.json
+
+# Playwright MCP browser cache + transient state snapshots
+.playwright-mcp/
+
 # Brainstorming skill visual companion — mockups persist but not tracked
 .superpowers/
 
