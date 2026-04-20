@@ -1,5 +1,8 @@
 {
   "name": "project-genesis-marketplace",
+  "metadata": {
+    "description": "Project Genesis — bootstrap any project from an idea to a GitHub repo via a 7-phase protocol. One OAuth click, zero SSH, zero config files."
+  },
   "owner": {
     "name": "myconciergerie-prog",
     "email": "myconciergerie@gmail.com"
