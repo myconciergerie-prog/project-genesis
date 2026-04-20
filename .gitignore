@@ -44,6 +44,10 @@ venv/
 # Genesis-specific — R2.5 forensic snapshots stay LOCAL ONLY
 .claude/worktrees/
 
+# Claude Code — local session state
+.claude/settings.local.json
+.playwright-mcp/
+
 # Build artefacts
 dist/
 build/
