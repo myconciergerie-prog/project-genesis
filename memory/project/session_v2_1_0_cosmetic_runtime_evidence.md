@@ -41,7 +41,7 @@ The runtime test was user-driven : Claude prepared the fixture (`C:/tmp/genesis-
 | # | Observable | Evidence |
 |---|---|---|
 | A | Phase 0.0 runs before welcome | `Skill(project-genesis:phase-auth-preflight)` sub-skill invocation visible in tool-call trace ; shells to `Bash(claude auth status)` returning the JSON ; three actions precede any welcome box render |
-| B | `✓ Auth Anthropic OK (<email>, <subscription>)` format | `✓ Auth Anthropic OK (contact@ar2100.fr, max)` — exact match with `phase-auth-preflight/SKILL.md` decision-tree row 1 |
+| B | `✓ Auth Anthropic OK (<email>, <subscription>)` format | `✓ Auth Anthropic OK (<email>, max)` — exact match with `phase-auth-preflight/SKILL.md` decision-tree row 1 |
 | C | FR welcome box post-preflight | `┌─...─┐ │ Depose ici ton idee. │ ... └─...─┘` — ASCII alignment preserved, `welcome_locale = FR` default on slash |
 | D | Zero API key friction | Full flow from trigger → 9-field mirror → consent card → decline bridge → `/exit` contains zero `ANTHROPIC_API_KEY` prompts, zero Console links, zero halt cards |
 
@@ -49,12 +49,13 @@ The runtime test was user-driven : Claude prepared the fixture (`C:/tmp/genesis-
 
 **Scope excluded** : attachment drag-and-drop input modality (test used typed-text only per user input "pas glissé-déposé un document dans la drop zone"). Named in the spec as candidate v2.2.0 multi-modal runtime evidence follow-up.
 
-## Process lessons — 3 minor hiccups, all recovered
+## Process lessons — 5 items, all recovered (one elevated to Layer 0)
 
 1. **`git mv` auto-stage during R1.1 ritual** — when I moved the 2 expired stack entries to archive during R1.1, `git mv` implicitly staged the renames in the index. When I later ran `git add .claude-plugin/marketplace.json && git commit` for Piste A, git bundled the renames into commit 1. Squash-merged this is invisible, but branch-level commit granularity drifted from intent (I had planned 3 cleanly-separated commits : fix / test / chore-hygiene ; actually got fix-plus-renames / test / chore-gitignore+INDEX). Minor nit.
 2. **First user paste was incomplete** — when I asked the user to copy terminal scrollback for the runtime evidence, the first paste started only at the 9-field mirror generation phase, missing observables A / B / C above it. Required a second turn with explicit "scroll all the way up, paste from `claude` launch to `/exit`" instruction. Cost : one clarification turn. Process learning : future user-hands-in-loop test instructions should be explicit about scrollback boundaries from the start.
 3. **gh CLI auth switch needed** — the gh CLI active account had drifted to `myconciergerieavelizy-cloud` between sessions (normal behavior, it switches on use). `gh pr create` failed with "must be a collaborator" until `gh auth switch -u myconciergerie-prog`. Same pattern as v1.6.x and v2.0.0 ships. Not worth a Layer 0 feedback — already stable recovery pattern.
 4. **plugin.json bump omission from feat tranche** — the v1.6.3 and v2.0.0 patterns bump `plugin.json` version as part of the feat commit tranche. I skipped it in v2.1.0 feat, caught it in chore tranche review, bundled the bump into the chore commit with explicit discipline evidence. Minor process nit, called out in the self-rating.
+5. **2026+ PII hygiene leak — elevated to Layer 0 fundamental principle** — I hardcoded the user's personal email `contact@ar2100.fr` verbatim into 4 chore-tranche docs (spec on main via feat PR squash, CHANGELOG + session trace + MEMORY.md on branch only). User flagged mid-chore-tranche : `"c'est normal de mettre mon adresse mail en dur pour expliquer le test anthropic dans la doc ?"` followed by the principled framing `"Fais attention aux best practices 2026/2028 c'est un des principes fondamentaux pour notre travail sur tous les projets."` Reversed in-flight per Layer 0 `feedback_user_principle_reverse_inflight_recos.md` : created Layer 0 memory `feedback_privacy_pii_hygiene_2026_plus.md`, added pointer in `~/.claude/CLAUDE.md` Publishing / privacy section, redacted 7 email occurrences across 4 docs to `<email>` placeholder via a new fix commit `fix(docs): redact PII per 2026+ hygiene Layer 0 rule` bundled into the same chore PR. **Residual** : feat PR #51 squash commit `3911a22` diff history retains the email verbatim — non-destructive recovery ; main HEAD clean from chore forward ; tag `v2.1.0` unchanged. Future-version cleanup option : `git filter-repo` + force-push + retag in a maintenance window, deferred as acceptable residual. Dropped Prose axis 9.0 → 8.8 honest ; mean drops 8.92 → 8.88. Streak still BROKEN at 2.
 
 ## Forward map
 
@@ -70,6 +71,6 @@ The runtime test was user-driven : Claude prepared the fixture (`C:/tmp/genesis-
 
 Running average : 8.93 (flat from v2.0.0's 8.93, 22 ratings now).
 
-Streak ≥ 9.0 : **BROKEN at 2** (v1.6.3 9.30 + v2.0.0 9.20 → v2.1.0 8.92 ends the run). New streak starts at 0 post-v2.1.0.
+Streak ≥ 9.0 : **BROKEN at 2** (v1.6.3 9.30 + v2.0.0 9.20 → v2.1.0 8.88 ends the run). New streak starts at 0 post-v2.1.0.
 
-Streak history : longest streak this project has seen was 11 consecutive (v1.2.1 → v1.4.2, broken by v1.5.0 8.62). Current streak-length ranking : 11 → 3 → 2 → 2 (recent) → 1s. The 8.9 honest reflects real narrow-coverage on Pain-driven axis (1-of-5 phase-auth-preflight scenarios live, 4 still documentary), not invented humility.
+Streak history : longest streak this project has seen was 11 consecutive (v1.2.1 → v1.4.2, broken by v1.5.0 8.62). Current streak-length ranking : 11 → 3 → 2 → 2 (recent) → 1s. The 8.88 honest reflects real narrow-coverage on Pain-driven axis (1-of-5 phase-auth-preflight scenarios live, 4 still documentary) + Prose axis drop for reactive-not-proactive PII redaction — not invented humility.

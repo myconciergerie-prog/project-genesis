@@ -30,7 +30,7 @@ Every version bump includes a **5-axis self-rating block** per R10.3 discipline,
 
 - **`claude plugin validate .claude-plugin/marketplace.json`** : was `⚠ Found 1 warning: metadata.description: No marketplace description provided` → post-fix `✔ Validation passed` (zero warnings).
 - **`claude plugin validate .claude-plugin/plugin.json`** : `✔ Validation passed` (sanity check, unchanged).
-- **Live runtime evidence** : 4/4 observables PASS on `C:/tmp/genesis-v2-test/` fresh project with freshly-bumped v2.0.0 marketplace install. Observables : (A) `phase-auth-preflight` sub-skill invoked before welcome box ; (B) exact line `✓ Auth Anthropic OK (contact@ar2100.fr, max)` ; (C) FR welcome ASCII box renders with `welcome_locale = FR` default on slash ; (D) zero `ANTHROPIC_API_KEY` / halt / Console links across full flow.
+- **Live runtime evidence** : 4/4 observables PASS on `C:/tmp/genesis-v2-test/` fresh project with freshly-bumped v2.0.0 marketplace install. Observables : (A) `phase-auth-preflight` sub-skill invoked before welcome box ; (B) exact line `✓ Auth Anthropic OK (<email>, max)` ; (C) FR welcome ASCII box renders with `welcome_locale = FR` default on slash ; (D) zero `ANTHROPIC_API_KEY` / halt / Console links across full flow.
 - **Bonus evidence** : v1.3.1 9-field mirror, v1.3.2 consent card with pre-write existence probe, v1.3.3 decline bridge in FR render intact post-v2 refactor.
 
 ### Self-rating — v2.1.0 (honest post-feat)
@@ -38,13 +38,13 @@ Every version bump includes a **5-axis self-rating block** per R10.3 discipline,
 | Axis | Projected | Honest | Delta | Notes |
 |---|---|---|---|---|
 | Pain-driven | 9.0 | 8.7 | −0.3 | Closes the documentary-gap axis for 1 of 5 `phase-auth-preflight` scenarios (authed-firstparty). Other 4 (logged-out halt, Bedrock warn, binary-missing install, corrupt JSON) remain documentary — require auth-disruption which is out of scope for a low-friction live test. Narrow closure, not full. |
-| Prose | 9.0 | 9.0 | 0.0 | Spec is comprehensive (verbatim blocks, bonus evidence section, scope-excluded clause). PR body structured table. Commit messages substantive. No regret. |
+| Prose | 9.0 | 8.8 | −0.2 | Spec is comprehensive (verbatim blocks, bonus evidence section, scope-excluded clause). PR body structured table. Commit messages substantive. **Deduction** : committed user email `contact@ar2100.fr` verbatim into 4 public-repo docs (spec + CHANGELOG + session trace + MEMORY.md) ; caught only when user raised the question mid-chore-tranche. Redacted to `<email>` placeholder before chore PR via new fix commit ; residual persists in historical squash `3911a22` diff. Layer 0 feedback memory `feedback_privacy_pii_hygiene_2026_plus.md` added as fundamental cross-project principle per user framing "c'est un des principes fondamentaux pour notre travail sur tous les projets". |
 | Best-at-date | 8.9 | 8.9 | 0.0 | Methodology uses the canonical `claude auth status` JSON probe per v2 spec. No drift. No new SOTA axis to tap at this scope. |
 | Self-contained | 9.2 | 9.0 | −0.2 | Scope locked to Piste A + Piste B + minor hygiene. No scope leak. Minor process nit : commit 1 (`ec01fed`) bundled the marketplace.json fix with 2 stack-file renames that `git mv` had auto-staged during R1.1 ritual cleanup. Squash-merged so main history is clean, but branch-level commit granularity drifted from intent. |
 | Anti-Frankenstein | 9.1 | 9.0 | −0.1 | Net add : 1 spec (~140 lines) + 1 JSON field + 2 archive moves + 2 gitignore lines + 1 plugin.json version patch. Small, purpose-driven, no speculative surface. Minor : plugin.json bump omission from feat forced a compensating patch in chore (process nit, not scope nit). |
-| **Mean** | **9.04** | **8.92** | **−0.12** | **≈ 8.9 honest. Streak ≥ 9.0 BROKEN at 2** (v1.6.3 9.30 + v2.0.0 9.20 run ends here). |
+| **Mean** | **9.04** | **8.88** | **−0.16** | **≈ 8.9 honest. Streak ≥ 9.0 BROKEN at 2** (v1.6.3 9.30 + v2.0.0 9.20 run ends here). Prose axis drop reflects the PII-redaction discipline that should have been proactive, not reactive. |
 
-**Running average post-v2.1.0 honest** : (8.93 × 21 + 8.92) / 22 = 196.45 / 22 ≈ **8.93 (flat)**. 22 tagged ratings total.
+**Running average post-v2.1.0 honest** : (8.93 × 21 + 8.88) / 22 = 196.41 / 22 ≈ **8.93 (flat, marginal)**. 22 tagged ratings total.
 
 ### Discipline evidence
 
@@ -54,6 +54,7 @@ Every version bump includes a **5-axis self-rating block** per R10.3 discipline,
 - **Runtime-evidence-first** — piste B was the load-bearing axis. Live test surfaced one actual nit (the initial paste from user was incomplete, showing the cost of loose "paste your output" instructions instead of "paste full scrollback from `claude` launch to `/exit`"). Noted for next user-hands-in-loop test instruction.
 - **Granular commits per pattern #3** — 3 commits in feat tranche (fix + test + chore-hygiene), squash-merged as `3911a22` via PR #51.
 - **R2.3.1 auth switch observation** — `gh auth switch -u myconciergerie-prog` applied at PR creation time (active account had drifted to `myconciergerieavelizy-cloud` between sessions). Pattern continues from v1.6.x and v2.0.0 ships. Not worth a Layer 0 feedback add — already stable pattern.
+- **2026+ PII hygiene discipline — Layer 0 promotion same-turn** — user flagged the hardcoded email leak in chore tranche docs as a fundamental cross-project principle : `"Fais attention aux best practices 2026/2028 c'est un des principes fondamentaux pour notre travail sur tous les projets. mets à jour ta mémoire si ce n'est pas clair."` Reversed in-flight per Layer 0 `feedback_user_principle_reverse_inflight_recos.md` : (a) created Layer 0 memory `feedback_privacy_pii_hygiene_2026_plus.md` with rule + scope + recovery paths + historical-residual handling, (b) added pointer in `~/.claude/CLAUDE.md` Publishing / privacy section, (c) redacted 7 email occurrences across 4 chore-tranche docs to `<email>` placeholder via new fix commit in same chore PR. **Residual** : squash commit `3911a22` (feat PR #51 squash-merge) diff history retains `contact@ar2100.fr` verbatim ; main HEAD clean from this chore PR forward ; tag `v2.1.0` points to `3911a22` unchanged. Non-destructive recovery — future major-version maintenance could re-tag on a rewritten commit via `git filter-repo` + force-push if high-value, but residual is acceptable given email is the user's already-somewhat-public primary email (present elsewhere on their authorized digital surface) and the value of preserving the tag chain integrity.
 
 ---
 
