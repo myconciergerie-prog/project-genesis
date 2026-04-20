@@ -121,9 +121,41 @@ User could ask to ship **Phase 5 (VPS Supabase self-host, `v0.4.0`)** first as a
 
 1. **Cwd** = `C:/Dev/Claude_cowork/genesis-web/`. Create worktree at `genesis-web/.claude/worktrees/v1.0.0-deploy/` on fresh `feat/v1.0.0-deploy` branch.
 2. **Verify VPS prerequisites** (checklist above items 1–7). Do not start code before items 1–6 are green.
-3. **Local Supabase stack** — can stop it now to free ~500 MB RAM; Phase 8 uses the VPS-hosted stack, not local.
+3. **Local Supabase stack** — stopped at Phase 7 close to free ~500 MB RAM; Phase 8 uses the VPS-hosted stack, not local.
 4. **Read plan Phase 8** at `.claude/docs/superpowers/plans/2026-04-20-v3-sub1-landing-implementation.md` lines 2117–2250.
 5. **Spec section 11-15** at `.claude/docs/superpowers/specs/2026-04-19-v3-sub1-landing-design.md` for acceptance criteria and deploy architecture.
+
+## Layer 0 memory to apply in Phase 8 (added during Phase 7 session by parallel sibling work, not assimilated until session-close audit)
+
+Three Layer 0 files were written between 03:50 and 04:22 on 2026-04-20 while the Phase 7 session was active. Read them before Phase 8 kickoff — two of them apply directly to the VPS migration + TS types regen path.
+
+### Directly applicable to Phase 8 (TS types regen from VPS Supabase)
+
+- **`~/.claude/memory/layer0/lesson_mcp_types_double_unwrap.md`** — MCP `generate_typescript_types` requires a double JSON unwrap (`[0].text` then `JSON.parse(text).types`). Bug sournois : local commit can look OK, CI typecheck breaks. When Phase 8 regenerates types from the VPS Supabase project ref (post-migration away from local project `v0.4.0-supabase`), call the MCP wrapper with the double unwrap in mind.
+- **`~/.claude/memory/layer0/lesson_ts_regen_canonical_path_discovery.md`** — regen TARGET path MUST be discovered via `rg "import type { Database } from"` inside the client bootstrap file, NOT copied from prior-session convention. Orphan files bypass CI typecheck (valid standalone, not imported) → silent breakage caught at consumer sites downstream. Canonical pattern: **every PR that regens types includes a "3-line consumer smoke"** that imports a non-trivial Database shape (e.g. `Database['public']['Tables']['users']['Row']`) in one of the app files. For Phase 8, `src/auth/supabase.ts` is the canonical client bootstrap to grep for — that's where the types import anchors.
+
+### Applicable ONLY if Phase 5 (VPS Supabase self-host) is rolled into Phase 8 as a combined ship
+
+- **`~/.claude/memory/layer0/pattern_amendment_pre_exec_fold.md`** — before dispatching a subagent on schema-touching work (migrations / RPCs / policies), dump live schema via MCP + fold any drift (FK deps / CHECK enums / trigger bodies / policy overlap) into a docs-only plan amendment commit BEFORE the implementer dispatch. 2/2 validation rate on myconciergerie-www same day. Cost ~15min, saves 1+ dispatches of rework. **For pure frontend deploy (Phase 8 as scoped in the original plan), this rule does not fire** — no schema ops. **If the user chooses the "Phase 5 + Phase 8 combined" alternative**, this rule applies to the Supabase migration work on the VPS (creating initial schema + RLS policies for the `v1.0.0` production DB).
+
+### R8 cache freshness note for Phase 8
+
+Two `stack/` entries hit TTL on 2026-04-20 and will be past-expiry when the next session opens :
+
+- `stack/claude-code-plugin-structure_2026-04-19.md` (expires 2026-04-20)
+- `stack/claude-code-session-jsonl-format_2026-04-19.md` (expires 2026-04-20)
+
+Neither is directly needed for Phase 8 (VPS deploy is plugin-shape-agnostic and doesn't touch JSONL parsing), but refresh if any session archive work recurs or if a plugin structure update is suspected.
+
+### Also worth knowing — `session-post-processor` pattern gap surfaced this session
+
+During dogfood run #3 of the session-post-processor skill, GitHub Push Protection caught a `sb_(secret|publishable)_*` Supabase key format the skill's `halt-on-leak` gate missed. The skill was marked GREEN but the archive leaked on push. **Before wiring `SessionEnd` hook in v0.6+ Genesis ship, patch `skills/session-post-processor/redaction-patterns.md` + `run.py` to add :**
+
+```python
+(r"sb_(secret|publishable|access)_[A-Za-z0-9_-]{20,}", "supabase_sb_key")
+```
+
+The Phase 7 archive for this session was manually scrubbed before push — the halt gate's own verdict was not trustworthy, and the user should know this before re-invoking the skill on future sessions until the pattern set is audited.
 
 ## Exact phrase for next session
 
