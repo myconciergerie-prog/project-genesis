@@ -9,6 +9,30 @@ next_action: Phase 5 — Supabase self-host + Auth config (`v0.4.0`)
 
 # Resume — 2026-04-20 v3.0 sub-project #1 Phase 4 → Phase 5
 
+## Late-session update — Phase 5 scaffold pre-staged (2026-04-20 late evening)
+
+After the 3-phase ship, user signaled VPS imminent ("VPS pas opé mais précâblé, connexion imminente"). Pre-staged the Phase 5 scaffold that does NOT depend on the live VPS:
+
+- Branch `feat/v0.4.0-supabase` created in genesis-web, pushed to origin @ `db5d436`
+- Worktree was created at `genesis-web/.claude/worktrees/v0.4.0-supabase/`, scaffold committed, then **worktree removed locally** (branch persists on origin)
+- Files added in scaffold commit:
+  - `memory/MEMORY.md` — genesis-web project memory index
+  - `memory/reference/supabase_genesis_selfhost.md` — runbook with placeholders ONLY (no secrets), cross-project notes acknowledging the shared VPS Supabase instance per Layer 0 `infra_2026-04-18_supabase_vps_ovh_migration.md` (ride + www + atelier + Cyrano migrations TBD)
+  - `.env.example` — `VITE_SUPABASE_URL=https://supabase.myconciergerie.fr` + `VITE_SUPABASE_ANON_KEY=<placeholder>`
+
+User then said "on passe cette étape on reviendra après" — Phase 5 deferred. **Resume by:**
+
+```bash
+cd C:/Dev/Claude_cowork/genesis-web
+git fetch
+git worktree add .claude/worktrees/v0.4.0-supabase feat/v0.4.0-supabase
+cd .claude/worktrees/v0.4.0-supabase
+npm install
+# resume Phase 5 from db5d436 — Tasks 5.1-5.6 are still pending, 5.7 partially done (placeholders only)
+```
+
+**4 infos needed from user before Phase 5 live work**: VPS address (was originally said "VPN" — typo for VPS), SSH initial user + auth method, RAM/CPU/disk specs (RAM ≥ 4 GB hard requirement), 1password vault "Genesis" status (exists or to create).
+
 ## What this session shipped (3 phases, 4 tags)
 
 A long autonomous session that started after Phase 1 and shipped Phase 2 + Phase 3 + Phase 4 back-to-back. The user authorized continuing each time after seeing the natural-pause status update.
