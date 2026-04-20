@@ -23,7 +23,7 @@ The test proves the v2.0.0 architectural shift — `claude auth login` / Max sub
 | Fixture path | `C:/tmp/genesis-v2-test/` (empty directory, not a git repo, no CLAUDE.md, no memory/) |
 | Plugin install | `project-genesis@project-genesis-marketplace` updated from v1.6.3 → v2.0.0 via `claude plugin update` |
 | Claude CLI | v2.1.113+ (current installed version on this machine) |
-| Auth state at test | `claude auth status` returns `loggedIn=true`, `apiProvider=firstParty`, `email=contact@ar2100.fr`, `subscriptionType=max` |
+| Auth state at test | `claude auth status` returns `loggedIn=true`, `apiProvider=firstParty`, `email=<email>`, `subscriptionType=max` |
 | Operator | user (myconciergerie-prog) executing in his own terminal |
 | Session transport | fresh `claude` invocation in the fixture cwd (standard CLI, no `--dangerously-skip-permissions` to get the honest consent flow) |
 
@@ -31,7 +31,7 @@ The test proves the v2.0.0 architectural shift — `claude auth login` / Max sub
 
 | # | What to observe | Expected per v2.0.0 spec | Captured verbatim |
 |---|---|---|---|
-| A | Phase 0.0 `phase-auth-preflight` runs **before** Phase 0.1 welcome box | A one-line confirmation `✓ Auth Anthropic OK (contact@ar2100.fr, max)` prints before any welcome ASCII art | _(paste first turn output here)_ |
+| A | Phase 0.0 `phase-auth-preflight` runs **before** Phase 0.1 welcome box | A one-line confirmation `✓ Auth Anthropic OK (<email>, max)` prints before any welcome ASCII art | _(paste first turn output here)_ |
 | B | The confirmation line matches the authed-firstparty template | Exact format `✓ Auth Anthropic OK (<email>, <subscriptionType>)` per `phase-auth-preflight/SKILL.md` decision tree row 1 | _(paste the line verbatim here)_ |
 | C | Phase 0.1 welcome box prints after Phase 0.0 passes | The unified FR welcome ASCII box per `genesis-drop-zone/phase-0-welcome.md` | _(paste welcome box here)_ |
 | D | No `ANTHROPIC_API_KEY` prompt, no halt card, no Console link | The full drop-zone flow (welcome → user intent → 9-field mirror → consent card → optional write) proceeds purely on Max auth. Zero mention of API keys. | _(yes / no ; note any unexpected prompts)_ |
@@ -91,12 +91,12 @@ Session : `99de0078-9e3a-4dae-8dd1-c79a9b48974f` (user-invoked, fresh `claude` s
 ### Observable B — auth confirmation line verbatim
 
 ```
-● ✓ Auth Anthropic OK (contact@ar2100.fr, max)
+● ✓ Auth Anthropic OK (<email>, max)
 
   Now checking is_fresh_context before printing the welcome box.
 ```
 
-**Verdict** ✓ — exact format match with the `phase-auth-preflight/SKILL.md` decision-tree row 1 template : `✓ Auth Anthropic OK (<email>, <subscriptionType>)`. Populated with real user values (`contact@ar2100.fr` = Layer 0 primary personal email, `max` = `subscriptionType` returned by `claude auth status` JSON). No drift on casing, parenthesization, comma separator, or field order.
+**Verdict** ✓ — exact format match with the `phase-auth-preflight/SKILL.md` decision-tree row 1 template : `✓ Auth Anthropic OK (<email>, <subscriptionType>)`. At live test time `<email>` was populated with the Claude Code account's authed email (redacted from this doc per the 2026+ privacy best practice — see Layer 0 `feedback_privacy_pii_hygiene_2026_plus.md`) and `max` was the `subscriptionType` returned by `claude auth status` JSON. No drift on casing, parenthesization, comma separator, or field order.
 
 ### Observable C — welcome box post-preflight
 
